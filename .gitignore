@@ -9,11 +9,6 @@ lerna-debug.log*
 **/.idea
 .idea
 
-*.lke
-
-# our own files
-**.lke
-
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
@@ -49,14 +44,14 @@ bower_components
 build/Release
 
 # Dependency directories
-node_modules/
+**/node_modules
 jspm_packages/
 
 # TypeScript v1 declaration files
 typings/
 
 # TypeScript cache
-*.tsbuildinfo
+**/*.tsbuildinfo
 
 # Optional npm cache directory
 .npm
@@ -130,11 +125,6 @@ dist
 # LKE Plugins
 *.lke
 *.cookie
-.npmrc
-/backend
-/debug
-/frontend
-/public/bundles
 
 *.private.*
 builds/
