@@ -1,0 +1,22 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsc -b tsconfig.json",
+    "lint": "eslint ./src ../shared --ext .ts",
+    "lint:fix": "eslint ./src ../shared --ext .ts --fix"
+  },
+  "bundledDependencies": [
+    "express",
+    "superagent"
+  ],
+  "dependencies": {
+    "express": "4.17.3",
+    "superagent": "8.1.2"
+  },
+  "devDependencies": {
+    "@types/express": "4.17.21",
+    "@types/node": "18.19.3",
+    "@types/superagent": "4.1.15"
+  }
+}

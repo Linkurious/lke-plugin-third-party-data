@@ -1,0 +1,19 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "vite serve",
+    "build": "vite build",
+    "clean": "rm -rf ../../dist/frontend ./node_modules/.vite",
+    "lint": "eslint ./src ../shared --ext .ts",
+    "lint:fix": "eslint ./src ../shared --ext .ts --fix"
+  },
+  "dependencies": {
+    "bootstrap": "5.3.2"
+  },
+  "devDependencies": {
+    "@types/bootstrap": "5.2.10",
+    "vite": "5.0.10"
+  }
+}

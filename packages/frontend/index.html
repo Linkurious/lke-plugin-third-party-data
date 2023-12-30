@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>3rd Party Data (Linkurious Plugin)</title>
+  <base href="/">
+  <link rel="stylesheet" type="text/css" href="./assets/main.css" />
+  <link rel="icon" type="image/x-icon" href="./assets/linkurious.ico">
+</head>
+
+<body>
+
+<div class="container py-4 px-3 mx-auto">
+  <div class="container my-3">
+    <div class="row">
+      <div class="col-6">
+        <h1>Third-Party Data</h1>
+      </div>
+      <div id="button-bar" class="col-6">
+        <button id="btn-integration-list" class="btn btn-secondary admin-btn float-end me-1" type="button">See integrations</button>
+        <button id="btn-integration-add" class="btn btn-primary admin-btn float-end me-1" type="button">Add integration</button>
+        <button id="btn-close" class="btn btn-secondary" type="button">Close</button>
+      </div>
+    </div>
+    <div id="content" class="my-4"></div>
+  </div>
+
+  <!--------------------Spinner-------------------->
+  <div id="spinner" class="spinner hider show">
+    <div class="spinnerContent">
+      <div class="loader"></div>
+      <div class="messageDisplay m-2"></div>
+    </div>
+  </div>
+
+  <!---------------------Popin--------------------->
+  <div id="popin" class="popin">
+    <div class="popinContent">
+      <a class="close">ⓧ</a>
+      <div class="messageDisplay m-3">
+        <h2 class="popinTitle">Title</h2>
+        <div class="popinMessage"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/index.ts"></script>
+</div>
+
+</body>
+</html>

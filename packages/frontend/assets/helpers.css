@@ -1,0 +1,99 @@
+.hidden {
+  display: none !important;
+}
+
+.spinner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  transition: opacity 0.5s;
+  display: none;
+  opacity: 0;
+}
+
+.spinner .spinnerContent {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.spinner .spinnerContent .loader {
+  border: 16px solid #f3f3f3;
+  border-top: 16px solid #3498db;
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  animation: spin 2s linear infinite;
+  margin: auto;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.spinner .spinnerContent .messageDisplay {
+  color: white;
+}
+
+.spinner.hider .spinnerContent .messageDisplay {
+  color: black;
+}
+
+.spinner .spinnerContent .messageDisplay p {
+  text-align: center;
+}
+
+.popin {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  transition: opacity 0.5s;
+  display: none;
+  opacity: 0;
+}
+
+.popin .popinContent {
+  margin: 200px auto auto;
+  width: 60%;
+  min-width: 1024px;
+  max-width: 1200px;
+  background-color: #ecf0f1;
+  padding: 10px;
+  border-radius: 10px;
+  color: black;
+}
+
+.popin .popinContent .close {
+  float: right;
+  transition: color 200ms;
+  font-size: 30px;
+  font-weight: bold;
+  text-decoration: none;
+  color: rgb(120, 120, 120);
+}
+
+.popin .popinContent .close:hover {
+  color: black;
+  cursor: pointer;
+}
+
+.popin.show,
+.spinner.show {
+  display: inherit;
+  opacity: 1;
+}
+
+.popin.hider,
+.spinner.hider {
+  background: rgb(180, 180, 180);
+  transition: none;
+}
