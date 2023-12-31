@@ -1,4 +1,4 @@
-import {UiFacade} from './uiFacade.ts';
+import {UiFacade} from './uiFacade';
 
 export abstract class BaseUI {
   protected readonly ui: UiFacade;

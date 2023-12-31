@@ -1,10 +1,10 @@
 import {ItemTypeAccessRightType} from '@linkurious/rest-client/dist/src/api/AccessRight/types';
 import {PropertyTypeName} from '@linkurious/rest-client/dist/src/api/GraphSchema/types';
 
-import {GraphItemSchema, GraphPropertySchema} from '../api/schema.ts';
-import {VendorFieldTypeName} from '../../../shared/vendor/vendorModel.ts';
-import {VendorModel} from '../../../shared/vendor/vendor.ts';
-import {ConstantFieldTypeName, FieldMapping} from '../../../shared/integration/IntegrationModel.ts';
+import {GraphItemSchema, GraphPropertySchema} from '../api/schema';
+import {VendorFieldTypeName} from '../../../shared/vendor/vendorModel';
+import {Vendor} from '../../../shared/vendor/vendor';
+import {ConstantFieldTypeName, FieldMapping} from '../../../shared/integration/IntegrationModel';
 
 export class IntegrationModelChecker {
   /*
@@ -52,28 +52,31 @@ export class IntegrationModelChecker {
    * - check that the target SearchQuery field exists (in the vendor search query fields)
    * - check that the target SearchQuery field type matches the source value (either constant or SourceNode property type)
    */
-  static checkSourceNodeToSearchQueryMapping(
-    model: FieldMapping[] | undefined,
-    sourceNodeSchema: GraphItemSchema,
-    vendor: VendorModel
+  static checkSourceNodeMappings(
+    mappings: FieldMapping[] | undefined,
+    sourceNodeTypeSchema: GraphItemSchema,
+    vendor: Vendor
   ): void {
-    if (!model || model.length === 0) {
+    if (!mappings || mappings.length === 0) {
       throw new Error('At least one search query mapping must be defined');
     }
     for (const vendorFields of vendor.searchQueryFields) {
-      if (vendorFields.required && !model.find((m) => m.outputPropertyKey === vendorFields.key)) {
+      if (
+        vendorFields.required &&
+        !mappings.find((m) => m.outputPropertyKey === vendorFields.key)
+      ) {
         throw new Error(`Search query mapping: required field "${vendorFields.key}" is missing`);
       }
     }
-    for (const mapping of model) {
-      IntegrationModelChecker.isSearchMapping(mapping, vendor, sourceNodeSchema);
+    for (const mapping of mappings) {
+      IntegrationModelChecker.checkSourceNodeMapping(mapping, vendor, sourceNodeTypeSchema);
     }
   }
 
-  public static isSearchMapping(
+  public static checkSourceNodeMapping(
     mapping: Partial<FieldMapping>,
-    vendor: VendorModel,
-    sourceNodeSchema: GraphItemSchema
+    vendor: Vendor,
+    sourceNodeTypeSchema: GraphItemSchema
   ): asserts mapping is FieldMapping {
     const prefix = 'Search query mapping';
     const vendorField = vendor.searchQueryFields.find((f) => f.key === mapping.outputPropertyKey);
@@ -95,7 +98,7 @@ export class IntegrationModelChecker {
       this.checkGraphPropertyToVendorFieldMapping(
         prefix,
         mapping.inputPropertyKey,
-        sourceNodeSchema,
+        sourceNodeTypeSchema,
         vendorField.type
       );
     } else {
@@ -138,14 +141,17 @@ export class IntegrationModelChecker {
 
   private static checkGraphPropertyToVendorFieldType(
     errorPrefix: string,
-    schemaProperty: GraphPropertySchema,
+    nodePropertySchema: GraphPropertySchema,
     vendorFieldType: VendorFieldTypeName
   ): void {
     if (
-      !IntegrationModelChecker.isLegalPropertyToVendorField(schemaProperty.type, vendorFieldType)
+      !IntegrationModelChecker.isLegalPropertyToVendorField(
+        nodePropertySchema.type,
+        vendorFieldType
+      )
     ) {
       throw new Error(
-        `${errorPrefix}: graph property "${schemaProperty.propertyKey}" is of type "${schemaProperty.type}" in schema, but should be of type "${vendorFieldType}" to match the vendor field`
+        `${errorPrefix}: graph property "${nodePropertySchema.propertyKey}" is of type "${nodePropertySchema.type}" in the graph schema, but should be of type "${vendorFieldType}" to match the vendor field`
       );
     }
   }
@@ -176,7 +182,7 @@ export class IntegrationModelChecker {
   static checkDetailsResponseToTargetNodeMapping(
     targetNodeFieldMapping: FieldMapping[] | undefined,
     targetNodeSchema: GraphItemSchema,
-    vendorModel: VendorModel
+    vendor: Vendor
   ): void {
     if (targetNodeSchema.access !== ItemTypeAccessRightType.WRITE) {
       throw new Error(`Target node-category "${targetNodeSchema.itemType}" is not writable`);
@@ -185,7 +191,7 @@ export class IntegrationModelChecker {
       throw new Error('At least one node field mapping must be defined');
     }
     for (const mapping of targetNodeFieldMapping) {
-      this.isDetailsMapping(mapping, vendorModel, targetNodeSchema);
+      this.isDetailsMapping(mapping, vendor, targetNodeSchema);
     }
   }
 
@@ -193,10 +199,10 @@ export class IntegrationModelChecker {
     errorPrefix: string,
     sourceFieldKey: string,
     targetPropertySchema: GraphPropertySchema,
-    vendor: VendorModel
+    vendor: Vendor
   ): void {
     // check that the property exists
-    const vendorField = vendor.detailsResponseFields.find((p) => p.key === sourceFieldKey);
+    const vendorField = vendor.outputFields.find((p) => p.key === sourceFieldKey);
     if (!vendorField) {
       throw new Error(`${errorPrefix}: unknown vendor property "${sourceFieldKey}"`);
     }
@@ -262,7 +268,7 @@ export class IntegrationModelChecker {
 
   static isDetailsMapping(
     mapping: Partial<FieldMapping>,
-    vendor: VendorModel,
+    vendor: Vendor,
     targetNodeSchema: GraphItemSchema
   ): asserts mapping is FieldMapping {
     const prefix = 'Target node field mapping';

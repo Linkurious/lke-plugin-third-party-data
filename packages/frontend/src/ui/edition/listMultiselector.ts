@@ -1,5 +1,6 @@
-import {AbstractFormPopin} from './abstractFormPopin.ts';
-import {UiFacade} from './uiFacade.ts';
+import {UiFacade} from '../uiFacade';
+
+import {AbstractFormPopin} from './abstractFormPopin';
 
 export class ListMultiselector<T extends string = string> extends AbstractFormPopin<T[]> {
   private readonly input: T[];

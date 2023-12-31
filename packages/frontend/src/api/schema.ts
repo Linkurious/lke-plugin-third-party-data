@@ -5,7 +5,7 @@ import {
 } from '@linkurious/rest-client/dist/src/api/GraphSchema/types';
 import {ItemTypeAccessRightType} from '@linkurious/rest-client/dist/src/api/AccessRight/types';
 
-import {API} from './api.ts';
+import {API} from './api';
 
 export type ItemAccess = 'read' | 'write';
 export interface GraphItemSchema {

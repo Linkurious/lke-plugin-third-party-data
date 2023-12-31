@@ -1,7 +1,7 @@
-import {$id} from '../utils.ts';
+import {$elem, $id} from '../utils';
 
-import {BaseUI} from './baseUI.ts';
-import {UiFacade} from './uiFacade.ts';
+import {BaseUI} from './baseUI';
+import {UiFacade} from './uiFacade';
 
 interface IPopinCloseValue<V = undefined> {
   closedByUser: boolean;
@@ -42,7 +42,12 @@ export class PopIn extends BaseUI {
       p.textContent = line;
       content.appendChild(p);
     }
-    content.appendChild(this.ui.button.create('Close', {primary: true}, () => this.close()));
+    content.appendChild(
+      $elem('div', {class: 'd-flex justify-content-end'}, [
+        this.ui.button.create('Close', {primary: true}, () => this.close())
+      ])
+    );
+
     return this.showElement(title, content, hideApp);
   }
 

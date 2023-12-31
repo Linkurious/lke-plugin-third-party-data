@@ -1,27 +1,22 @@
 import {LkError, Response, User} from '@linkurious/rest-client';
 import {LkEdge, LkNode} from '@linkurious/rest-client/dist/src/api/graphItemTypes';
 
-import {Vendor} from '../../shared/vendor/vendor';
-import {VendorSearchResult} from '../../shared/api/response.ts';
-import {
-  IntegrationModel,
-  IntegrationModelPublic
-} from '../../shared/integration/IntegrationModel.ts';
+import {VendorSearchResult} from '../../shared/api/response';
+import {IntegrationModel, IntegrationModelPublic} from '../../shared/integration/IntegrationModel';
 
 import {API} from './api/api';
 import {UiFacade} from './ui/uiFacade';
 import {Schema} from './api/schema';
 import {SearchSuccessState, UrlParams} from './urlParams';
-import {asError, clone, randomString} from './utils.ts';
-import {Configuration} from './configuration.ts';
-import {VendorIntegration} from './integration/vendorIntegration.ts';
+import {asError, clone, randomString} from './utils';
+import {Configuration} from './configuration';
+import {VendorIntegration} from './integration/vendorIntegration';
 
 export class ServiceFacade {
   private readonly urlParams;
   public readonly ui: UiFacade;
   public readonly api: API;
   public readonly schema: Schema;
-  public readonly vendor: Vendor;
   public readonly config: Configuration;
 
   public constructor() {
@@ -29,7 +24,6 @@ export class ServiceFacade {
     this.ui = new UiFacade(this);
     this.urlParams = new UrlParams();
     this.schema = new Schema(this.api);
-    this.vendor = new Vendor();
     this.config = new Configuration(this.api);
   }
 
@@ -129,7 +123,7 @@ export class ServiceFacade {
       int.getOutputEdge(searchResult, newNodeR.body.id, inputNodeId)
     );
     if (!newEdgeR.isSuccess()) {
-      throw new Error(`Failed to create output node: ${newEdgeR.body.message}`);
+      throw new Error(`Failed to create output edge: ${newEdgeR.body.message}`);
     }
 
     let addedInLKE = false;
@@ -158,8 +152,14 @@ export class ServiceFacade {
     }
   }
 
-  async createCustomAction(integration: IntegrationModel): Promise<void> {
+  async createCustomAction(
+    integration: IntegrationModel,
+    backTo: 'integration-list'
+  ): Promise<void> {
     console.log('CREATE_CUSTOM_ACTION: ' + JSON.stringify(integration));
-    // todo
+    await this.ui.showCustomActionManager(integration);
+    if (backTo === 'integration-list') {
+      await this.ui.showIntegrationsList();
+    }
   }
 }

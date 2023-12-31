@@ -1,8 +1,8 @@
 import {ICreateNodeParams, ICreateEdgeParams} from '@linkurious/rest-client';
 
-import {ServiceFacade} from '../serviceFacade.ts';
-import {IntegrationModelPublic} from '../../../shared/integration/IntegrationModel.ts';
-import {VendorSearchResult} from '../../../shared/api/response.ts';
+import {ServiceFacade} from '../serviceFacade';
+import {IntegrationModelPublic} from '../../../shared/integration/IntegrationModel';
+import {VendorSearchResult} from '../../../shared/api/response';
 
 export class VendorIntegration {
   private readonly model: IntegrationModelPublic;

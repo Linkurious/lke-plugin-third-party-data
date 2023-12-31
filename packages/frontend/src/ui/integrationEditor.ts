@@ -1,13 +1,14 @@
-import {IntegrationModel} from '../../../shared/integration/IntegrationModel.ts';
-import {ServiceFacade} from '../serviceFacade.ts';
+import {IntegrationModel} from '../../../shared/integration/IntegrationModel';
+import {ServiceFacade} from '../serviceFacade';
+import {Vendor} from '../../../shared/vendor/vendor';
 
-import {VendorEditorModel, VendorSelector} from './vendorSelector.ts';
-import {BaseUI} from './baseUI.ts';
-import {NodeTypeSelector} from './nodeTypeSelector.ts';
-import {SourceSelector} from './sourceSelector.ts';
-import {SearchMappingEditor} from './searchMappingEditor.ts';
-import {ListMultiselector} from './listMultiselector.ts';
-import {DetailsMappingEditor} from './detailsMappingEditor.ts';
+import {VendorEditorModel, VendorSelector} from './edition/vendorSelector';
+import {BaseUI} from './baseUI';
+import {NodeTypeSelector} from './edition/nodeTypeSelector';
+import {SourceSelector} from './edition/sourceSelector';
+import {InputNodeMappingEditor} from './edition/inputNodeMappingEditor';
+import {ListMultiselector} from './edition/listMultiselector';
+import {OutputNodeMappingEditor} from './edition/outputNodeMappingEditor';
 
 export class IntegrationEditor extends BaseUI {
   private readonly services: ServiceFacade;
@@ -19,11 +20,11 @@ export class IntegrationEditor extends BaseUI {
 
   async show(model: Partial<IntegrationModel>): Promise<IntegrationModel | undefined> {
     // vendor
-    const vendorSelector = new VendorSelector(this.services);
+    const vendorSelector = new VendorSelector(this.ui);
     let currentVendorInfo: VendorEditorModel | undefined = undefined;
     if (model.vendorKey) {
       currentVendorInfo = {
-        vendor: this.services.vendor.getVendorByKey(model.vendorKey),
+        vendor: Vendor.getVendorByKey(model.vendorKey),
         adminSettings: model.adminSettings ?? {}
       };
     }
@@ -63,7 +64,7 @@ export class IntegrationEditor extends BaseUI {
     console.log('integration: selected node category: ' + JSON.stringify(sourceNodeCategory));
 
     // source-node property mapping
-    const searchMappingEditor = new SearchMappingEditor(this.services, {
+    const searchMappingEditor = new InputNodeMappingEditor(this.services, {
       sourceKey: model.sourceKey,
       sourceNodeType: model.inputNodeCategory,
       vendor: vendorInfo.vendor
@@ -117,9 +118,9 @@ export class IntegrationEditor extends BaseUI {
     model.outputNodeCategory = targetNodeCategory;
 
     // TargetNode details mapping
-    const detailsMappingEditor = new DetailsMappingEditor(this.services, {
+    const detailsMappingEditor = new OutputNodeMappingEditor(this.services, {
       sourceKey: dataSource.key,
-      targetNodeType: model.outputNodeCategory,
+      outputNodeType: model.outputNodeCategory,
       vendor: vendorInfo.vendor
     });
     const detailsMapping = await detailsMappingEditor.show(model.outputNodeFieldMapping);

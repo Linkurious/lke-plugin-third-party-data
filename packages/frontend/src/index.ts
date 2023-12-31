@@ -8,7 +8,7 @@ import 'bootstrap';
  */
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-import {ServiceFacade} from './serviceFacade.ts';
+import {ServiceFacade} from './serviceFacade';
 
 window.addEventListener('load', () => {
   const urlParams = new URLSearchParams(location.search);

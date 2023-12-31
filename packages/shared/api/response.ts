@@ -1,4 +1,4 @@
-import {IntegrationVendorKey, VendorFieldType} from '../vendor/vendorModel';
+import {VendorFieldType} from '../vendor/vendorModel';
 
 export interface ApiError {
   code: string;
@@ -13,7 +13,7 @@ export interface VendorSearchResult {
 export interface VendorSearchResponse {
   integrationId: string;
   inputNodeId: string;
-  vendorKey: IntegrationVendorKey;
+  vendorKey: string;
   results: VendorSearchResult[];
   error?: ApiError;
 }

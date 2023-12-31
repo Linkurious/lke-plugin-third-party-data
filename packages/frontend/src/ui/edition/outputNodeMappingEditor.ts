@@ -1,26 +1,26 @@
 import {PropertyTypeName} from '@linkurious/rest-client';
 
-import {VendorModel} from '../../../shared/vendor/vendor.ts';
-import {ServiceFacade} from '../serviceFacade.ts';
-import {FieldMapping, FieldMappingType} from '../../../shared/integration/IntegrationModel.ts';
-import {$elem, addCombo, addSelect, asError} from '../utils.ts';
-import {GraphItemSchema, GraphPropertySchema} from '../api/schema.ts';
-import {IntegrationModelChecker} from '../integration/integrationModelChecker.ts';
-import {VendorField, VendorFieldTypeName} from '../../../shared/vendor/vendorModel.ts';
+import {ServiceFacade} from '../../serviceFacade';
+import {FieldMapping, FieldMappingType} from '../../../../shared/integration/IntegrationModel';
+import {$elem, addCombo, addSelect, asError} from '../../utils';
+import {GraphItemSchema, GraphPropertySchema} from '../../api/schema';
+import {IntegrationModelChecker} from '../../integration/integrationModelChecker';
+import {VendorField, VendorFieldTypeName} from '../../../../shared/vendor/vendorModel';
+import {Vendor} from '../../../../shared/vendor/vendor';
 
-import {AbstractMappingEditor} from './abstractMappingEditor.ts';
+import {AbstractMappingEditor} from './abstractMappingEditor';
 
-interface DetailsMappingParams {
-  vendor: VendorModel;
+interface OutputNodeMappingEditorParams {
+  vendor: Vendor;
   sourceKey: string;
-  targetNodeType: string;
+  outputNodeType: string;
 }
 
-export class DetailsMappingEditor extends AbstractMappingEditor {
-  private readonly params: DetailsMappingParams;
+export class OutputNodeMappingEditor extends AbstractMappingEditor {
+  private readonly params: OutputNodeMappingEditorParams;
   private targetNodeSchema?: GraphItemSchema;
 
-  constructor(services: ServiceFacade, params: DetailsMappingParams) {
+  constructor(services: ServiceFacade, params: OutputNodeMappingEditorParams) {
     super(
       services,
       'Search query mapping',
@@ -33,7 +33,7 @@ export class DetailsMappingEditor extends AbstractMappingEditor {
     if (!this.targetNodeSchema) {
       this.targetNodeSchema = await this.services.schema.getNodeTypeSchema(
         this.params.sourceKey,
-        this.params.targetNodeType
+        this.params.outputNodeType
       );
     }
     return this.targetNodeSchema;
@@ -63,7 +63,7 @@ export class DetailsMappingEditor extends AbstractMappingEditor {
   }
 
   private addDetailsFieldSelect(parent: HTMLElement, validTypes: VendorFieldTypeName[]): void {
-    const detailsFields = this.params.vendor.detailsResponseFields
+    const outputFields = this.params.vendor.outputFields
       .filter((vf) => validTypes.includes(vf.type))
       .map((vf) => ({
         key: vf.key,
@@ -71,9 +71,9 @@ export class DetailsMappingEditor extends AbstractMappingEditor {
       }));
     addSelect(
       parent,
-      {label: 'Source response field'},
+      {label: 'API field'},
       'details-mapping-source-field-select',
-      detailsFields,
+      outputFields,
       (sourceFieldKey) => {
         console.log('newDetailsMapping.sourceFieldKey: ' + sourceFieldKey);
         if (this.newModel.type === 'property') {
@@ -89,7 +89,7 @@ export class DetailsMappingEditor extends AbstractMappingEditor {
     const btnOptions = {primary: true, small: true, outline: true};
     const buttonDefault = this.ui.button.create('Default mapping', btnOptions, async () => {
       this.setModel(
-        this.params.vendor.detailsResponseFields.map((vf) => ({
+        this.params.vendor.outputFields.map((vf) => ({
           type: 'property',
           inputPropertyKey: vf.key,
           outputPropertyKey: vf.key
@@ -150,9 +150,7 @@ export class DetailsMappingEditor extends AbstractMappingEditor {
   }
 
   private renderVendorFieldKey(vendorFieldKey?: string): string {
-    const vendorField = this.params.vendor.detailsResponseFields.find(
-      (vf) => vf.key === vendorFieldKey
-    );
+    const vendorField = this.params.vendor.outputFields.find((vf) => vf.key === vendorFieldKey);
     return this.renderVendorField(vendorField);
   }
 
@@ -218,7 +216,7 @@ export class DetailsMappingEditor extends AbstractMappingEditor {
   protected $getNodeTypeSchemaInternal(): Promise<GraphItemSchema> {
     return this.services.schema.getNodeTypeSchema(
       this.params.sourceKey,
-      this.params.targetNodeType
+      this.params.outputNodeType
     );
   }
 }

@@ -1,6 +1,6 @@
-import {ServiceFacade} from '../serviceFacade.ts';
+import {ServiceFacade} from '../../serviceFacade';
 
-import {AbstractSelector} from './abstractSelector.ts';
+import {AbstractSelector} from './abstractSelector';
 
 export class SourceSelector extends AbstractSelector<{key: string; name: string}> {
   private readonly services: ServiceFacade;

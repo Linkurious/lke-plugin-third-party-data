@@ -1,7 +1,7 @@
-import {addSelect} from '../utils.ts';
+import {addSelect} from '../../utils';
+import {UiFacade} from '../uiFacade';
 
-import {UiFacade} from './uiFacade.ts';
-import {AbstractFormPopin} from './abstractFormPopin.ts';
+import {AbstractFormPopin} from './abstractFormPopin';
 
 export abstract class AbstractSelector<T> extends AbstractFormPopin<T> {
   private choices?: T[];

@@ -1,7 +1,7 @@
 import {RestClient} from '@linkurious/rest-client';
 
 import {VendorSearchResponse} from '../../../shared/api/response';
-import {MyPluginConfig, MyPluginConfigPublic} from '../../../shared/myPluginConfig.ts';
+import {MyPluginConfig, MyPluginConfigPublic} from '../../../shared/myPluginConfig';
 
 export class API {
   private readonly restClient: RestClient;

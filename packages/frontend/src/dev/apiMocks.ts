@@ -1,12 +1,18 @@
 import {User} from '@linkurious/rest-client';
+import {CustomAction} from '@linkurious/rest-client/dist/src/api/CustomAction/types';
 
-import {VendorSearchResponse} from '../../../shared/api/response.ts';
+import {VendorSearchResponse} from '../../../shared/api/response';
 import {
   IntegrationModel,
   IntegrationModelPublic
-} from '../../../shared/integration/IntegrationModel.ts';
+} from '../../../shared/integration/IntegrationModel';
 
-import {ApiMock} from './devServer.ts';
+import {ApiMock} from './devServer';
+
+const defaultIntegrationId = 'azerty';
+const validSourceKey = 'abc123';
+const outputNodeType = 'Person_details';
+const outputEdgeType = 'has_details';
 
 const mockUser: User = {
   source: 'local',
@@ -20,11 +26,8 @@ const mockUser: User = {
   updatedAt: '2021-01-01T00:00:00.000Z',
   preferences: {pinOnDrag: false, locale: 'en', incrementalLayout: false}
 };
-const validSourceKey = 'abc123';
-const outputNodeType = 'Person_details';
-const outputEdgeType = 'has_details';
 const publicIntegrationModel: IntegrationModelPublic = {
-  id: 'azerty',
+  id: defaultIntegrationId,
   vendorKey: 'dnb',
   sourceKey: validSourceKey,
   inputNodeCategory: 'Person',
@@ -156,12 +159,14 @@ export const API_MOCKS: ApiMock[] = [
       }
     }
   },
+  // check currently connected user
   {
     match: '/api/auth/me',
     response: {
       body: mockUser
     }
   },
+  // list data-sources
   {
     match: '/api/dataSources',
     response: {
@@ -181,6 +186,7 @@ export const API_MOCKS: ApiMock[] = [
       ]
     }
   },
+  // get node schema for valid data-source
   {
     match: `/api/${validSourceKey}/graph/schema/node/types`,
     response: {
@@ -252,6 +258,37 @@ export const API_MOCKS: ApiMock[] = [
           }
         ]
       }
+    }
+  },
+  // lit custom actions for valid data-source
+  {
+    match: `/api/${validSourceKey}/customAction`,
+    response: {
+      body: [
+        {
+          id: 1,
+          name: 'fetch person info from DnB',
+          description: 'fetch person info from DnB yeah and some details too',
+          sourceKey: validSourceKey,
+          urlTemplate: `{{baseURL}}plugin/3d/?integrationId=${defaultIntegrationId}&nodeId={{node}}&sourceKey={{sourceKey}}&noise=1234356743245678543234567865432134567865432`
+        },
+        {
+          id: 2,
+          name: 'other action',
+          description: 'this action is unrelated to this plugin',
+          sourceKey: validSourceKey,
+          urlTemplate: `{{baseURL}}plugin/image-export/?viz={{visualization}}&sourceKey={{sourceKey}}`
+        }
+      ] as CustomAction[]
+    }
+  },
+  // create custom action
+  {
+    verb: 'POST',
+    match: `/api/${validSourceKey}/customAction`,
+    response: {
+      body: {},
+      status: 201
     }
   }
 ];

@@ -35,7 +35,11 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": [],
+  "include": [
+    "./packages/shared",
+    "./packages/backend/src",
+    "./packages/frontend/src"
+  ],
   "exclude": [
     "node_modules",
     ".eslintrc.cjs"

@@ -13,7 +13,7 @@ module.exports = {
   parserOptions: {
     'ecmaVersion': 'ESNext',
     'sourceType': 'module',
-    'project': ['./tsconfig.json']
+    'project': ['./tsconfig.json', './packages/*/tsconfig.json'],
   },
   rules: {
     'eqeqeq': ['error'], // Requires === or !== in place of == or !=

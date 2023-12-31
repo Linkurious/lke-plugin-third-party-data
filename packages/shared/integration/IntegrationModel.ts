@@ -1,8 +1,6 @@
-import {IntegrationVendorKey} from '../vendor/vendorModel';
-
 export interface IntegrationModelPublic {
   id: string;
-  vendorKey: IntegrationVendorKey;
+  vendorKey: string;
   sourceKey: string;
   inputNodeCategory: string;
   searchQueryFieldMapping: FieldMapping[];

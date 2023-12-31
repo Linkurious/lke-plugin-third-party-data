@@ -1,7 +1,7 @@
-import {$id} from '../utils.ts';
+import {$id} from '../utils';
 
-import {UiFacade} from './uiFacade.ts';
-import {BaseUI} from './baseUI.ts';
+import {UiFacade} from './uiFacade';
+import {BaseUI} from './baseUI';
 
 export interface RunLongTaskOptions {
   /**

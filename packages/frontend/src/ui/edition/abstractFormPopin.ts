@@ -1,7 +1,11 @@
-import {$elem} from '../utils.ts';
+import {$elem} from '../../utils';
+import {BaseUI} from '../baseUI';
+import {UiFacade} from '../uiFacade';
 
-import {BaseUI} from './baseUI.ts';
-import {UiFacade} from './uiFacade.ts';
+export interface ButtonsConfig {
+  saveText: string | undefined;
+  closeText: string;
+}
 
 export abstract class AbstractFormPopin<T> extends BaseUI {
   private model: T | undefined;
@@ -14,6 +18,13 @@ export abstract class AbstractFormPopin<T> extends BaseUI {
     super(ui);
     this.title = title;
     this.description = description;
+  }
+
+  protected getButtonsConfig(): ButtonsConfig {
+    return {
+      saveText: 'Next',
+      closeText: 'Cancel'
+    };
   }
 
   protected setModel(model: T): void {
@@ -96,24 +107,30 @@ export abstract class AbstractFormPopin<T> extends BaseUI {
     this.validationMessage.textContent = '';
     content.appendChild(this.validationMessage);
 
+    const buttons = $elem('div', {class: 'd-flex justify-content-end'});
+    content.appendChild(buttons);
+
     // buttons & validation message
     return new Promise<T | undefined>((resolve) => {
-      content.appendChild(
-        this.ui.button.create('Next', {primary: true}, async () => {
-          // handle validation error
-          const error = await this.getValidationError();
-          if (this.setValidationError(error)) {
-            // there was an error, don't resolve
-            return;
-          }
+      const config = this.getButtonsConfig();
+      if (config.saveText) {
+        buttons.appendChild(
+          this.ui.button.create(config.saveText, {primary: true}, async () => {
+            // handle validation error
+            const error = await this.getValidationError();
+            if (this.setValidationError(error)) {
+              // there was an error, don't resolve
+              return;
+            }
 
-          // close the popin and resolve with the form value
-          this.ui.popIn.close();
-          resolve(this.model);
-        })
-      );
-      content.appendChild(
-        this.ui.button.create('Cancel', {}, () => {
+            // close the popin and resolve with the form value
+            this.ui.popIn.close();
+            resolve(this.model);
+          })
+        );
+      }
+      buttons.appendChild(
+        this.ui.button.create(config.closeText, {}, () => {
           this.ui.popIn.close();
           resolve(undefined);
         })

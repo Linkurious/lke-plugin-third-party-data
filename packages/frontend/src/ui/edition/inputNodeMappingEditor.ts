@@ -1,20 +1,20 @@
-import {VendorModel} from '../../../shared/vendor/vendor.ts';
-import {ServiceFacade} from '../serviceFacade.ts';
-import {FieldMapping, FieldMappingType} from '../../../shared/integration/IntegrationModel.ts';
-import {addSelect, asError} from '../utils.ts';
-import {GraphItemSchema} from '../api/schema.ts';
-import {IntegrationModelChecker} from '../integration/integrationModelChecker.ts';
-import {VendorField} from '../../../shared/vendor/vendorModel.ts';
+import {Vendor} from '../../../../shared/vendor/vendor';
+import {ServiceFacade} from '../../serviceFacade';
+import {FieldMapping, FieldMappingType} from '../../../../shared/integration/IntegrationModel';
+import {addSelect, asError} from '../../utils';
+import {GraphItemSchema} from '../../api/schema';
+import {IntegrationModelChecker} from '../../integration/integrationModelChecker';
+import {VendorField} from '../../../../shared/vendor/vendorModel';
 
-import {AbstractMappingEditor} from './abstractMappingEditor.ts';
+import {AbstractMappingEditor} from './abstractMappingEditor';
 
 interface SearchMappingParams {
-  vendor: VendorModel;
+  vendor: Vendor;
   sourceKey: string;
   sourceNodeType: string;
 }
 
-export class SearchMappingEditor extends AbstractMappingEditor {
+export class InputNodeMappingEditor extends AbstractMappingEditor {
   private readonly params: SearchMappingParams;
   private sourceNodeSchema?: GraphItemSchema;
 
@@ -161,7 +161,7 @@ export class SearchMappingEditor extends AbstractMappingEditor {
     const mappings = this.getModel();
     const sourceNodeSchema = await this.getSourceNodeSchema();
     try {
-      IntegrationModelChecker.checkSourceNodeToSearchQueryMapping(
+      IntegrationModelChecker.checkSourceNodeMappings(
         mappings,
         sourceNodeSchema,
         this.params.vendor
@@ -189,6 +189,6 @@ export class SearchMappingEditor extends AbstractMappingEditor {
     model: Partial<FieldMapping>,
     nodeTypeSchema: GraphItemSchema
   ): asserts model is FieldMapping {
-    IntegrationModelChecker.isSearchMapping(model, this.params.vendor, nodeTypeSchema);
+    IntegrationModelChecker.checkSourceNodeMapping(model, this.params.vendor, nodeTypeSchema);
   }
 }

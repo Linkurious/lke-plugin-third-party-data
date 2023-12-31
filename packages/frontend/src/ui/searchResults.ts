@@ -1,10 +1,11 @@
-import {ServiceFacade} from '../serviceFacade.ts';
-import {$elem} from '../utils.ts';
-import {IntegrationModelPublic} from '../../../shared/integration/IntegrationModel.ts';
-import {VendorSearchResponse, VendorSearchResult} from '../../../shared/api/response.ts';
+import {ServiceFacade} from '../serviceFacade';
+import {$elem} from '../utils';
+import {IntegrationModelPublic} from '../../../shared/integration/IntegrationModel';
+import {VendorSearchResponse, VendorSearchResult} from '../../../shared/api/response';
+import {Vendor} from '../../../shared/vendor/vendor';
 
-import {BaseUI} from './baseUI.ts';
-import {UiFacade} from './uiFacade.ts';
+import {BaseUI} from './baseUI';
+import {UiFacade} from './uiFacade';
 
 export class SearchResults extends BaseUI {
   constructor(ui: UiFacade) {
@@ -12,12 +13,13 @@ export class SearchResults extends BaseUI {
   }
 
   async getContent(response: VendorSearchResponse, services: ServiceFacade): Promise<HTMLElement> {
-    const vendor = services.vendor.getVendorByKey(response.vendorKey);
+    const vendor = Vendor.getVendorByKey(response.vendorKey);
     const integration = await services.config.getIntegrationPublic(response.integrationId);
-    const description = `Results from ${vendor.name}`;
+    const description = $elem('p', {class: 'mb-3'});
+    description.innerHTML = `Results from API: <mark>${vendor.name}</mark>`;
     return $elem('div', {}, [
       $elem('h2', {}, `Search results`),
-      $elem('p', {class: 'mb-3'}, description),
+      description,
       // results
       ...response.results.map((result, index) => {
         return $elem('div', {class: 'row mb-3'}, [
@@ -34,7 +36,9 @@ export class SearchResults extends BaseUI {
               async () => {
                 const content = $elem('div', {class: 'my-1'}, [
                   this.getSearchResultProperties(integration, result, false),
-                  this.ui.button.create('Close', {primary: false}, () => this.ui.popIn.close())
+                  $elem('div', {class: 'd-flex justify-content-end'}, [
+                    this.ui.button.create('Close', {primary: false}, () => this.ui.popIn.close())
+                  ])
                 ]);
                 await this.ui.popIn.showElement('Search result details', content);
               }

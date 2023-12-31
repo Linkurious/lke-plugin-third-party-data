@@ -41,6 +41,14 @@ export class Configuration {
     this.configData = config;
   }
 
+  /**
+   * Get the plugin basePath from the public configuration
+   */
+  async getBasePath(): Promise<string> {
+    const config = await this.getConfigPublic();
+    return config.basePath;
+  }
+
   async saveNewIntegration(model: IntegrationModel): Promise<void> {
     console.log('SAVE_NEW_INTEGRATION: ' + JSON.stringify(model));
     const config = await this.getConfig();

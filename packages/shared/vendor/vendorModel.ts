@@ -1,16 +1,23 @@
-import {VENDOR_MAP} from './vendorMap';
+export type VendorModel = VendorModelSearch | VendorModelSearchAndDetails;
 
-export type IntegrationVendorKey = keyof typeof VENDOR_MAP;
-
-export interface InternalVendorModel {
+export interface BaseVendorModel<T extends VendorStrategy> {
+  readonly key: string;
   readonly name: string;
   readonly description: string;
+  readonly strategy: T;
   readonly searchQueryFields: VendorField[];
   readonly searchResponseFields: VendorField[];
-  readonly detailsResponseFields: VendorField[];
   readonly adminFields: VendorAdminField[];
+  readonly detailsResponseFields?: undefined | VendorField[];
+}
+export interface VendorModelSearch extends BaseVendorModel<'search'> {
+  readonly detailsResponseFields?: undefined;
+}
+export interface VendorModelSearchAndDetails extends BaseVendorModel<'searchAndDetails'> {
+  readonly detailsResponseFields: VendorField[];
 }
 
+export type VendorStrategy = 'search' | 'searchAndDetails';
 export type VendorFieldTypeName = 'string' | 'number' | 'boolean';
 export type VendorFieldType = string | number | boolean;
 

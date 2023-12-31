@@ -1,9 +1,9 @@
 import {EntityType} from '@linkurious/rest-client';
 
-import {ServiceFacade} from '../serviceFacade.ts';
-import {ItemAccess} from '../api/schema.ts';
+import {ServiceFacade} from '../../serviceFacade';
+import {ItemAccess} from '../../api/schema';
 
-import {AbstractSelector} from './abstractSelector.ts';
+import {AbstractSelector} from './abstractSelector';
 
 export class NodeTypeSelector extends AbstractSelector<string> {
   private readonly services: ServiceFacade;

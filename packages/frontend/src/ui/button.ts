@@ -1,7 +1,7 @@
-import {asError} from '../utils.ts';
+import {asError} from '../utils';
 
-import {BaseUI} from './baseUI.ts';
-import {UiFacade} from './uiFacade.ts';
+import {BaseUI} from './baseUI';
+import {UiFacade} from './uiFacade';
 
 export class Button extends BaseUI {
   constructor(ui: UiFacade) {

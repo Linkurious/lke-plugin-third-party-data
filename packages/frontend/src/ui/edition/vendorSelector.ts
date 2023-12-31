@@ -1,25 +1,22 @@
-import {ServiceFacade} from '../serviceFacade.ts';
-import {VendorModel} from '../../../shared/vendor/vendor.ts';
-import {$elem, addSelect} from '../utils.ts';
-import {VendorAdminField} from '../../../shared/vendor/vendorModel.ts';
+import {Vendor} from '../../../../shared/vendor/vendor';
+import {$elem, addSelect} from '../../utils';
+import {VendorAdminField} from '../../../../shared/vendor/vendorModel';
+import {UiFacade} from '../uiFacade';
 
-import {AbstractSelector} from './abstractSelector.ts';
+import {AbstractSelector} from './abstractSelector';
 
 export type VendorEditorModel = {
-  vendor: VendorModel;
+  vendor: Vendor;
   adminSettings: Record<string, string | undefined>;
 };
 
 export class VendorSelector extends AbstractSelector<VendorEditorModel> {
-  private readonly services: ServiceFacade;
-
-  constructor(services: ServiceFacade) {
+  constructor(ui: UiFacade) {
     super(
-      services.ui,
-      'Select third-party data vendor',
-      'Select a third-party data vendor for this new integration'
+      ui,
+      'Select third-party vendor API',
+      'Select a third-party data vendor API for this new integration, and configure it.'
     );
-    this.services = services;
   }
 
   /**
@@ -28,7 +25,7 @@ export class VendorSelector extends AbstractSelector<VendorEditorModel> {
    */
   protected async getChoices(): Promise<VendorEditorModel[]> {
     const current = this.getModel();
-    return this.services.vendor.getVendors().map((v) => ({
+    return Vendor.getVendors().map((v) => ({
       vendor: v,
       adminSettings: current?.vendor.key === v.key ? current.adminSettings : {}
     }));
@@ -57,11 +54,7 @@ export class VendorSelector extends AbstractSelector<VendorEditorModel> {
         : model.vendor.adminFields.map((f, i) => {
             const id = 'admin-field-' + i;
             const left = $elem('div', {class: 'col-5'}, [
-              $elem(
-                'label',
-                {for: id, class: 'form-label'},
-                `${f.name}${f.required ? ' *' : ''}`
-              )
+              $elem('label', {for: id, class: 'form-label'}, `${f.name}${f.required ? ' *' : ''}`)
             ]);
             const right = $elem('div', {class: 'col-7'});
             this.addField(right, f, id, model);
@@ -71,7 +64,12 @@ export class VendorSelector extends AbstractSelector<VendorEditorModel> {
     return $elem('div', {}, [description, settings]);
   }
 
-  private addField(parent: HTMLElement, field: VendorAdminField, id: string, model: VendorEditorModel): void {
+  private addField(
+    parent: HTMLElement,
+    field: VendorAdminField,
+    id: string,
+    model: VendorEditorModel
+  ): void {
     if (field.enum) {
       const NONE = 'no-value';
       const values = field.enum.map((v) => ({key: v, value: v}));

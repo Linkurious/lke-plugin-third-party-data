@@ -1,7 +1,7 @@
 import * as vite from 'vite';
 
-import {DevServer} from './src/dev/devServer.ts';
-import {API_MOCKS} from './src/dev/apiMocks.ts';
+import {DevServer} from './src/dev/devServer';
+import {API_MOCKS} from './src/dev/apiMocks';
 
 /**
  * Specific settings

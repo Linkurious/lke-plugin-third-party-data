@@ -1,7 +1,8 @@
-import {ServiceFacade} from '../serviceFacade.ts';
-import {$elem} from '../utils.ts';
+import {ServiceFacade} from '../serviceFacade';
+import {$elem} from '../utils';
+import {Vendor} from '../../../shared/vendor/vendor';
 
-import {BaseUI} from './baseUI.ts';
+import {BaseUI} from './baseUI';
 
 export class IntegrationList extends BaseUI {
   private readonly services: ServiceFacade;
@@ -26,7 +27,7 @@ export class IntegrationList extends BaseUI {
       $elem('th', {scope: 'col'}, 'Data-Source'),
       $elem('th', {scope: 'col'}, 'Input node'),
       $elem('th', {scope: 'col'}, 'Output node'),
-      $elem('th', {scope: 'col'}, 'Actions')
+      $elem('th', {scope: 'col', class: 'text-end pe-3'}, 'Actions')
     );
     head.appendChild(headRow);
 
@@ -36,7 +37,7 @@ export class IntegrationList extends BaseUI {
     for (const int of integrations) {
       const row = document.createElement('tr');
       row.append(
-        $elem('td', {}, this.services.vendor.getVendorByKey(int.vendorKey).name),
+        $elem('td', {}, Vendor.getVendorByKey(int.vendorKey).name),
         $elem(
           'td',
           {},
@@ -44,13 +45,16 @@ export class IntegrationList extends BaseUI {
         ),
         $elem('td', {}, int.inputNodeCategory),
         $elem('td', {}, int.outputNodeCategory),
-        $elem('td', {}, [
+        $elem('td', {class: 'd-flex justify-content-end'}, [
           this.ui.button.create('Edit', {primary: true, small: true}, () =>
             this.services.editIntegration(int.id)
           ),
+          this.ui.button.create('Install', {small: true, primary: true, outline: true}, () => {
+            return this.services.createCustomAction(int, 'integration-list');
+          }),
           this.ui.button.create('Delete', {small: true}, () => {
             row.remove();
-            void this.services.config.deleteIntegration(int.id);
+            return this.services.config.deleteIntegration(int.id);
           })
         ])
       );

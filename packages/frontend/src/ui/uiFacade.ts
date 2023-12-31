@@ -1,16 +1,17 @@
 import {User} from '@linkurious/rest-client';
 
-import {$hide, $id, asError} from '../utils.ts';
-import {ServiceFacade} from '../serviceFacade.ts';
-import {IntegrationModel} from '../../../shared/integration/IntegrationModel.ts';
+import {$hide, $id, asError} from '../utils';
+import {ServiceFacade} from '../serviceFacade';
+import {IntegrationModel} from '../../../shared/integration/IntegrationModel';
 import {VendorSearchResponse} from '../../../shared/api/response';
 
-import {PopIn} from './popIn.ts';
-import {LongTask} from './longTask.ts';
-import {IntegrationList} from './integrationList.ts';
-import {IntegrationEditor} from './integrationEditor.ts';
-import {Button} from './button.ts';
-import {SearchResults} from './searchResults.ts';
+import {PopIn} from './popIn';
+import {LongTask} from './longTask';
+import {IntegrationList} from './integrationList';
+import {IntegrationEditor} from './integrationEditor';
+import {Button} from './button';
+import {SearchResults} from './searchResults';
+import {CustomActionManager} from './edition/customActionManager.ts';
 
 export class UiFacade {
   private readonly services: ServiceFacade;
@@ -78,5 +79,10 @@ export class UiFacade {
     console.log('SHOW_INTEGRATIONS_LIST');
     const integrationList = new IntegrationList(this.services);
     await integrationList.show();
+  }
+
+  async showCustomActionManager(integration: IntegrationModel): Promise<void> {
+    const cam = new CustomActionManager(this.services);
+    await cam.show(integration);
   }
 }

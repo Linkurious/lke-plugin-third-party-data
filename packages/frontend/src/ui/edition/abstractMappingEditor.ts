@@ -1,9 +1,9 @@
-import {ConstantFieldTypeName, FieldMapping} from '../../../shared/integration/IntegrationModel.ts';
-import {ServiceFacade} from '../serviceFacade.ts';
-import {GraphItemSchema} from '../api/schema.ts';
-import {asError} from '../utils.ts';
+import {ConstantFieldTypeName, FieldMapping} from '../../../../shared/integration/IntegrationModel';
+import {ServiceFacade} from '../../serviceFacade';
+import {GraphItemSchema} from '../../api/schema';
+import {asError} from '../../utils';
 
-import {AbstractFormPopin} from './abstractFormPopin.ts';
+import {AbstractFormPopin} from './abstractFormPopin';
 
 export abstract class AbstractMappingEditor extends AbstractFormPopin<FieldMapping[]> {
   protected newModel: Partial<FieldMapping>;
