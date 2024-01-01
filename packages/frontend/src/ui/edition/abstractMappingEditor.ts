@@ -1,7 +1,7 @@
 import {ConstantFieldTypeName, FieldMapping} from '../../../../shared/integration/IntegrationModel';
 import {ServiceFacade} from '../../serviceFacade';
 import {GraphItemSchema} from '../../api/schema';
-import {asError} from '../../utils';
+import {asError} from '../../../../shared/utils';
 
 import {AbstractFormPopin} from './abstractFormPopin';
 
@@ -106,7 +106,7 @@ export abstract class AbstractMappingEditor extends AbstractFormPopin<FieldMappi
     const [col1Text, col2Text, col3Text] = this.renderMappingEntry(mapping, nodeTypeSchema);
 
     const mappingDiv = document.createElement('div');
-    mappingDiv.classList.add('mb-3', 'row', 'font-monospace', 'text-nowrap');
+    mappingDiv.classList.add('mb-3', 'row', 'font-monospace', 'text-break');
 
     // column 1 (4)
     const col1 = document.createElement('div');

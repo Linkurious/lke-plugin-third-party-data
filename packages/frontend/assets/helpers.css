@@ -70,6 +70,10 @@
   padding: 10px;
   border-radius: 10px;
   color: black;
+  /* popin scroll hack for now */
+  max-height: 70%;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .popin .popinContent .close {

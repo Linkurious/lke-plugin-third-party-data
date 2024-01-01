@@ -3,14 +3,14 @@ import {LkEdge, LkNode} from '@linkurious/rest-client/dist/src/api/graphItemType
 
 import {VendorSearchResult} from '../../shared/api/response';
 import {IntegrationModel, IntegrationModelPublic} from '../../shared/integration/IntegrationModel';
+import {VendorIntegration} from '../../shared/integration/vendorIntegration';
+import {asError, clone, randomString} from '../../shared/utils';
 
 import {API} from './api/api';
 import {UiFacade} from './ui/uiFacade';
 import {Schema} from './api/schema';
 import {SearchSuccessState, UrlParams} from './urlParams';
-import {asError, clone, randomString} from './utils';
 import {Configuration} from './configuration';
-import {VendorIntegration} from './integration/vendorIntegration';
 
 export class ServiceFacade {
   private readonly urlParams;
@@ -23,7 +23,7 @@ export class ServiceFacade {
     this.api = new API();
     this.ui = new UiFacade(this);
     this.urlParams = new UrlParams();
-    this.schema = new Schema(this.api);
+    this.schema = new Schema(this.api.server);
     this.config = new Configuration(this.api);
   }
 
@@ -110,7 +110,7 @@ export class ServiceFacade {
     inputNodeId: string
   ): Promise<void> {
     console.log('IMPORT_RESULT: ' + JSON.stringify(searchResult));
-    const int = new VendorIntegration(this, integration);
+    const int = new VendorIntegration(integration);
 
     // create + save the target node from the search result
     const newNodeR = await this.api.server.graphNode.createNode(int.getOutputNode(searchResult));

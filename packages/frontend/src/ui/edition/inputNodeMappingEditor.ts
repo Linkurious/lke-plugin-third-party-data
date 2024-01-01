@@ -1,10 +1,11 @@
 import {Vendor} from '../../../../shared/vendor/vendor';
 import {ServiceFacade} from '../../serviceFacade';
 import {FieldMapping, FieldMappingType} from '../../../../shared/integration/IntegrationModel';
-import {addSelect, asError} from '../../utils';
+import {addSelect} from '../uiUtils';
 import {GraphItemSchema} from '../../api/schema';
 import {IntegrationModelChecker} from '../../integration/integrationModelChecker';
 import {VendorField} from '../../../../shared/vendor/vendorModel';
+import {asError} from '../../../../shared/utils';
 
 import {AbstractMappingEditor} from './abstractMappingEditor';
 

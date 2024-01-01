@@ -1,9 +1,9 @@
-import {ServiceFacade} from '../../serviceFacade.ts';
-import {IntegrationModel} from '../../../../shared/integration/IntegrationModel.ts';
-import {$elem} from '../../utils.ts';
-import {Vendor} from '../../../../shared/vendor/vendor.ts';
+import {ServiceFacade} from '../../serviceFacade';
+import {IntegrationModel} from '../../../../shared/integration/IntegrationModel';
+import {$elem} from '../uiUtils';
+import {VendorIntegration} from '../../../../shared/integration/vendorIntegration';
 
-import {AbstractFormPopin, ButtonsConfig} from './abstractFormPopin.ts';
+import {AbstractFormPopin, ButtonsConfig} from './abstractFormPopin';
 
 export class CustomActionManager extends AbstractFormPopin<IntegrationModel> {
   private readonly services: ServiceFacade;
@@ -75,10 +75,10 @@ export class CustomActionManager extends AbstractFormPopin<IntegrationModel> {
       $elem('div', {class: 'row row-cols-auto'}, [
         $elem('div', {class: 'col'}, [
           this.ui.button.create('Add custom action', {primary: true}, async () => {
-            const vendor = Vendor.getVendorByKey(integration.vendorKey);
+            const int = new VendorIntegration(integration);
             const basePath = await this.services.config.getBasePath();
             await this.services.api.server.customAction.createCustomAction(
-              vendor.getCustomAction(integration, basePath)
+              int.getCustomAction(basePath)
             );
             await this.redrawContent();
           })

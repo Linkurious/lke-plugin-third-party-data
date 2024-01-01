@@ -3,62 +3,52 @@ import express = require('express');
 
 import {MyPluginConfig} from '../../shared/myPluginConfig';
 
-import {ServiceFacade} from './serviceFacade';
+import {ServiceFacade} from './services/serviceFacade';
+import {SearchOptions} from './models/searchOptions';
 
 export const configureRoutes = (options: PluginRouteOptions<MyPluginConfig>): void => {
   const services = new ServiceFacade(options);
   options.router.use(express.json());
 
-  // This is a middleware that will be called for every request
-  options.router.use(
-    respond(async (req, _res, next) => {
-      const isAdmin = await services.currentUserIsAdmin(req);
-      if (!isAdmin) {
-        throw new Error('Unauthorized');
-      }
-      next();
-    })
-  );
-
-  /**
-   * Validate the user access rights
-   */
   options.router.get(
-    '/authorize',
-    // It does anything because the whole logins in a middleware
-    respond((_req, res) => {
-      res.sendStatus(204);
+    '/admin-config',
+    respond(async () => {
+      return services.getConfigAdmin();
     })
   );
 
   options.router.get(
-    '/get-config',
-    respond(async (req, res) => {
-      // send response
-      const user = await options.getRestClient(req).auth.getCurrentUser();
-      if (user.isSuccess()) {
-        console.log(user.body.email);
-      }
+    '/config',
+    respond(async () => {
+      return services.getConfigUser();
+    })
+  );
 
-      res.json(options.configuration);
+  options.router.get(
+    '/search',
+    respond(async (req) => {
+      const searchOptions = SearchOptions.from(req.query);
+      return services.search(options.getRestClient(req), searchOptions);
     })
   );
 };
 
 function respond(
-  promiseFunction: (
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ) => Promise<void> | void
+  handler: (req: express.Request) => Promise<unknown>,
+  successStatus = 200
 ): express.RequestHandler {
-  return (req, res, next) => {
-    Promise.resolve(promiseFunction(req, res, next)).catch((e) => {
-      if (e instanceof Error) {
-        res.status(500).json({error: e.name, message: e.message});
-      } else {
-        res.status(500).json(JSON.stringify(e));
-      }
-    });
+  return (req, res) => {
+    Promise.resolve(handler(req))
+      .then((response) => {
+        res.status(successStatus);
+        res.json(response);
+      })
+      .catch((e) => {
+        if (e instanceof Error) {
+          res.status(500).json({error: e.name, message: e.message});
+        } else {
+          res.status(500).json({error: 'unexpected', message: JSON.stringify(e)});
+        }
+      });
   };
 }

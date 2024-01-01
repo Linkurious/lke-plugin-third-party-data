@@ -1,7 +1,7 @@
 import {ServiceFacade} from '../serviceFacade';
-import {$elem} from '../utils';
 import {Vendor} from '../../../shared/vendor/vendor';
 
+import {$elem} from './uiUtils';
 import {BaseUI} from './baseUI';
 
 export class IntegrationList extends BaseUI {
@@ -23,6 +23,7 @@ export class IntegrationList extends BaseUI {
 
     const headRow = document.createElement('tr');
     headRow.append(
+      $elem('th', {scope: 'col'}, 'id'),
       $elem('th', {scope: 'col'}, 'Vendor API'),
       $elem('th', {scope: 'col'}, 'Data-Source'),
       $elem('th', {scope: 'col'}, 'Input node'),
@@ -37,6 +38,7 @@ export class IntegrationList extends BaseUI {
     for (const int of integrations) {
       const row = document.createElement('tr');
       row.append(
+        $elem('td', {}, int.id),
         $elem('td', {}, Vendor.getVendorByKey(int.vendorKey).name),
         $elem(
           'td',

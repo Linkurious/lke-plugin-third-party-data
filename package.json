@@ -26,6 +26,7 @@
     "clean": "rm -rf ./dist *.tgz *.lke",
     "clean:modules": "rm -rf ./package-lock.json ./node_modules",
     "lint": "npm run lint -ws",
+    "lint:fix": "npm run lint:fix -ws",
     "lint:ci-deactivated": "eslint -f checkstyle -o reports/checkstyle.xml .",
     "build": "npm run build -ws",
     "postbuild": "npm pack && mv $(npm run --silent npm-package-name) $(npm run --silent artifact-name)",

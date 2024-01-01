@@ -2,11 +2,12 @@ import {PropertyTypeName} from '@linkurious/rest-client';
 
 import {ServiceFacade} from '../../serviceFacade';
 import {FieldMapping, FieldMappingType} from '../../../../shared/integration/IntegrationModel';
-import {$elem, addCombo, addSelect, asError} from '../../utils';
+import {$elem, addCombo, addSelect} from '../uiUtils';
 import {GraphItemSchema, GraphPropertySchema} from '../../api/schema';
 import {IntegrationModelChecker} from '../../integration/integrationModelChecker';
 import {VendorField, VendorFieldTypeName} from '../../../../shared/vendor/vendorModel';
 import {Vendor} from '../../../../shared/vendor/vendor';
+import {asError} from '../../../../shared/utils';
 
 import {AbstractMappingEditor} from './abstractMappingEditor';
 

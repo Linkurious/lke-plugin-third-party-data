@@ -1,4 +1,4 @@
-import {addSelect} from '../../utils';
+import {addSelect} from '../uiUtils';
 import {UiFacade} from '../uiFacade';
 
 import {AbstractFormPopin} from './abstractFormPopin';

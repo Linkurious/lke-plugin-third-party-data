@@ -1,4 +1,4 @@
-import {asError} from '../utils';
+import {asError} from '../../../shared/utils';
 
 import {BaseUI} from './baseUI';
 import {UiFacade} from './uiFacade';

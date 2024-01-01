@@ -1,5 +1,5 @@
 import {Vendor} from '../../../../shared/vendor/vendor';
-import {$elem, addSelect} from '../../utils';
+import {$elem, addSelect} from '../uiUtils';
 import {VendorAdminField} from '../../../../shared/vendor/vendorModel';
 import {UiFacade} from '../uiFacade';
 

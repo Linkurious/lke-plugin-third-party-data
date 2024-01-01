@@ -1,5 +1,4 @@
-import {$id} from '../utils';
-
+import {$id} from './uiUtils';
 import {UiFacade} from './uiFacade';
 import {BaseUI} from './baseUI';
 

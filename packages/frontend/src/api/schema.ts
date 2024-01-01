@@ -1,11 +1,9 @@
-import {EntityType, GraphSchemaTypeWithAccess} from '@linkurious/rest-client';
+import {EntityType, GraphSchemaTypeWithAccess, RestClient} from '@linkurious/rest-client';
 import {
   DataVisibility,
   PropertyTypeName
 } from '@linkurious/rest-client/dist/src/api/GraphSchema/types';
 import {ItemTypeAccessRightType} from '@linkurious/rest-client/dist/src/api/AccessRight/types';
-
-import {API} from './api';
 
 export type ItemAccess = 'read' | 'write';
 export interface GraphItemSchema {
@@ -20,7 +18,7 @@ export interface GraphPropertySchema {
 }
 
 export class Schema {
-  constructor(private readonly api: API) {}
+  constructor(private readonly api: RestClient) {}
 
   async getNodeTypeSchema(
     sourceKey: string,
@@ -44,7 +42,7 @@ export class Schema {
     itemType: string,
     access: ItemAccess = 'read'
   ): Promise<GraphItemSchema> {
-    const r = await this.api.server.graphSchema.getTypesWithAccess({
+    const r = await this.api.graphSchema.getTypesWithAccess({
       sourceKey: sourceKey,
       entityType: entityType
     });
@@ -89,7 +87,7 @@ export class Schema {
     entityType: EntityType,
     access: ItemAccess
   ): Promise<GraphSchemaTypeWithAccess[]> {
-    const r = await this.api.server.graphSchema.getTypesWithAccess({
+    const r = await this.api.graphSchema.getTypesWithAccess({
       entityType: entityType,
       sourceKey: sourceKey
     });

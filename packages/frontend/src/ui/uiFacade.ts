@@ -1,17 +1,18 @@
 import {User} from '@linkurious/rest-client';
 
-import {$hide, $id, asError} from '../utils';
 import {ServiceFacade} from '../serviceFacade';
 import {IntegrationModel} from '../../../shared/integration/IntegrationModel';
 import {VendorSearchResponse} from '../../../shared/api/response';
+import {asError} from '../../../shared/utils';
 
+import {$hide, $id} from './uiUtils';
 import {PopIn} from './popIn';
 import {LongTask} from './longTask';
 import {IntegrationList} from './integrationList';
 import {IntegrationEditor} from './integrationEditor';
 import {Button} from './button';
 import {SearchResults} from './searchResults';
-import {CustomActionManager} from './edition/customActionManager.ts';
+import {CustomActionManager} from './edition/customActionManager';
 
 export class UiFacade {
   private readonly services: ServiceFacade;

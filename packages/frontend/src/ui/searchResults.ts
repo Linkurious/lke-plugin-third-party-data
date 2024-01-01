@@ -1,9 +1,9 @@
 import {ServiceFacade} from '../serviceFacade';
-import {$elem} from '../utils';
 import {IntegrationModelPublic} from '../../../shared/integration/IntegrationModel';
 import {VendorSearchResponse, VendorSearchResult} from '../../../shared/api/response';
 import {Vendor} from '../../../shared/vendor/vendor';
 
+import {$elem} from './uiUtils';
 import {BaseUI} from './baseUI';
 import {UiFacade} from './uiFacade';
 
