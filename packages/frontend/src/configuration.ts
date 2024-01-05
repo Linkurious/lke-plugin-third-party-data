@@ -1,5 +1,6 @@
 import {MyPluginConfig, MyPluginConfigPublic} from '../../shared/myPluginConfig';
 import {IntegrationModel, IntegrationModelPublic} from '../../shared/integration/IntegrationModel';
+import {STRINGS} from '../../shared/strings';
 
 import {API} from './api/api';
 
@@ -61,7 +62,7 @@ export class Configuration {
     const config = await this.getConfig();
     const index = config.integrations.findIndex((int) => int.id === model.id);
     if (index < 0) {
-      throw new Error(`Integration ${model.id} does not exist yet`);
+      throw new Error(STRINGS.errors.updateIntegratioNotFound(model.id));
     }
     config.integrations[index] = model;
     await this.saveConfig(config);
@@ -76,7 +77,7 @@ export class Configuration {
     const config = await this.getConfig();
     const index = config.integrations.findIndex((i) => i.id === integrationId);
     if (index < 0) {
-      throw new Error(`Integration ${integrationId} was not found`);
+      throw new Error(STRINGS.errors.integrationNotFound(integrationId));
     }
     config.integrations.splice(index, 1);
     await this.saveConfig(config);
@@ -86,7 +87,7 @@ export class Configuration {
     const config = await this.getConfig();
     const int = config.integrations.find((i) => i.id === integrationId);
     if (!int) {
-      throw new Error(`Integration ${integrationId} was not found`);
+      throw new Error(STRINGS.errors.integrationNotFound(integrationId));
     }
     return int;
   }
@@ -95,7 +96,7 @@ export class Configuration {
     const config = await this.getConfigPublic();
     const int = config.integrations.find((i) => i.id === integrationId);
     if (!int) {
-      throw new Error(`Integration ${integrationId} was not found`);
+      throw new Error(STRINGS.errors.integrationNotFound(integrationId));
     }
     return int;
   }

@@ -1,25 +1,28 @@
 import * as superagent from 'superagent';
 
-import {VendorFieldType} from '../../../../shared/vendor/vendorModel';
-import {VendorIntegration} from '../../../../shared/integration/vendorIntegration';
+import {AbstractFields, VendorFieldType} from '../../../../shared/vendor/vendorModel';
 import {VendorSearchResult} from '../../../../shared/api/response';
+import {VendorIntegration} from '../../../../shared/integration/vendorIntegration';
+import {Vendor} from '../../../../shared/vendor/vendor';
 
 import {SearchDriver} from './searchDriver';
 
-export abstract class BaseSearchDriver implements SearchDriver {
+export abstract class BaseSearchDriver<SQ extends AbstractFields, SR extends AbstractFields>
+  implements SearchDriver<SQ, SR>
+{
   public readonly vendorKey: string;
   protected readonly client: typeof superagent;
 
-  protected constructor(vendorKey: string) {
-    this.vendorKey = vendorKey;
+  protected constructor(vendor: Vendor<SQ, SR>) {
+    this.vendorKey = vendor.key;
     this.client = superagent;
   }
 
   abstract search(
-    searchQuery: Record<string, VendorFieldType>,
+    searchQuery: SQ,
     integration: VendorIntegration,
     maxResults: number
-  ): Promise<VendorSearchResult[]>;
+  ): Promise<VendorSearchResult<SR>[]>;
 }
 
 export function flattenJson(json: Record<string, unknown>): Record<string, VendorFieldType> {
@@ -58,7 +61,7 @@ function flattenJsonField(
         .join('\n\n');
     }
   } else {
-    const prefix = key + '.';
+    const prefix = key + '_';
     for (const [subKey, subValue] of Object.entries(value)) {
       if (subValue !== null && typeof subValue === 'object') {
         flattenJsonField(result, prefix + subKey, subValue as Record<string, unknown>);

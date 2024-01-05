@@ -2,6 +2,7 @@ import {MyPluginConfig, MyPluginConfigPublic} from '../../../shared/myPluginConf
 import {clone} from '../../../shared/utils';
 import {IntegrationModelPublic} from '../../../shared/integration/IntegrationModel';
 import {VendorIntegration} from '../../../shared/integration/vendorIntegration';
+import {STRINGS} from '../../../shared/strings';
 
 import {Logger} from './logger';
 
@@ -46,7 +47,7 @@ export class Configuration {
   getIntegrationById(integrationId: string): VendorIntegration {
     const integration = this.config.integrations.find((i) => i.id === integrationId);
     if (!integration) {
-      throw new Error(`Integration not found: ${integrationId}`);
+      throw new Error(STRINGS.errors.getIntegrationById(integrationId));
     }
     return new VendorIntegration(integration);
   }

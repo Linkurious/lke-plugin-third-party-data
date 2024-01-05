@@ -1,11 +1,10 @@
-import {User} from '@linkurious/rest-client';
-import {CustomAction} from '@linkurious/rest-client/dist/src/api/CustomAction/types';
+import {User, CustomAction} from '@linkurious/rest-client';
 
-import {VendorSearchResponse} from '../../../shared/api/response';
 import {
   IntegrationModel,
   IntegrationModelPublic
-} from '../../../shared/integration/IntegrationModel';
+} from '../../../shared/integration/IntegrationModel.ts';
+import {VendorSearchResponse} from '../../../shared/api/response.ts';
 
 import {ApiMock} from './devServer';
 
@@ -26,16 +25,14 @@ const mockUser: User = {
   updatedAt: '2021-01-01T00:00:00.000Z',
   preferences: {pinOnDrag: false, locale: 'en', incrementalLayout: false}
 };
+
 const publicIntegrationModel: IntegrationModelPublic = {
   id: defaultIntegrationId,
-  vendorKey: 'dnb',
+  vendorKey: 'annuaire-entreprises-data-gouv-fr',
   sourceKey: validSourceKey,
   inputNodeCategory: 'Person',
   searchQueryFieldMapping: [
-    {outputPropertyKey: 'firstName', type: 'property', inputPropertyKey: 'full_name'},
-    {outputPropertyKey: 'lastName', type: 'property', inputPropertyKey: 'full_name'},
-    {outputPropertyKey: 'age', type: 'property', inputPropertyKey: 'age'},
-    {outputPropertyKey: 'suspicious', type: 'constant', valueType: 'boolean', value: true}
+    {outputPropertyKey: 'q', type: 'property', inputPropertyKey: 'full_name'}
   ],
   searchResponseFieldSelection: ['firstName', 'lastName'],
   outputEdgeType: outputEdgeType,
@@ -47,7 +44,7 @@ const publicIntegrationModel: IntegrationModelPublic = {
       type: 'constant',
       outputPropertyKey: 'via',
       valueType: 'string',
-      value: 'dnb'
+      value: 'annuaire-entreprises'
     }
   ]
 };
@@ -84,10 +81,10 @@ export const API_MOCKS: ApiMock[] = [
       body: {
         integrationId: publicIntegrationModel.id,
         inputNodeId: '123',
-        vendorKey: 'dnb',
+        vendorKey: 'annuaire-entreprises-data-gouv-fr',
         results: [
           {
-            id: 'vendor:dnb:abc',
+            id: 'duns:123',
             properties: {
               firstName: 'Patrick',
               lastName: 'Starfish',
@@ -97,7 +94,7 @@ export const API_MOCKS: ApiMock[] = [
             }
           },
           {
-            id: 'vendor:dnb:xyz',
+            id: 'duns:456',
             properties: {
               firstName: 'Bob',
               lastName: 'Sponge',
@@ -108,6 +105,14 @@ export const API_MOCKS: ApiMock[] = [
           }
         ]
       } as VendorSearchResponse
+    }
+  },
+  {
+    verb: 'POST',
+    match: '/api/admin/plugins/restart-all',
+    response: {
+      body: {},
+      status: 204
     }
   },
   {

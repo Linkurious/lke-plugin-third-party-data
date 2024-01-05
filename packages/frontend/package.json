@@ -6,7 +6,7 @@
     "start": "vite serve",
     "build": "vite build",
     "clean": "rm -rf ../../dist/frontend ./node_modules/.vite",
-    "lint": "eslint ./src ../shared --ext .ts",
+    "lint": "npx tsc && eslint ./src ../shared --ext .ts",
     "lint:fix": "eslint ./src ../shared --ext .ts --fix"
   },
   "dependencies": {

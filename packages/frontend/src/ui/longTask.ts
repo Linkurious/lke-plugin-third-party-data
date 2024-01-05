@@ -20,10 +20,10 @@ export class LongTask extends BaseUI {
     super(uiFacade);
     this.nestedWaitingTasks = 0;
   }
-  async run<T, V>(
-    init: T,
-    task: (updater: IWaitingMessage<T>) => Promise<V>,
-    options: RunLongTaskOptions = {}
+  async run<V, T>(
+    task: (updater: IWaitingMessage<T | undefined>) => Promise<V>,
+    options: RunLongTaskOptions = {},
+    init?: T
   ): Promise<V> {
     const updater = this.startWaiting(options.hideApp ?? false, init);
     try {

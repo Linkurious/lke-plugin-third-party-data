@@ -1,12 +1,14 @@
-import {addSelect} from '../uiUtils';
+import {addCombo} from '../uiUtils';
 import {UiFacade} from '../uiFacade';
 
 import {AbstractFormPopin} from './abstractFormPopin';
 
 export abstract class AbstractSelector<T> extends AbstractFormPopin<T> {
   private choices?: T[];
-  protected constructor(ui: UiFacade, title: string, description: string) {
+  private readonly autocomplete: boolean;
+  protected constructor(ui: UiFacade, title: string, description: string, autocomplete = false) {
     super(ui, title, description);
+    this.autocomplete = autocomplete;
   }
 
   private async getChoicesInternal(): Promise<T[]> {
@@ -35,8 +37,11 @@ export abstract class AbstractSelector<T> extends AbstractFormPopin<T> {
       value: this.getChoiceName(v)
     }));
     const model = this.getModel();
-    const options = {selectedKey: model ? this.getChoiceKey(model) : undefined};
-    addSelect(content, options, 'select-popin', choiceValues, (choiceKey) => {
+    const options = {
+      selectedKey: model ? this.getChoiceKey(model) : undefined,
+      autocomplete: this.autocomplete
+    };
+    addCombo(content, options, 'select-popin', choiceValues, (choiceKey) => {
       const model = this.getModel();
       const changed = model === undefined ? true : this.getChoiceKey(model) !== choiceKey;
       if (!changed) {
@@ -45,7 +50,12 @@ export abstract class AbstractSelector<T> extends AbstractFormPopin<T> {
 
       const selectedChoice = choices.find((choice) => this.getChoiceKey(choice) === choiceKey);
       if (!selectedChoice) {
-        console.warn('could not find selected choice for key ' + choiceKey);
+        if (this.autocomplete) {
+          // add a new choice (type-wise, this is wrong)
+          this.setModel(choiceKey as T);
+        } else {
+          console.warn('could not find selected choice for key ' + choiceKey);
+        }
       } else {
         this.setModel(selectedChoice);
         void this.redrawContent();

@@ -1,19 +1,33 @@
-import {VendorFieldType} from '../vendor/vendorModel';
+import {ItemTypeAccessRightType, PropertyTypeName} from '@linkurious/rest-client';
+
+import {AbstractFields} from '../vendor/vendorModel';
+
+export interface GraphItemSchema {
+  itemType: string;
+  access: ItemTypeAccessRightType;
+  properties: GraphPropertySchema[];
+}
+
+export interface GraphPropertySchema {
+  propertyKey: string;
+  required: boolean;
+  type: PropertyTypeName;
+}
 
 export interface ApiError {
   code: string;
   message: string;
 }
 
-export interface VendorSearchResult {
+export interface VendorSearchResult<R extends AbstractFields = AbstractFields> {
   id: string;
-  properties: Record<string, VendorFieldType>;
+  properties: R;
 }
 
-export interface VendorSearchResponse {
+export interface VendorSearchResponse<R extends AbstractFields = AbstractFields> {
   integrationId: string;
   inputNodeId: string;
   vendorKey: string;
-  results: VendorSearchResult[];
+  results: VendorSearchResult<R>[];
   error?: ApiError;
 }

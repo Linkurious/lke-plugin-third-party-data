@@ -1,7 +1,10 @@
 import {RestClient} from '@linkurious/rest-client';
+import {CustomAction} from '@linkurious/rest-client/dist/src/api/CustomAction/types';
 
-import {VendorSearchResponse} from '../../../shared/api/response';
+import {ApiError, VendorSearchResponse} from '../../../shared/api/response';
 import {MyPluginConfig, MyPluginConfigPublic} from '../../../shared/myPluginConfig';
+import {STRINGS} from '../../../shared/strings';
+import {IntegrationModel} from '../../../shared/integration/IntegrationModel.ts';
 
 export class API {
   private readonly restClient: RestClient;
@@ -16,14 +19,16 @@ export class API {
   async getDataSources(): Promise<{key: string; name: string}[]> {
     const r = await this.server.dataSource.getDataSources({withStyles: false, withCaptions: false});
     if (!r.isSuccess()) {
-      throw new Error(`Get connected sources: could not get list of sources (${r.body.message})`);
+      throw new Error(STRINGS.errors.getDataSources(r.body));
     }
     //.filter((s) => s.connected && s.state === DataSourceState.READY)
-    return r.body.map((s) => ({
-      // key is always defined on a connected source
-      key: s.key!,
-      name: s.name
-    }));
+    return r.body
+      .filter((s) => typeof s.key === 'string')
+      .map((s) => ({
+        // key is always defined on a connected source
+        key: s.key!,
+        name: s.name
+      }));
   }
 
   private async plugin(
@@ -42,8 +47,8 @@ export class API {
     console.log('GET ' + url);
     const r = await fetch(url);
     if (expectedStatus && r.status !== expectedStatus) {
-      const cause = `Unexpected HTTP status ${r.status}`;
-      const message = failureMessage ? `${failureMessage} (${cause})` : cause;
+      const cause = await this.getPluginResponseError(r);
+      const message = failureMessage ? `${failureMessage}:\n${cause}` : cause;
       throw new Error(message);
     }
     return (await r.json()) as Record<string, unknown>;
@@ -62,28 +67,37 @@ export class API {
         nodeId: params.nodeId
       },
       200,
-      `Failed searching for Node ${params.nodeId} in source ${params.sourceKey}`
+      STRINGS.errors.search.nodeNotFound(params)
     );
     return r as unknown as VendorSearchResponse;
   }
 
   async getPluginConfiguration(): Promise<MyPluginConfig> {
-    const r = await this.plugin(
-      `./api/admin-config`,
-      {},
-      200,
-      `Could not get the plugin's admin-configuration`
-    );
+    const r = await this.plugin(`./api/admin-config`, {}, 200, STRINGS.errors.getAdminConfig);
     return r as unknown as MyPluginConfig;
   }
 
   async getPluginConfigurationPublic(): Promise<MyPluginConfigPublic> {
-    const r = await this.plugin(
-      `./api/config`,
-      {},
-      200,
-      `Could not get the plugin's user-configuration`
-    );
+    const r = await this.plugin(`./api/config`, {}, 200, STRINGS.errors.getUserConfig);
     return r as unknown as MyPluginConfigPublic;
+  }
+
+  private async getPluginResponseError(r: Response): Promise<string> {
+    try {
+      const body = (await r.json()) as ApiError;
+      return body.message;
+    } catch (e) {
+      return `Unexpected HTTP status ${r.status}`;
+    }
+  }
+
+  async getCustomActions(integration: IntegrationModel): Promise<CustomAction[]> {
+    const actionsR = await this.server.customAction.getCustomActions({
+      sourceKey: integration.sourceKey
+    });
+    if (!actionsR.isSuccess()) {
+      throw new Error(STRINGS.errors.customActions.loadFailed(actionsR.body));
+    }
+    return actionsR.body.filter((a) => a.urlTemplate.includes(`integrationId=${integration.id}`));
   }
 }

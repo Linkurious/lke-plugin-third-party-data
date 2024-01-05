@@ -1,34 +1,33 @@
-import {PluginRouteOptions} from '@linkurious/rest-client';
-import express = require('express');
+import {PluginInterface} from '@linkurious/rest-client';
+import express from 'express';
 
 import {MyPluginConfig} from '../../shared/myPluginConfig';
 
 import {ServiceFacade} from './services/serviceFacade';
 import {SearchOptions} from './models/searchOptions';
 
-export const configureRoutes = (options: PluginRouteOptions<MyPluginConfig>): void => {
-  const services = new ServiceFacade(options);
-  options.router.use(express.json());
+export = function (pluginInterface: PluginInterface<MyPluginConfig>): void {
+  const services = new ServiceFacade(pluginInterface);
 
-  options.router.get(
+  pluginInterface.router.get(
     '/admin-config',
     respond(async () => {
       return services.getConfigAdmin();
     })
   );
 
-  options.router.get(
+  pluginInterface.router.get(
     '/config',
     respond(async () => {
       return services.getConfigUser();
     })
   );
 
-  options.router.get(
+  pluginInterface.router.get(
     '/search',
     respond(async (req) => {
       const searchOptions = SearchOptions.from(req.query);
-      return services.search(options.getRestClient(req), searchOptions);
+      return services.search(pluginInterface.getRestClient(req), searchOptions);
     })
   );
 };

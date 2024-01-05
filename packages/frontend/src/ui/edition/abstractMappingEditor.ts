@@ -1,7 +1,8 @@
 import {ConstantFieldTypeName, FieldMapping} from '../../../../shared/integration/IntegrationModel';
 import {ServiceFacade} from '../../serviceFacade';
-import {GraphItemSchema} from '../../api/schema';
 import {asError} from '../../../../shared/utils';
+import {GraphItemSchema} from '../../../../shared/api/response.ts';
+import {STRINGS} from '../../../../shared/strings';
 
 import {AbstractFormPopin} from './abstractFormPopin';
 
@@ -21,7 +22,7 @@ export abstract class AbstractMappingEditor extends AbstractFormPopin<FieldMappi
     // input
     const constantValueInput = document.createElement('input');
     constantValueInput.classList.add(constantType === 'boolean' ? 'form-check' : 'form-control');
-    constantValueInput.id = 'search-mapping-constant-value-input';
+    constantValueInput.id = 'abs-mapping-constant-value-input';
     constantValueInput.type =
       constantType === 'string' ? 'text' : constantType === 'number' ? 'number' : 'checkbox';
     constantValueInput.addEventListener('change', () => {
@@ -42,7 +43,7 @@ export abstract class AbstractMappingEditor extends AbstractFormPopin<FieldMappi
     const constantValueLabel = document.createElement('label');
     constantValueLabel.setAttribute('for', constantValueInput.id);
     constantValueLabel.classList.add('form-label');
-    constantValueLabel.textContent = `Fixed value`;
+    constantValueLabel.textContent = STRINGS.ui.mappingEditor.constant;
     // add label, then input
     parent.appendChild(constantValueLabel);
     parent.appendChild(constantValueInput);
@@ -75,7 +76,7 @@ export abstract class AbstractMappingEditor extends AbstractFormPopin<FieldMappi
     col4.classList.add('col-1');
     const label = document.createElement('label');
     label.classList.add('form-label', 'd-block');
-    label.textContent = 'Action';
+    label.textContent = STRINGS.ui.mappingEditor.actionColumnHead;
     col4.appendChild(label);
     col4.appendChild(
       this.ui.button.create('Add', {primary: true, small: true}, async () => {

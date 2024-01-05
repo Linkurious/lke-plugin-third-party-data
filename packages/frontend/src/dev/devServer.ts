@@ -62,12 +62,15 @@ export class DevServer {
         : {
             target: `http://localhost:${this.backendDevServerPort}`,
             changeOrigin: true,
-            secure: false,
+            secure: false
+            /*
+          toProxy: true,
+            forward: `http://localhost:${this.backendDevServerPort}`,
             configure: (proxy): void => {
               proxy.on('proxyReq', (_proxyReq, req) => {
                 console.log('Forwarding plugin API call: ' + req.url);
               });
-            }
+            }*/
           };
 
     return {

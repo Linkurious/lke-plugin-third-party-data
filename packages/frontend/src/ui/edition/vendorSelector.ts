@@ -2,6 +2,8 @@ import {Vendor} from '../../../../shared/vendor/vendor';
 import {$elem, addSelect} from '../uiUtils';
 import {VendorAdminField} from '../../../../shared/vendor/vendorModel';
 import {UiFacade} from '../uiFacade';
+import {Vendors} from '../../../../shared/vendor/vendors.ts';
+import {STRINGS} from '../../../../shared/strings';
 
 import {AbstractSelector} from './abstractSelector';
 
@@ -12,11 +14,7 @@ export type VendorEditorModel = {
 
 export class VendorSelector extends AbstractSelector<VendorEditorModel> {
   constructor(ui: UiFacade) {
-    super(
-      ui,
-      'Select third-party vendor API',
-      'Select a third-party data vendor API for this new integration, and configure it.'
-    );
+    super(ui, STRINGS.ui.vendorSelector.title, STRINGS.ui.vendorSelector.description);
   }
 
   /**
@@ -25,7 +23,7 @@ export class VendorSelector extends AbstractSelector<VendorEditorModel> {
    */
   protected async getChoices(): Promise<VendorEditorModel[]> {
     const current = this.getModel();
-    return Vendor.getVendors().map((v) => ({
+    return Vendors.getVendors().map((v) => ({
       vendor: v,
       adminSettings: current?.vendor.key === v.key ? current.adminSettings : {}
     }));
@@ -74,7 +72,7 @@ export class VendorSelector extends AbstractSelector<VendorEditorModel> {
       const NONE = 'no-value';
       const values = field.enum.map((v) => ({key: v, value: v}));
       if (!field.required) {
-        values.unshift({key: NONE, value: '(No value)'});
+        values.unshift({key: NONE, value: STRINGS.ui.global.noValue});
       }
       addSelect(
         parent,
@@ -104,16 +102,16 @@ export class VendorSelector extends AbstractSelector<VendorEditorModel> {
   protected override async getValidationError(): Promise<string | undefined> {
     const model = this.getModel();
     if (!model) {
-      return 'No vendor selected';
+      return STRINGS.errors.vendorSelector.noVendorSelected;
     }
     for (const field of model.vendor.adminFields) {
       const value = model.adminSettings[field.key];
       if (field.required && !value) {
-        return `Missing required field: ${field.name}`;
+        return STRINGS.errors.vendorSelector.missingRequiredField(field.name);
       }
       if (value && field.enum && model.adminSettings[field.key]) {
         if (!field.enum.includes(value)) {
-          return `Invalid value for field ${field.name}`;
+          return STRINGS.errors.vendorSelector.invalidValue(field.name);
         }
       }
     }

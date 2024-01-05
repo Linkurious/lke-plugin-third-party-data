@@ -1,19 +1,27 @@
-export type VendorModel = VendorModelSearch | VendorModelSearchAndDetails;
+export type VendorModel<SQ extends AbstractFields, SR extends AbstractFields> =
+  | VendorModelSearch<SQ, SR>
+  | VendorModelSearchAndDetails<SQ, SR>;
 
-export interface BaseVendorModel<T extends VendorStrategy> {
+export interface BaseVendorModel<
+  T extends VendorStrategy,
+  SQ extends AbstractFields,
+  SR extends AbstractFields
+> {
   readonly key: string;
   readonly name: string;
   readonly description: string;
   readonly strategy: T;
-  readonly searchQueryFields: VendorField[];
-  readonly searchResponseFields: VendorField[];
+  readonly searchQueryFields: FieldsDescription<SQ>;
+  readonly searchResponseFields: FieldsDescription<SR>;
   readonly adminFields: VendorAdminField[];
   readonly detailsResponseFields?: undefined | VendorField[];
 }
-export interface VendorModelSearch extends BaseVendorModel<'search'> {
+export interface VendorModelSearch<SQ extends AbstractFields, SR extends AbstractFields>
+  extends BaseVendorModel<'search', SQ, SR> {
   readonly detailsResponseFields?: undefined;
 }
-export interface VendorModelSearchAndDetails extends BaseVendorModel<'searchAndDetails'> {
+export interface VendorModelSearchAndDetails<SQ extends AbstractFields, SR extends AbstractFields>
+  extends BaseVendorModel<'searchAndDetails', SQ, SR> {
   readonly detailsResponseFields: VendorField[];
 }
 
@@ -37,4 +45,29 @@ export interface VendorAdminField {
   name: string;
   required?: boolean;
   enum?: string[];
+}
+
+export type AbstractFields = {[key: string]: VendorFieldType | undefined};
+
+type FieldsDescription<ObjectFormat extends AbstractFields> = {
+  [K in keyof ObjectFormat]: {
+    type: ObjectFormat[K] extends string | undefined
+      ? 'string'
+      : ObjectFormat[K] extends number | undefined
+        ? 'number'
+        : ObjectFormat[K] extends boolean | undefined
+          ? 'boolean'
+          : never;
+    required: ObjectFormat[K] extends NonNullable<unknown> ? true : false;
+  };
+};
+
+export function toVendorFields<T extends AbstractFields, K extends keyof FieldsDescription<T>>(
+  fs: FieldsDescription<T>
+): VendorField[] {
+  return Object.entries(fs).map(([key, field]) => ({
+    key: key,
+    type: (field as FieldsDescription<T>[K]).type as VendorFieldTypeName,
+    required: (field as FieldsDescription<T>[K]).required
+  }));
 }

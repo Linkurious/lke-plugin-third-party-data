@@ -2,10 +2,18 @@ import {RestClient} from '@linkurious/rest-client';
 
 import {SearchOptions} from '../../models/searchOptions';
 import {Configuration} from '../configuration';
-import {VendorIntegration} from '../../../../shared/integration/vendorIntegration';
 import {VendorSearchResult} from '../../../../shared/api/response';
+import {VendorIntegration} from '../../../../shared/integration/vendorIntegration';
+import {STRINGS} from '../../../../shared/strings';
 
 import {SearchDriver} from './searchDriver';
+import {AnnuaireEntreprisesDriver} from './driver/annuaireEntreprisesDriver';
+import {DnbPeopleLookupDriver} from './driver/dnbPeopleLookupDriver';
+
+const SEARCH_DRIVERS: SearchDriver[] = [
+  new AnnuaireEntreprisesDriver(),
+  new DnbPeopleLookupDriver()
+];
 
 export class Searcher {
   public readonly integration: VendorIntegration;
@@ -39,12 +47,8 @@ export class Searcher {
   private getSearchDriver(): SearchDriver {
     const driver = SEARCH_DRIVERS.find((d) => d.vendorKey === this.integration.vendor.key);
     if (!driver) {
-      throw new Error(
-        `No search driver for vendor "${this.integration.vendor.key}" (integration ${this.integration.id})`
-      );
+      throw new Error(STRINGS.errors.search.vendorNotFound(this.integration));
     }
     return driver;
   }
 }
-
-const SEARCH_DRIVERS: SearchDriver[] = [];

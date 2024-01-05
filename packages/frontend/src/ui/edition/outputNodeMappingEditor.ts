@@ -1,13 +1,14 @@
-import {PropertyTypeName} from '@linkurious/rest-client';
+import {ItemTypeAccessRightType, PropertyTypeName} from '@linkurious/rest-client';
 
 import {ServiceFacade} from '../../serviceFacade';
 import {FieldMapping, FieldMappingType} from '../../../../shared/integration/IntegrationModel';
 import {$elem, addCombo, addSelect} from '../uiUtils';
-import {GraphItemSchema, GraphPropertySchema} from '../../api/schema';
 import {IntegrationModelChecker} from '../../integration/integrationModelChecker';
 import {VendorField, VendorFieldTypeName} from '../../../../shared/vendor/vendorModel';
 import {Vendor} from '../../../../shared/vendor/vendor';
 import {asError} from '../../../../shared/utils';
+import {GraphItemSchema, GraphPropertySchema} from '../../../../shared/api/response.ts';
+import {STRINGS} from '../../../../shared/strings';
 
 import {AbstractMappingEditor} from './abstractMappingEditor';
 
@@ -19,25 +20,27 @@ interface OutputNodeMappingEditorParams {
 
 export class OutputNodeMappingEditor extends AbstractMappingEditor {
   private readonly params: OutputNodeMappingEditorParams;
-  private targetNodeSchema?: GraphItemSchema;
+  private outputNodeSchema?: GraphItemSchema;
 
   constructor(services: ServiceFacade, params: OutputNodeMappingEditorParams) {
     super(
       services,
-      'Search query mapping',
-      'Build the new node properties from the vendor details'
+      STRINGS.ui.outputMappingEditor.title,
+      STRINGS.ui.outputMappingEditor.description
     );
     this.params = params;
   }
 
-  private async getTargetNodeSchema(): Promise<GraphItemSchema> {
-    if (!this.targetNodeSchema) {
-      this.targetNodeSchema = await this.services.schema.getNodeTypeSchema(
+  private async getOutputNodeSchema(): Promise<GraphItemSchema> {
+    if (!this.outputNodeSchema) {
+      this.outputNodeSchema = await this.services.schema.getNodeTypeSchema(
         this.params.sourceKey,
-        this.params.outputNodeType
+        this.params.outputNodeType,
+        ItemTypeAccessRightType.WRITE,
+        true
       );
     }
-    return this.targetNodeSchema;
+    return this.outputNodeSchema;
   }
 
   private getTargetProperty(targetNodeSchema: GraphItemSchema): GraphPropertySchema | undefined {
@@ -72,7 +75,7 @@ export class OutputNodeMappingEditor extends AbstractMappingEditor {
       }));
     addSelect(
       parent,
-      {label: 'API field'},
+      {label: STRINGS.ui.outputMappingEditor.apiFieldLabel},
       'details-mapping-source-field-select',
       outputFields,
       (sourceFieldKey) => {
@@ -85,23 +88,31 @@ export class OutputNodeMappingEditor extends AbstractMappingEditor {
   }
 
   protected override getExtraFooter(): HTMLElement {
-    const textDefault = 'Use default mapping for all properties';
-    const textClear = 'Remove all existing mappings';
+    const textDefault = STRINGS.ui.outputMappingEditor.defaultMappingText;
+    const textClear = STRINGS.ui.outputMappingEditor.clearMappingText;
     const btnOptions = {primary: true, small: true, outline: true};
-    const buttonDefault = this.ui.button.create('Default mapping', btnOptions, async () => {
-      this.setModel(
-        this.params.vendor.outputFields.map((vf) => ({
-          type: 'property',
-          inputPropertyKey: vf.key,
-          outputPropertyKey: vf.key
-        }))
-      );
-      await this.redrawContent();
-    });
-    const buttonClear = this.ui.button.create('Clear mapping', btnOptions, async () => {
-      this.setModel([]);
-      await this.redrawContent();
-    });
+    const buttonDefault = this.ui.button.create(
+      STRINGS.ui.outputMappingEditor.defaultMappingButton,
+      btnOptions,
+      async () => {
+        this.setModel(
+          this.params.vendor.outputFields.map((vf) => ({
+            type: 'property',
+            inputPropertyKey: vf.key,
+            outputPropertyKey: vf.key
+          }))
+        );
+        await this.redrawContent();
+      }
+    );
+    const buttonClear = this.ui.button.create(
+      STRINGS.ui.outputMappingEditor.clearMappingButton,
+      btnOptions,
+      async () => {
+        this.setModel([]);
+        await this.redrawContent();
+      }
+    );
     return $elem('div', {class: 'mb-3'}, [
       $elem('div', {class: 'row mb-1'}, [
         $elem('div', {class: 'col-2'}, [buttonDefault]),
@@ -131,9 +142,9 @@ export class OutputNodeMappingEditor extends AbstractMappingEditor {
 
   protected override async getValidationError(): Promise<string | undefined> {
     const mappings = this.getModel();
-    const targetNodeSchema = await this.getTargetNodeSchema();
+    const targetNodeSchema = await this.getOutputNodeSchema();
     try {
-      IntegrationModelChecker.checkDetailsResponseToTargetNodeMapping(
+      IntegrationModelChecker.checkDetailsResponseToOutputNodeMapping(
         mappings,
         targetNodeSchema,
         this.params.vendor
@@ -185,11 +196,11 @@ export class OutputNodeMappingEditor extends AbstractMappingEditor {
   ): Promise<void> {
     addSelect<FieldMappingType>(
       col2,
-      {label: 'Input type'},
+      {label: STRINGS.ui.outputMappingEditor.inputTypeLabel},
       'details-mapping-input-type-select',
       [
-        {key: 'property', value: `Vendor response data`},
-        {key: 'constant', value: 'Fixed value'}
+        {key: 'property', value: STRINGS.ui.outputMappingEditor.fieldInputLabel},
+        {key: 'constant', value: STRINGS.ui.mappingEditor.constant}
       ],
       (fieldMappingType) => {
         console.log('NEW detailsMapping.type: ' + fieldMappingType);
@@ -211,13 +222,15 @@ export class OutputNodeMappingEditor extends AbstractMappingEditor {
     model: Partial<FieldMapping>,
     nodeTypeSchema: GraphItemSchema
   ): asserts model is FieldMapping {
-    IntegrationModelChecker.isDetailsMapping(model, this.params.vendor, nodeTypeSchema);
+    IntegrationModelChecker.isOutputMapping(model, this.params.vendor, nodeTypeSchema);
   }
 
   protected $getNodeTypeSchemaInternal(): Promise<GraphItemSchema> {
     return this.services.schema.getNodeTypeSchema(
       this.params.sourceKey,
-      this.params.outputNodeType
+      this.params.outputNodeType,
+      ItemTypeAccessRightType.WRITE,
+      true
     );
   }
 }

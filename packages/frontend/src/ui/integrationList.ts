@@ -1,5 +1,6 @@
 import {ServiceFacade} from '../serviceFacade';
-import {Vendor} from '../../../shared/vendor/vendor';
+import {Vendors} from '../../../shared/vendor/vendors.ts';
+import {STRINGS} from '../../../shared/strings';
 
 import {$elem} from './uiUtils';
 import {BaseUI} from './baseUI';
@@ -28,7 +29,7 @@ export class IntegrationList extends BaseUI {
       $elem('th', {scope: 'col'}, 'Data-Source'),
       $elem('th', {scope: 'col'}, 'Input node'),
       $elem('th', {scope: 'col'}, 'Output node'),
-      $elem('th', {scope: 'col', class: 'text-end pe-3'}, 'Actions')
+      $elem('th', {scope: 'col', class: 'text-end pe-3'}, STRINGS.ui.integrationList.actionsHeader)
     );
     head.appendChild(headRow);
 
@@ -39,7 +40,7 @@ export class IntegrationList extends BaseUI {
       const row = document.createElement('tr');
       row.append(
         $elem('td', {}, int.id),
-        $elem('td', {}, Vendor.getVendorByKey(int.vendorKey).name),
+        $elem('td', {}, Vendors.getVendorByKey(int.vendorKey).name),
         $elem(
           'td',
           {},
@@ -48,29 +49,39 @@ export class IntegrationList extends BaseUI {
         $elem('td', {}, int.inputNodeCategory),
         $elem('td', {}, int.outputNodeCategory),
         $elem('td', {class: 'd-flex justify-content-end'}, [
-          this.ui.button.create('Edit', {primary: true, small: true}, () =>
-            this.services.editIntegration(int.id)
+          this.ui.button.create(
+            STRINGS.ui.integrationList.editButton,
+            {primary: true, small: true},
+            () => this.services.editIntegration(int.id)
           ),
-          this.ui.button.create('Install', {small: true, primary: true, outline: true}, () => {
-            return this.services.createCustomAction(int, 'integration-list');
-          }),
-          this.ui.button.create('Delete', {small: true}, () => {
-            row.remove();
-            return this.services.config.deleteIntegration(int.id);
-          })
+          this.ui.button.create(
+            STRINGS.ui.integrationList.installButton,
+            {small: true, primary: true, outline: true},
+            () => {
+              return this.services.createCustomAction(int, 'integration-list');
+            }
+          ),
+          this.ui.button.create(
+            STRINGS.ui.integrationList.deleteButton,
+            {small: true},
+            async () => {
+              row.remove();
+              await this.services.deleteIntegration(int.id);
+            }
+          )
         ])
       );
       tableBody.appendChild(row);
     }
 
     const footer = $elem('div', {class: 'd-flex justify-content-end'}, [
-      this.ui.button.create('Add integration', {primary: true}, () =>
+      this.ui.button.create(STRINGS.ui.integrationList.addButton, {primary: true}, () =>
         this.services.addIntegration()
       ),
-      this.ui.button.create('Close', {}, () => this.ui.popIn.close())
+      this.ui.button.create(STRINGS.ui.global.closeButton, {}, () => this.ui.popIn.close())
     ]);
 
     const content = $elem('div', {}, [table, footer]);
-    await this.ui.popIn.showElement('Integrations list', content, true);
+    await this.ui.popIn.showElement(STRINGS.ui.integrationList.title, content, true);
   }
 }

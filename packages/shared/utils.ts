@@ -5,7 +5,7 @@ export function randomString(chars: string, length: number): string {
   let r = '';
   for (let i = 0; i < length; ++i) {
     // note: Math.random is always *strictly* less than 1
-    r += chars[Math.floor(Math.random() * (chars.length + 1))];
+    r += chars[Math.floor(Math.random() * chars.length)];
   }
   return r;
 }

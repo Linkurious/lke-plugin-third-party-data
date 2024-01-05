@@ -1,12 +1,15 @@
 import {VendorSearchResult} from '../../../../shared/api/response';
-import {VendorFieldType} from '../../../../shared/vendor/vendorModel';
+import {AbstractFields} from '../../../../shared/vendor/vendorModel';
 import {VendorIntegration} from '../../../../shared/integration/vendorIntegration';
 
-export interface SearchDriver {
+export interface SearchDriver<
+  SQ extends AbstractFields = AbstractFields,
+  SR extends AbstractFields = AbstractFields
+> {
   readonly vendorKey: string;
   search(
-    searchQuery: Record<string, VendorFieldType>,
+    searchQuery: SQ,
     integration: VendorIntegration,
     maxResults: number
-  ): Promise<VendorSearchResult[]>;
+  ): Promise<VendorSearchResult<SR>[]>;
 }

@@ -1,8 +1,8 @@
-import {AnnuaireEntreprisesDataGouvFr} from '../services/vendor/driver/annuaireEntreprisesDataGouvFr';
+import {AnnuaireEntreprisesDriver} from '../services/vendor/driver/annuaireEntreprisesDriver';
 import {Vendor} from '../../../shared/vendor/vendor';
 import {VendorIntegration} from '../../../shared/integration/vendorIntegration';
 
-const d = new AnnuaireEntreprisesDataGouvFr();
+const d = new AnnuaireEntreprisesDriver();
 void d
   .search(
     {q: 'test'},

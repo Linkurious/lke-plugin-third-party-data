@@ -45,14 +45,17 @@
   },
   "license": "Apache 2",
   "files": [
-    "dist/backend",
-    "dist/frontend",
+    "dist",
     "manifest.json",
     "LICENSE"
   ],
-  "devDependencies": {
+  "bundledDependencies": true,
+  "dependencies": {
     "@linkurious/rest-client": "4.0.19",
-
+    "express": "4.17.3",
+    "superagent": "8.1.2"
+  },
+  "devDependencies": {
     "@typescript-eslint/eslint-plugin": "6.16.0",
     "eslint": "8.56.0",
     "eslint-config-prettier": "9.1.0",

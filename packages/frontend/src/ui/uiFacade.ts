@@ -4,8 +4,9 @@ import {ServiceFacade} from '../serviceFacade';
 import {IntegrationModel} from '../../../shared/integration/IntegrationModel';
 import {VendorSearchResponse} from '../../../shared/api/response';
 import {asError} from '../../../shared/utils';
+import {STRINGS} from '../../../shared/strings';
 
-import {$hide, $id} from './uiUtils';
+import {$elem, $hide, $id} from './uiUtils';
 import {PopIn} from './popIn';
 import {LongTask} from './longTask';
 import {IntegrationList} from './integrationList';
@@ -40,11 +41,7 @@ export class UiFacade {
       $hide(document.querySelectorAll('.admin-btn'));
     }
 
-    if (window.opener) {
-      this.bindButton('btn-close', async () => window.close());
-    } else {
-      $hide(document.querySelectorAll('#btn-close'));
-    }
+    console.log(`Window.opener available: ${window.opener !== null}`);
   }
 
   bindButton(id: string, handler: () => Promise<unknown>, longTask = false): void {
@@ -56,7 +53,7 @@ export class UiFacade {
     button.addEventListener('click', async () => {
       try {
         if (longTask) {
-          await this.longTask.run(null, handler);
+          await this.longTask.run(handler);
         } else {
           await handler();
         }
@@ -85,5 +82,14 @@ export class UiFacade {
   async showCustomActionManager(integration: IntegrationModel): Promise<void> {
     const cam = new CustomActionManager(this.services);
     await cam.show(integration);
+  }
+
+  async showEmptyState(): Promise<void> {
+    this.showContent(
+      $elem('div', {class: 'alert alert-primary', role: 'alert'}, [
+        $elem('span', {}, STRINGS.emptyStatePrefix),
+        $elem('a', {href: STRINGS.emptyStateLinkUrl}, STRINGS.emptyStateLinkText)
+      ])
+    );
   }
 }

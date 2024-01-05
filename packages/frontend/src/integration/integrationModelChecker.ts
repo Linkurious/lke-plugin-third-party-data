@@ -1,10 +1,10 @@
-import {ItemTypeAccessRightType} from '@linkurious/rest-client/dist/src/api/AccessRight/types';
-import {PropertyTypeName} from '@linkurious/rest-client/dist/src/api/GraphSchema/types';
+import {ItemTypeAccessRightType, PropertyTypeName} from '@linkurious/rest-client';
 
-import {GraphItemSchema, GraphPropertySchema} from '../api/schema';
 import {VendorFieldTypeName} from '../../../shared/vendor/vendorModel';
 import {Vendor} from '../../../shared/vendor/vendor';
 import {ConstantFieldTypeName, FieldMapping} from '../../../shared/integration/IntegrationModel';
+import {STRINGS} from '../../../shared/strings';
+import {GraphItemSchema, GraphPropertySchema} from '../../../shared/api/response.ts';
 
 export class IntegrationModelChecker {
   /*
@@ -58,14 +58,11 @@ export class IntegrationModelChecker {
     vendor: Vendor
   ): void {
     if (!mappings || mappings.length === 0) {
-      throw new Error('At least one search query mapping must be defined');
+      throw new Error(STRINGS.errors.checkSourceNodeMapping.noMappingsDefined);
     }
-    for (const vendorFields of vendor.searchQueryFields) {
-      if (
-        vendorFields.required &&
-        !mappings.find((m) => m.outputPropertyKey === vendorFields.key)
-      ) {
-        throw new Error(`Search query mapping: required field "${vendorFields.key}" is missing`);
+    for (const vendorField of vendor.searchQueryFields) {
+      if (vendorField.required && !mappings.find((m) => m.outputPropertyKey === vendorField.key)) {
+        throw new Error(STRINGS.errors.checkSourceNodeMapping.requiredFieldMissing(vendorField));
       }
     }
     for (const mapping of mappings) {
@@ -78,36 +75,37 @@ export class IntegrationModelChecker {
     vendor: Vendor,
     sourceNodeTypeSchema: GraphItemSchema
   ): asserts mapping is FieldMapping {
-    const prefix = 'Search query mapping';
     const vendorField = vendor.searchQueryFields.find((f) => f.key === mapping.outputPropertyKey);
     if (!vendorField) {
-      throw new Error(`${prefix}: vendor field "${mapping.outputPropertyKey}" is unknown`);
+      throw new Error(STRINGS.errors.checkSourceNodeMapping.unknownField(mapping));
     }
     if (mapping.type === 'constant') {
       // check that the value matches the expected type
       const valueType = typeof mapping.value;
       if (valueType !== vendorField.type) {
         throw new Error(
-          `${prefix}: constant value for "${mapping.outputPropertyKey}" is invalid (got ${valueType}, expected ${vendorField.type})`
+          STRINGS.errors.checkSourceNodeMapping.invalidConstantType(
+            mapping,
+            valueType,
+            vendorField.type
+          )
         );
       }
     } else if (mapping.type === 'property') {
       if (!mapping.inputPropertyKey) {
-        throw new Error(`${prefix}: source node property must be defined`);
+        throw new Error(STRINGS.errors.checkSourceNodeMapping.missingInputProperty);
       }
       this.checkGraphPropertyToVendorFieldMapping(
-        prefix,
         mapping.inputPropertyKey,
         sourceNodeTypeSchema,
         vendorField.type
       );
     } else {
-      throw new Error(`${prefix}: unknown mapping type "${mapping.type}"`);
+      throw new Error(STRINGS.errors.checkSourceNodeMapping.unknownMappingType(mapping.type));
     }
   }
 
   private static checkGraphPropertyToVendorFieldMapping(
-    errorPrefix: string,
     sourcePropertyKey: string,
     graphItemSchema: GraphItemSchema,
     vendorFieldType: VendorFieldTypeName
@@ -118,29 +116,17 @@ export class IntegrationModelChecker {
     );
     if (!schemaProperty) {
       throw new Error(
-        `${errorPrefix}: unknown property "${sourcePropertyKey}" for node category "${graphItemSchema.itemType}"`
+        STRINGS.errors.checkSourceNodeMapping.unknownProperty(
+          sourcePropertyKey,
+          graphItemSchema.itemType
+        )
       );
     }
-    /*
-    // check that the property is accessible
-    if (schemaProperty.access === PropertyAccessRightType.NONE) {
-      throw new Error(
-        `${errorPrefix}: property "${sourcePropertyKey}" for node category "${graphItemSchema.itemType}" is not accessible in the graph schema`
-      );
-    }
-    // check that the property is visible
-    if (schemaProperty.visibility === DataVisibility.NONE) {
-      throw new Error(
-        `${errorPrefix}: property "${sourcePropertyKey}" for node category "${graphItemSchema.itemType}" is set to "not visible" in the graph schema`
-      );
-    }
-     */
     // check that the property type matches
-    this.checkGraphPropertyToVendorFieldType(errorPrefix, schemaProperty, vendorFieldType);
+    this.checkGraphPropertyToVendorFieldType(schemaProperty, vendorFieldType);
   }
 
   private static checkGraphPropertyToVendorFieldType(
-    errorPrefix: string,
     nodePropertySchema: GraphPropertySchema,
     vendorFieldType: VendorFieldTypeName
   ): void {
@@ -151,7 +137,10 @@ export class IntegrationModelChecker {
       )
     ) {
       throw new Error(
-        `${errorPrefix}: graph property "${nodePropertySchema.propertyKey}" is of type "${nodePropertySchema.type}" in the graph schema, but should be of type "${vendorFieldType}" to match the vendor field`
+        STRINGS.errors.checkSourceNodeMapping.invalidPropertyType(
+          nodePropertySchema,
+          vendorFieldType
+        )
       );
     }
   }
@@ -179,51 +168,44 @@ export class IntegrationModelChecker {
    *   - check that if target CreatedNode property exists (or can be created)
    *   - if the target CreatedNode property exists, check that its type matches the source value (either constant or DetailsResponse field type)
    */
-  static checkDetailsResponseToTargetNodeMapping(
-    targetNodeFieldMapping: FieldMapping[] | undefined,
-    targetNodeSchema: GraphItemSchema,
+  static checkDetailsResponseToOutputNodeMapping(
+    outputNodeFieldMapping: FieldMapping[] | undefined,
+    outputNodeSchema: GraphItemSchema,
     vendor: Vendor
   ): void {
-    if (targetNodeSchema.access !== ItemTypeAccessRightType.WRITE) {
-      throw new Error(`Target node-category "${targetNodeSchema.itemType}" is not writable`);
+    if (outputNodeSchema.access !== ItemTypeAccessRightType.WRITE) {
+      throw new Error(STRINGS.errors.outputMapping.outputNodeNotWritable(outputNodeSchema));
     }
-    if (!targetNodeFieldMapping || targetNodeFieldMapping.length === 0) {
-      throw new Error('At least one node field mapping must be defined');
+    if (!outputNodeFieldMapping || outputNodeFieldMapping.length === 0) {
+      throw new Error(STRINGS.errors.outputMapping.emptyMapping);
     }
-    for (const mapping of targetNodeFieldMapping) {
-      this.isDetailsMapping(mapping, vendor, targetNodeSchema);
+    for (const mapping of outputNodeFieldMapping) {
+      this.isOutputMapping(mapping, vendor, outputNodeSchema);
     }
   }
 
   private static checkVendorFieldToGraphPropertyType(
-    errorPrefix: string,
     sourceFieldKey: string,
-    targetPropertySchema: GraphPropertySchema,
+    outputPropertySchema: GraphPropertySchema,
     vendor: Vendor
   ): void {
     // check that the property exists
     const vendorField = vendor.outputFields.find((p) => p.key === sourceFieldKey);
     if (!vendorField) {
-      throw new Error(`${errorPrefix}: unknown vendor property "${sourceFieldKey}"`);
+      throw new Error(STRINGS.errors.outputMapping.unknownInputField(sourceFieldKey));
     }
     // check that the property type matches
-    this.checkValueToGraphPropertyType(
-      errorPrefix,
-      'vendor field',
-      vendorField.type,
-      targetPropertySchema
-    );
+    this.checkValueToGraphPropertyType('vendor field', vendorField.type, outputPropertySchema);
   }
 
   private static checkValueToGraphPropertyType(
-    errorPrefix: string,
     sourceKind: 'vendor field' | 'constant value',
     sourceType: ConstantFieldTypeName | VendorFieldTypeName,
     targetPropertySchema: GraphPropertySchema
   ): void {
     if (!this.getLegalValueTypeForProperty(targetPropertySchema.type).includes(sourceType)) {
       throw new Error(
-        `${errorPrefix}: ${sourceKind} of type "${sourceType}" cannot be assigned to node property "${targetPropertySchema.propertyKey}" of type "${targetPropertySchema.type}"`
+        STRINGS.errors.outputMapping.invalidType(sourceKind, sourceType, targetPropertySchema)
       );
     }
   }
@@ -266,39 +248,34 @@ export class IntegrationModelChecker {
     }
   }
 
-  static isDetailsMapping(
+  static isOutputMapping(
     mapping: Partial<FieldMapping>,
     vendor: Vendor,
-    targetNodeSchema: GraphItemSchema
+    outputNodeSchema: GraphItemSchema
   ): asserts mapping is FieldMapping {
-    const prefix = 'Target node field mapping';
-    const targetPropertySchema = targetNodeSchema.properties.find(
+    const targetPropertySchema = outputNodeSchema.properties.find(
       (p) => p.propertyKey === mapping.outputPropertyKey
     );
     // check if the target property exists
     if (!targetPropertySchema) {
-      console.warn(
-        `${prefix}: will create new property on created node ${JSON.stringify(mapping)}`
+      console.info(
+        `Output node mapping: will create new property on created node ${JSON.stringify(mapping)}`
       );
       return;
     }
     // the target property exists, check that its type matches the source value
     if (mapping.type === 'constant') {
       if (!mapping.valueType) {
-        throw new Error(`${prefix}: constant value type must be defined`);
+        throw new Error(STRINGS.errors.outputMapping.constantWithoutType(mapping));
       }
-      this.checkValueToGraphPropertyType(
-        prefix,
-        'constant value',
-        mapping.valueType,
-        targetPropertySchema
-      );
+      this.checkValueToGraphPropertyType('constant value', mapping.valueType, targetPropertySchema);
     } else if (mapping.type === 'property') {
       if (!mapping.inputPropertyKey) {
-        throw new Error(`${prefix}: source field key must be defined`);
+        throw new Error(
+          STRINGS.errors.outputMapping.missingInputProperty(mapping.outputPropertyKey)
+        );
       }
       this.checkVendorFieldToGraphPropertyType(
-        prefix,
         mapping.inputPropertyKey,
         targetPropertySchema,
         vendor

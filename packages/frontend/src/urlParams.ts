@@ -1,8 +1,6 @@
-import {EntityType} from '@linkurious/rest-client';
-
 export class UrlParams {
   parse(query: URLSearchParams): State {
-    const required = ['sourceKey', 'itemId', 'integrationId'];
+    const required = ['sourceKey', 'nodeId', 'integrationId', 'action'];
     const missing: string[] = [];
     for (const key of required) {
       if (!query.get(key)) {
@@ -19,19 +17,26 @@ export class UrlParams {
     if (missing.length > 0) {
       return {
         error: true,
-        errorMessage: `Missing required parameters: ${missing.join(', ')}}`
+        errorMessage: `Missing required parameters: ${missing.join(', ')}`
       };
     }
 
-    // all required parameters are present and valid: 'search' success state
-    return {
-      error: false,
-      action: 'search',
-      sourceKey: query.get('sourceKey')!,
-      itemId: query.get('itemId')!,
-      integrationId: query.get('integrationId')!,
-      entityType: EntityType.NODE
-    };
+    const actions = query.get('action')!;
+    if (actions === 'search') {
+      // all required parameters are present and valid: 'search' success state
+      return {
+        error: false,
+        action: 'search',
+        sourceKey: query.get('sourceKey')!,
+        nodeId: query.get('nodeId')!,
+        integrationId: query.get('integrationId')!
+      };
+    } else {
+      return {
+        error: true,
+        errorMessage: `Unknown action: ${actions}`
+      };
+    }
   }
 }
 
@@ -48,8 +53,8 @@ interface BaseSuccessState<A> extends BaseState<false> {
 export type SuccessState = EmptySuccessState | SearchSuccessState;
 export interface EmptySuccessState extends BaseSuccessState<'none'> {}
 export interface SearchSuccessState extends BaseSuccessState<'search'> {
+  action: 'search';
   sourceKey: string;
-  itemId: string;
+  nodeId: string;
   integrationId: string;
-  entityType: EntityType;
 }

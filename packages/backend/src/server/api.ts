@@ -1,13 +1,13 @@
-import {PluginRouteOptions, RestClient} from '@linkurious/rest-client';
+import {PluginInterface, RestClient} from '@linkurious/rest-client';
 import * as express from 'express';
 
 import {MyPluginConfig} from '../../../shared/myPluginConfig';
 import {Logger, WithLogger} from '../services/logger';
 
 export class API extends WithLogger {
-  private readonly options: PluginRouteOptions<MyPluginConfig>;
+  private readonly options: PluginInterface<MyPluginConfig>;
 
-  constructor(options: PluginRouteOptions<MyPluginConfig>, logger: Logger) {
+  constructor(options: PluginInterface<MyPluginConfig>, logger: Logger) {
     super(logger);
     this.options = options;
   }

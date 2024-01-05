@@ -1,4 +1,4 @@
-import {PluginRouteOptions, RestClient} from '@linkurious/rest-client';
+import {PluginInterface, RestClient} from '@linkurious/rest-client';
 import express = require('express');
 
 import {MyPluginConfig, MyPluginConfigPublic} from '../../../shared/myPluginConfig';
@@ -16,7 +16,7 @@ export class ServiceFacade {
   public readonly api: API;
   public config: Configuration;
 
-  constructor(options: PluginRouteOptions<MyPluginConfig>) {
+  constructor(options: PluginInterface<MyPluginConfig>) {
     this.logger = new Logger();
     this.config = new Configuration(options.configuration, this.logger);
     this.api = new API(options, this.logger);

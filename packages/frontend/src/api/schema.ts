@@ -1,21 +1,15 @@
-import {EntityType, GraphSchemaTypeWithAccess, RestClient} from '@linkurious/rest-client';
 import {
+  EntityType,
+  GraphSchemaTypeWithAccess,
+  RestClient,
   DataVisibility,
-  PropertyTypeName
-} from '@linkurious/rest-client/dist/src/api/GraphSchema/types';
-import {ItemTypeAccessRightType} from '@linkurious/rest-client/dist/src/api/AccessRight/types';
+  ItemTypeAccessRightType
+} from '@linkurious/rest-client';
+
+import {asError} from '../../../shared/utils';
+import {GraphItemSchema} from '../../../shared/api/response';
 
 export type ItemAccess = 'read' | 'write';
-export interface GraphItemSchema {
-  itemType: string;
-  access: ItemTypeAccessRightType;
-  properties: GraphPropertySchema[];
-}
-export interface GraphPropertySchema {
-  propertyKey: string;
-  required: boolean;
-  type: PropertyTypeName;
-}
 
 export class Schema {
   constructor(private readonly api: RestClient) {}
@@ -23,9 +17,21 @@ export class Schema {
   async getNodeTypeSchema(
     sourceKey: string,
     nodeCategory: string,
-    access: ItemAccess = 'read'
+    access: ItemAccess = 'read',
+    tolerateMissing = false
   ): Promise<GraphItemSchema> {
-    return this.getItemTypeSchema(sourceKey, EntityType.NODE, nodeCategory, access);
+    try {
+      return await this.getItemTypeSchema(sourceKey, EntityType.NODE, nodeCategory, access);
+    } catch (e) {
+      if (tolerateMissing && asError(e).message.includes('was not found')) {
+        return {
+          itemType: nodeCategory,
+          access: ItemTypeAccessRightType.WRITE,
+          properties: []
+        };
+      }
+      throw e;
+    }
   }
 
   async getEdgeTypeSchema(

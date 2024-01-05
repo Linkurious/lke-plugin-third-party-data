@@ -1,3 +1,5 @@
+import {STRINGS} from '../../../shared/strings';
+
 import {$elem, $id} from './uiUtils';
 import {BaseUI} from './baseUI';
 import {UiFacade} from './uiFacade';
@@ -31,7 +33,7 @@ export class PopIn extends BaseUI {
   }
 
   show(style: 'info' | 'error', message: string, hideApp = false): Promise<IPopinCloseValue> {
-    const title = style === 'info' ? 'Information' : 'Error';
+    const title = style === 'info' ? STRINGS.ui.popin.info : STRINGS.ui.popin.error;
     const content = document.createElement('span');
     if (style === 'error') {
       content.classList.add('text-danger');
@@ -43,7 +45,7 @@ export class PopIn extends BaseUI {
     }
     content.appendChild(
       $elem('div', {class: 'd-flex justify-content-end'}, [
-        this.ui.button.create('Close', {primary: true}, () => this.close())
+        this.ui.button.create(STRINGS.ui.global.closeButton, {primary: true}, () => this.close())
       ])
     );
 

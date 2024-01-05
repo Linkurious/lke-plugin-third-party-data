@@ -1,5 +1,7 @@
 import {ParsedQs} from 'qs';
 
+import {STRINGS} from '../../../shared/strings';
+
 export class SearchOptions {
   public readonly integrationId: string;
   public readonly sourceKey: string;
@@ -20,27 +22,23 @@ export class SearchOptions {
 
   static from(query: ParsedQs): SearchOptions {
     if (typeof query.integrationId !== 'string') {
-      throw new Error('Missing query-string parameter: integrationId');
+      throw new Error(STRINGS.errors.searchOptions.missingIntegrationId);
     }
     if (typeof query.nodeId !== 'string') {
-      throw new Error(
-        'Missing query-string parameter: nodeId (hint: you possibly forgot to use a {{node}} entry in your action URL)'
-      );
+      throw new Error(STRINGS.errors.searchOptions.missingNodeId);
     }
     if (typeof query.sourceKey !== 'string') {
-      throw new Error(
-        'Missing query-string parameter: sourceKey (hint: you possibly forgot to use a {{sourceKey}} entry in your action URL)'
-      );
+      throw new Error(STRINGS.errors.searchOptions.missingSourceKey);
     }
 
     let maxResults: number | undefined;
     if (typeof query.maxResults === 'string') {
       maxResults = Number(query.maxResults);
       if (Number.isNaN(maxResults)) {
-        throw new Error('Invalid query-string parameter: maxResults (must be a number)');
+        throw new Error(STRINGS.errors.searchOptions.invalidMaxResults);
       }
       if (maxResults <= 0 || maxResults > 100) {
-        throw new Error('Invalid query-string parameter: maxResults (must be between 1 and 100)');
+        throw new Error(STRINGS.errors.searchOptions.invalidMaxResultsRange(0, 100));
       }
     }
 

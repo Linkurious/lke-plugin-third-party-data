@@ -2,40 +2,37 @@ import {Vendor} from '../../../../shared/vendor/vendor';
 import {ServiceFacade} from '../../serviceFacade';
 import {FieldMapping, FieldMappingType} from '../../../../shared/integration/IntegrationModel';
 import {addSelect} from '../uiUtils';
-import {GraphItemSchema} from '../../api/schema';
 import {IntegrationModelChecker} from '../../integration/integrationModelChecker';
 import {VendorField} from '../../../../shared/vendor/vendorModel';
 import {asError} from '../../../../shared/utils';
+import {GraphItemSchema} from '../../../../shared/api/response.ts';
+import {STRINGS} from '../../../../shared/strings';
 
 import {AbstractMappingEditor} from './abstractMappingEditor';
 
-interface SearchMappingParams {
+interface InputNodeMappingEditorParams {
   vendor: Vendor;
   sourceKey: string;
-  sourceNodeType: string;
+  inputNodeType: string;
 }
 
 export class InputNodeMappingEditor extends AbstractMappingEditor {
-  private readonly params: SearchMappingParams;
-  private sourceNodeSchema?: GraphItemSchema;
+  private readonly params: InputNodeMappingEditorParams;
+  private inputNodeSchema?: GraphItemSchema;
 
-  constructor(services: ServiceFacade, params: SearchMappingParams) {
-    super(
-      services,
-      'Search query mapping',
-      'Build the search query from the input node properties'
-    );
+  constructor(services: ServiceFacade, params: InputNodeMappingEditorParams) {
+    super(services, STRINGS.ui.inputMappingEditor.title, STRINGS.ui.inputMappingEditor.description);
     this.params = params;
   }
 
-  private async getSourceNodeSchema(): Promise<GraphItemSchema> {
-    if (!this.sourceNodeSchema) {
-      this.sourceNodeSchema = await this.services.schema.getNodeTypeSchema(
+  private async getInputNodeSchema(): Promise<GraphItemSchema> {
+    if (!this.inputNodeSchema) {
+      this.inputNodeSchema = await this.services.schema.getNodeTypeSchema(
         this.params.sourceKey,
-        this.params.sourceNodeType
+        this.params.inputNodeType
       );
     }
-    return this.sourceNodeSchema;
+    return this.inputNodeSchema;
   }
 
   private getTargetField(): VendorField | undefined {
@@ -55,7 +52,7 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
     }));
     addSelect(
       col1,
-      {label: 'Search query field (* = required)'},
+      {label: STRINGS.ui.inputMappingEditor.searchQueryFieldLabel},
       'search-mapping-vendor-field-select',
       vendorFieldOptions,
       (vendorFieldKey) => {
@@ -78,11 +75,14 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
   ): Promise<void> {
     addSelect<FieldMappingType>(
       col2,
-      {label: 'Input type'},
+      {label: STRINGS.ui.inputMappingEditor.inputTypeLabel},
       'search-mapping-input-type-select',
       [
-        {key: 'property', value: `"${this.params.sourceNodeType}" property`},
-        {key: 'constant', value: 'Fixed value'}
+        {
+          key: 'property',
+          value: STRINGS.ui.inputMappingEditor.propertyInputType(this.params.inputNodeType)
+        },
+        {key: 'constant', value: STRINGS.ui.mappingEditor.constant}
       ],
       (fieldMappingType) => {
         console.log('NEW searchMapping.type: ' + fieldMappingType);
@@ -126,7 +126,7 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
       }));
     addSelect(
       parent,
-      {label: 'Source property'},
+      {label: STRINGS.ui.inputMappingEditor.inputPropertyLabel},
       'search-mapping-source-property-select',
       properties,
       (sourceNodePropertyKey) => {
@@ -160,7 +160,7 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
 
   protected override async getValidationError(): Promise<string | undefined> {
     const mappings = this.getModel();
-    const sourceNodeSchema = await this.getSourceNodeSchema();
+    const sourceNodeSchema = await this.getInputNodeSchema();
     try {
       IntegrationModelChecker.checkSourceNodeMappings(
         mappings,
@@ -180,10 +180,7 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
   }
 
   protected $getNodeTypeSchemaInternal(): Promise<GraphItemSchema> {
-    return this.services.schema.getNodeTypeSchema(
-      this.params.sourceKey,
-      this.params.sourceNodeType
-    );
+    return this.services.schema.getNodeTypeSchema(this.params.sourceKey, this.params.inputNodeType);
   }
 
   protected assertNewModelIsValid(

@@ -25,13 +25,13 @@ export function $elem(
 
 export function addCombo(
   parent: HTMLElement,
-  options: {label?: string; autocomplete?: boolean},
+  options: {label?: string; selectedKey?: string; autocomplete?: boolean},
   id: string,
   values: {key: string; value: string}[],
   onChange: (optionKey: string) => void
 ): void {
   if (options.autocomplete) {
-    addAutocomplete(parent, options.label, id, values, onChange);
+    addAutocomplete(parent, options, id, values, onChange);
   } else {
     addSelect(parent, options, id, values, onChange);
   }
@@ -77,7 +77,7 @@ export function addSelect<T extends string = string>(
 
 export function addAutocomplete(
   parent: HTMLElement,
-  label: string | undefined,
+  options: {label?: string; selectedKey?: string},
   id: string,
   values: {key: string; value: string}[],
   onChange: (optionKey: string) => void
@@ -91,7 +91,10 @@ export function addAutocomplete(
   input.setAttribute('spellcheck', `false`);
   input.setAttribute('autocorrect', `off`);
   input.setAttribute('autocomplete', `off`); // avoid previously types values to be added in the datalist
-  input.setAttribute('placeholder', `Select a ${label ?? 'value'}...`);
+  input.setAttribute('placeholder', `Select a ${options.label ?? 'value'}...`);
+  if (options.selectedKey) {
+    input.value = options.selectedKey;
+  }
   input.addEventListener('input', () => {
     onChange(input.value);
   });
@@ -100,11 +103,11 @@ export function addAutocomplete(
   values.forEach((option) => {
     datalist.appendChild(new Option(option.value, option.key));
   });
-  if (label) {
+  if (options.label) {
     const selectLabel = document.createElement('label');
     selectLabel.setAttribute('for', input.id);
     selectLabel.classList.add('form-label');
-    selectLabel.textContent = label;
+    selectLabel.textContent = options.label;
     parent.appendChild(selectLabel);
   }
   parent.appendChild(input);

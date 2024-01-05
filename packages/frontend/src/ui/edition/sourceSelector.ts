@@ -1,11 +1,12 @@
 import {ServiceFacade} from '../../serviceFacade';
+import {STRINGS} from '../../../../shared/strings';
 
 import {AbstractSelector} from './abstractSelector';
 
 export class SourceSelector extends AbstractSelector<{key: string; name: string}> {
   private readonly services: ServiceFacade;
   constructor(services: ServiceFacade) {
-    super(services.ui, 'Select a data-source', 'Select a data-source for this integration');
+    super(services.ui, STRINGS.ui.sourceSelector.title, STRINGS.ui.sourceSelector.description);
     this.services = services;
   }
 

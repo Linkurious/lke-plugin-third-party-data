@@ -1,4 +1,5 @@
 import {UiFacade} from '../uiFacade';
+import {STRINGS} from '../../../../shared/strings';
 
 import {AbstractFormPopin} from './abstractFormPopin';
 
@@ -48,7 +49,7 @@ export class ListMultiselector<T extends string = string> extends AbstractFormPo
 
   protected override async getValidationError(): Promise<string | undefined> {
     if (!this.list) {
-      return 'Unexpected error: list is empty';
+      return STRINGS.errors.multiSelector.listUndefined;
     }
     const selected = Array.from(this.list.querySelectorAll('input'))
       .map((input, i) => (input.checked ? this.input[i] : undefined))

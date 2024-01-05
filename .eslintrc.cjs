@@ -18,6 +18,7 @@ module.exports = {
   rules: {
     'eqeqeq': ['error'], // Requires === or !== in place of == or !=
     'curly': ['error'], // Requires curly braces when a block contains only one statement
+    'import/extensions': ['error', 'never'], // Disallows file extensions on imports
     '@typescript-eslint/no-explicit-any': ['error'], // Don't allow any usage of 'any'
     '@typescript-eslint/no-empty-interface': ['off'], // Allows empty interfaces
     '@typescript-eslint/ban-ts-comment': ['off'], // Allows ts-ignore to be used when needed

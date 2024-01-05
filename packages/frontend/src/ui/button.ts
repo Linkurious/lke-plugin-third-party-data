@@ -18,7 +18,7 @@ export class Button extends BaseUI {
     button.classList.add(
       'btn',
       options.primary ? `btn-${outline}primary` : `btn-${outline}secondary`,
-      'me-2'
+      'ms-2'
     );
     if (options.classes) {
       button.classList.add(...options.classes);

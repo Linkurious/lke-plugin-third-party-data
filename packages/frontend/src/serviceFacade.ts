@@ -1,16 +1,17 @@
-import {LkError, Response, User} from '@linkurious/rest-client';
-import {LkEdge, LkNode} from '@linkurious/rest-client/dist/src/api/graphItemTypes';
+import {LkEdge, LkNode, LkError, Response, User} from '@linkurious/rest-client';
 
 import {VendorSearchResult} from '../../shared/api/response';
 import {IntegrationModel, IntegrationModelPublic} from '../../shared/integration/IntegrationModel';
-import {VendorIntegration} from '../../shared/integration/vendorIntegration';
+import {VendorIntegrationPublic} from '../../shared/integration/vendorIntegrationPublic';
 import {asError, clone, randomString} from '../../shared/utils';
+import {STRINGS} from '../../shared/strings';
 
 import {API} from './api/api';
 import {UiFacade} from './ui/uiFacade';
 import {Schema} from './api/schema';
 import {SearchSuccessState, UrlParams} from './urlParams';
 import {Configuration} from './configuration';
+import {$elem} from './ui/uiUtils.ts';
 
 export class ServiceFacade {
   private readonly urlParams;
@@ -33,9 +34,8 @@ export class ServiceFacade {
 
   async init(query: URLSearchParams): Promise<void> {
     return this.ui.longTask.run(
-      null,
       async (updater) => {
-        updater.update('App initialization...');
+        updater.update('Initialization...');
         try {
           const rCurrentUser = await this.getCurrentUser();
           if (rCurrentUser.isSuccess()) {
@@ -48,7 +48,7 @@ export class ServiceFacade {
             // Not awaiting: let the spinner stop after the popin is displayed
             void this.ui.popIn.show(
               'error',
-              "You don't have access to this plugin. Please contact your administrator.",
+              `You don't have access to this plugin. Please contact your administrator.`,
               true
             );
           }
@@ -70,6 +70,7 @@ export class ServiceFacade {
       await this.search(state);
     } else {
       // No action to perform
+      await this.ui.showEmptyState();
     }
   }
 
@@ -77,7 +78,7 @@ export class ServiceFacade {
     const response = await this.api.searchNode({
       integrationId: state.integrationId,
       sourceKey: state.sourceKey,
-      nodeId: state.itemId
+      nodeId: state.nodeId
     });
     if (response.error) {
       await this.ui.popIn.show('error', `${response.error.message} (error ${response.error.code})`);
@@ -92,7 +93,13 @@ export class ServiceFacade {
     if (!newIntegration) {
       return;
     }
-    await this.config.saveNewIntegration(newIntegration);
+    await this.ui.longTask.run(async (p) => {
+      p.update(STRINGS.ui.editIntegration.savingNewIntegration);
+      await this.config.saveNewIntegration(newIntegration);
+      p.update(STRINGS.ui.editIntegration.restartingPlugin);
+      await this.api.server.plugin.restartAll();
+      p.update(STRINGS.ui.global.done);
+    });
   }
 
   async editIntegration(integrationId: string): Promise<void> {
@@ -101,7 +108,14 @@ export class ServiceFacade {
     if (!newModel) {
       return;
     }
-    await this.config.saveExistingIntegration(newModel);
+
+    await this.ui.longTask.run(async (p) => {
+      p.update(STRINGS.ui.editIntegration.savingIntegration);
+      await this.config.saveExistingIntegration(newModel);
+      p.update(STRINGS.ui.editIntegration.restartingPlugin);
+      await this.api.server.plugin.restartAll();
+      p.update(STRINGS.ui.global.done);
+    });
   }
 
   async importSearchResult(
@@ -110,46 +124,64 @@ export class ServiceFacade {
     inputNodeId: string
   ): Promise<void> {
     console.log('IMPORT_RESULT: ' + JSON.stringify(searchResult));
-    const int = new VendorIntegration(integration);
-
-    // create + save the target node from the search result
-    const newNodeR = await this.api.server.graphNode.createNode(int.getOutputNode(searchResult));
-    if (!newNodeR.isSuccess()) {
-      throw new Error(`Failed to create output node: ${newNodeR.body.message}`);
-    }
-
-    // create the connecting edge
-    const newEdgeR = await this.api.server.graphEdge.createEdge(
-      int.getOutputEdge(searchResult, newNodeR.body.id, inputNodeId)
-    );
-    if (!newEdgeR.isSuccess()) {
-      throw new Error(`Failed to create output edge: ${newEdgeR.body.message}`);
-    }
-
     let addedInLKE = false;
-    if (window.opener) {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const ogma = window.opener.ogma as {
-          addNode: (node: LkNode) => void;
-          addEdge: (edge: LkEdge) => void;
-        };
-        ogma.addNode(newNodeR.body);
-        ogma.addEdge(newEdgeR.body);
-        addedInLKE = true;
-      } catch (e) {
-        console.warn('Could not add node/edge in LKE', e);
-      }
-    }
+    await this.ui.longTask.run(async (p) => {
+      const int = new VendorIntegrationPublic(integration);
 
-    if (addedInLKE) {
-      await this.ui.popIn.show(
-        'info',
-        `Successfully imported search result in the graph. The visualization has been updated`
+      // create + save the target node from the search result
+      p.update(STRINGS.ui.importSearchResult.creatingNode);
+      const newNodeR = await this.api.server.graphNode.createNode(int.getOutputNode(searchResult));
+      if (!newNodeR.isSuccess()) {
+        throw new Error(STRINGS.errors.importSearchResult.failedToCreateNode(newNodeR.body));
+      }
+      const newNodeId = newNodeR.body.id;
+
+      // create the connecting edge
+      p.update(STRINGS.ui.importSearchResult.creatingEdge);
+      const newEdgeR = await this.api.server.graphEdge.createEdge(
+        int.getOutputEdge(searchResult, newNodeR.body.id, inputNodeId)
       );
-    } else {
-      await this.ui.popIn.show('info', `Successfully imported search result in the graph.`);
-    }
+      if (!newEdgeR.isSuccess()) {
+        throw new Error(STRINGS.errors.importSearchResult.failedToCreateEdge(newEdgeR.body));
+      }
+
+      p.update(STRINGS.ui.global.done);
+      if (window.opener) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          const ogma = window.opener.ogma as OgmaInterface;
+          const ogmaNode = ogma.addNode(newNodeR.body);
+          ogma.addEdge(newEdgeR.body);
+          addedInLKE = true;
+          ogma.clearSelection();
+          ogmaNode.setSelected(true);
+          ogmaNode.locate();
+          void ogma.layouts.force({nodes: [newNodeId, inputNodeId]});
+        } catch (e) {
+          console.warn('Could not add node/edge in LKE', e);
+        }
+      }
+    });
+
+    const confirmText = addedInLKE
+      ? STRINGS.ui.importSearchResult.successfullyCreatedAndAdded
+      : STRINGS.ui.importSearchResult.successfullyCreated;
+    await this.ui.popIn.showElement(
+      'Success',
+      $elem('div', {class: 'my-1'}, [
+        $elem('p', {class: 'my-2'}, confirmText),
+        $elem('div', {class: 'd-flex justify-content-center'}, [
+          this.ui.button.create(
+            STRINGS.ui.importSearchResult.confirmModalCloseButton,
+            {primary: true},
+            () => {
+              this.ui.popIn.close();
+              window.close();
+            }
+          )
+        ])
+      ])
+    );
   }
 
   async createCustomAction(
@@ -162,4 +194,28 @@ export class ServiceFacade {
       await this.ui.showIntegrationsList();
     }
   }
+
+  async deleteIntegration(integrationId: string): Promise<void> {
+    await this.ui.longTask.run(async (p) => {
+      p.update(STRINGS.ui.editIntegration.deletingIntegration);
+      await this.config.deleteIntegration(integrationId);
+      p.update(STRINGS.ui.editIntegration.restartingPlugin);
+      await this.api.server.plugin.restartAll();
+      p.update(STRINGS.ui.global.done);
+    });
+  }
+}
+
+interface OgmaInterface {
+  clearSelection: () => void;
+  addNode: (node: LkNode) => OgmaNode;
+  addEdge: (edge: LkEdge) => void;
+  layouts: {
+    force: (params: {nodes: string[]}) => Promise<void>;
+  };
+}
+
+interface OgmaNode {
+  setSelected(s: boolean): void;
+  locate(): void;
 }

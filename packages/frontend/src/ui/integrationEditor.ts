@@ -1,6 +1,7 @@
 import {IntegrationModel} from '../../../shared/integration/IntegrationModel';
 import {ServiceFacade} from '../serviceFacade';
-import {Vendor} from '../../../shared/vendor/vendor';
+import {Vendors} from '../../../shared/vendor/vendors.ts';
+import {STRINGS} from '../../../shared/strings';
 
 import {VendorEditorModel, VendorSelector} from './edition/vendorSelector';
 import {BaseUI} from './baseUI';
@@ -24,7 +25,7 @@ export class IntegrationEditor extends BaseUI {
     let currentVendorInfo: VendorEditorModel | undefined = undefined;
     if (model.vendorKey) {
       currentVendorInfo = {
-        vendor: Vendor.getVendorByKey(model.vendorKey),
+        vendor: Vendors.getVendorByKey(model.vendorKey),
         adminSettings: model.adminSettings ?? {}
       };
     }
@@ -50,37 +51,38 @@ export class IntegrationEditor extends BaseUI {
     console.log('integration: selected source key: ' + JSON.stringify(dataSource));
 
     // source node-category
-    const sourceNodeCategorySelector = new NodeTypeSelector(
+    const inputNodeTypeSelector = new NodeTypeSelector(
       this.services,
       model.sourceKey,
       'read',
-      'Select the source node-category for this integration'
+      STRINGS.ui.integrationEditor.selectSourceNodeType,
+      false
     );
-    const sourceNodeCategory = await sourceNodeCategorySelector.show(model.inputNodeCategory);
-    if (!sourceNodeCategory) {
+    const inputNodeCategory = await inputNodeTypeSelector.show(model.inputNodeCategory);
+    if (!inputNodeCategory) {
       return;
     }
-    model.inputNodeCategory = sourceNodeCategory;
-    console.log('integration: selected node category: ' + JSON.stringify(sourceNodeCategory));
+    model.inputNodeCategory = inputNodeCategory;
+    console.log('integration: selected node category: ' + JSON.stringify(inputNodeCategory));
 
-    // source-node property mapping
-    const searchMappingEditor = new InputNodeMappingEditor(this.services, {
+    // InputNode property mapping
+    const inputNodeMappingEditor = new InputNodeMappingEditor(this.services, {
       sourceKey: model.sourceKey,
-      sourceNodeType: model.inputNodeCategory,
+      inputNodeType: model.inputNodeCategory,
       vendor: vendorInfo.vendor
     });
-    const searchMapping = await searchMappingEditor.show(model.searchQueryFieldMapping);
-    if (!searchMapping) {
+    const inputMapping = await inputNodeMappingEditor.show(model.searchQueryFieldMapping);
+    if (!inputMapping) {
       return;
     }
-    model.searchQueryFieldMapping = searchMapping;
-    console.log('integration: selected search mapping: ' + JSON.stringify(searchMapping));
+    model.searchQueryFieldMapping = inputMapping;
+    console.log('integration: selected search mapping: ' + JSON.stringify(inputMapping));
 
     // search result display
     const searchResultDisplay = new ListMultiselector(
       this.ui,
-      'Search result',
-      'Select the response fields to display in the search results',
+      STRINGS.ui.searchResultFieldSelector.title,
+      STRINGS.ui.searchResultFieldSelector.description,
       vendorInfo.vendor.searchResponseFields.map((vf) => vf.key),
       (vfKey) => {
         const vf = vendorInfo.vendor.searchResponseFields.find((vf) => vf.key === vfKey);
@@ -88,7 +90,7 @@ export class IntegrationEditor extends BaseUI {
       },
       (vfKeys) => {
         if (vfKeys.length === 0) {
-          return 'At least one field must be selected';
+          return STRINGS.errors.searchResultFieldSelectorEmpty;
         }
         return undefined;
       }
@@ -100,24 +102,25 @@ export class IntegrationEditor extends BaseUI {
     model.searchResponseFieldSelection = searchResultsKeys;
     console.log('integration: selected search results: ' + JSON.stringify(searchResultsKeys));
 
-    // select target edge-type
+    // select output edge-type
     // todo
     model.outputEdgeType = 'has_details';
 
-    // select target node-category
-    const targetNodeCategorySelector = new NodeTypeSelector(
+    // select output node-category
+    const outputNodeCategorySelector = new NodeTypeSelector(
       this.services,
       dataSource.key,
       'write',
-      'Select the node-category to create from the search result'
+      'Select the node-category to create from the search result',
+      true
     );
-    const targetNodeCategory = await targetNodeCategorySelector.show(model.outputNodeCategory);
-    if (!targetNodeCategory) {
+    const outputNodeCategory = await outputNodeCategorySelector.show(model.outputNodeCategory);
+    if (!outputNodeCategory) {
       return;
     }
-    model.outputNodeCategory = targetNodeCategory;
+    model.outputNodeCategory = outputNodeCategory;
 
-    // TargetNode details mapping
+    // OutputNode details mapping
     const detailsMappingEditor = new OutputNodeMappingEditor(this.services, {
       sourceKey: dataSource.key,
       outputNodeType: model.outputNodeCategory,

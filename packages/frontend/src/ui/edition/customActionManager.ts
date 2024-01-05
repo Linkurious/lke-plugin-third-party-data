@@ -1,7 +1,8 @@
 import {ServiceFacade} from '../../serviceFacade';
 import {IntegrationModel} from '../../../../shared/integration/IntegrationModel';
 import {$elem} from '../uiUtils';
-import {VendorIntegration} from '../../../../shared/integration/vendorIntegration';
+import {VendorIntegrationPublic} from '../../../../shared/integration/vendorIntegrationPublic';
+import {STRINGS} from '../../../../shared/strings';
 
 import {AbstractFormPopin, ButtonsConfig} from './abstractFormPopin';
 
@@ -10,8 +11,8 @@ export class CustomActionManager extends AbstractFormPopin<IntegrationModel> {
   constructor(services: ServiceFacade) {
     super(
       services.ui,
-      'Manage custom actions for this integration',
-      `Custom actions are used to launch an integration from a node context-menu`
+      STRINGS.ui.customActionManager.title,
+      STRINGS.ui.customActionManager.description
     );
     this.services = services;
   }
@@ -19,7 +20,7 @@ export class CustomActionManager extends AbstractFormPopin<IntegrationModel> {
   protected override getButtonsConfig(): ButtonsConfig {
     return {
       saveText: undefined,
-      closeText: 'Close'
+      closeText: STRINGS.ui.global.closeButton
     };
   }
 
@@ -28,25 +29,17 @@ export class CustomActionManager extends AbstractFormPopin<IntegrationModel> {
     if (!integration) {
       throw new Error('Bug: no integration set');
     }
-    const actions = await this.services.api.server.customAction.getCustomActions({
-      sourceKey: integration.sourceKey
-    });
-    if (!actions.isSuccess()) {
-      throw new Error(`Failed to get custom actions: ${actions.body.message}`);
-    }
-    const marchingActions = actions.body.filter((a) =>
-      a.urlTemplate.includes(`integrationId=${integration.id}`)
-    );
+    const actions = await this.services.api.getCustomActions(integration);
     content.appendChild($elem('p', {}));
-    if (marchingActions.length === 0) {
+    if (actions.length === 0) {
       content.append($elem('p', {}, `No custom action found for this integration`));
     } else {
       content.append(
-        $elem('p', {}, `Found ${marchingActions.length} custom action(s) for this integration:`),
+        $elem('p', {}, `Found ${actions.length} custom action(s) for this integration:`),
         $elem(
           'ul',
           {class: 'list-group mb-3'},
-          marchingActions.map((action) =>
+          actions.map((action) =>
             $elem(
               'li',
               {class: 'list-group-item d-flex justify-content-between align-items-start'},
@@ -55,16 +48,20 @@ export class CustomActionManager extends AbstractFormPopin<IntegrationModel> {
                   $elem('div', {class: 'fw-bold'}, action.name),
                   $elem('span', {class: 'font-monospace'}, action.urlTemplate)
                 ]),
-                // classes: ['btn-light']
-                this.ui.button.create('Delete', {primary: false, small: true}, async () => {
-                  const r = await this.services.api.server.customAction.deleteCustomAction({
-                    id: action.id,
-                    sourceKey: integration.sourceKey
-                  });
-                  if (!r.isSuccess()) {
-                    throw new Error(`Failed to delete custom action: ${r.body.message}`);
+                this.ui.button.create(
+                  STRINGS.ui.customActionManager.deleteButton,
+                  {primary: false, small: true},
+                  async () => {
+                    const r = await this.services.api.server.customAction.deleteCustomAction({
+                      id: action.id,
+                      sourceKey: integration.sourceKey
+                    });
+                    if (!r.isSuccess()) {
+                      throw new Error(STRINGS.errors.customActions.deleteFailed(r.body));
+                    }
+                    await this.redrawContent();
                   }
-                })
+                )
               ]
             )
           )
@@ -75,7 +72,7 @@ export class CustomActionManager extends AbstractFormPopin<IntegrationModel> {
       $elem('div', {class: 'row row-cols-auto'}, [
         $elem('div', {class: 'col'}, [
           this.ui.button.create('Add custom action', {primary: true}, async () => {
-            const int = new VendorIntegration(integration);
+            const int = new VendorIntegrationPublic(integration);
             const basePath = await this.services.config.getBasePath();
             await this.services.api.server.customAction.createCustomAction(
               int.getCustomAction(basePath)

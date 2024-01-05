@@ -45,7 +45,7 @@ export type ConstantFieldMapping =
   | ConstantNumberFieldMapping
   | ConstantBooleanFieldMapping;
 
-interface PropertyFieldMapping extends BaseQueryFieldMapping<'property'> {
+export interface PropertyFieldMapping extends BaseQueryFieldMapping<'property'> {
   inputPropertyKey: string;
 }
 
