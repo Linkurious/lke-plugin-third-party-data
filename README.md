@@ -2,9 +2,9 @@
 
 ## Purpose and principles
 The plugin is used to import Third Party Data to enrich certain nodes in your graph:
-- For example, you may have a `Person` node in your graph, and you want to enrich it with data from the [Clearbit API](https://clearbit.com/docs#enrichment-api).
-- You click any `Person` node in the graph, use the `custom action` menu and click `Enrich with Clearbit`.
-- The plugin opens abd shows a list of matching results from the Clearbit API.
+- For example, you may have a `Company` node in your graph, and you want to enrich it with data from the [French Official Company Information API](https://annuaire-entreprises.data.gouv.fr/).
+- You click any `Company` node in the graph, use the `custom action` menu and click `Fetch details for French Company`.
+- The plugin opens abd shows a list of matching results from the French Company Information API.
 - You select the result you want to import, which creates a new `Person_Details` node in the graph with the data from the API, linked to the original `Person` node.
 
 The plugin supports multiple vendor APIs.
@@ -12,12 +12,12 @@ To use one API, you must first create an **API integration** (can only be done b
 Then, you can use the plugin to search for matching data for a given node, and create a new node in the graph with the data from the API.
 
 An **API integration** is a configuration that contains:
-- the API to use (e.g. `dun-bradstreet-people`)
+- the API to use (e.g. `annuaire-entreprises-data-gouv-fr`)
 - the data-source to use (e.g. `My transaction graph`)
-- the type of node to use as input for searching (e.g. `Person`)
-- the properties of the input node to use as search parameters (e.g. `name`, `email`, `phone`)
-- the type of node to create as output with the response data (e.g. `Person_Details`)
-- the properties of the response to use as properties of the new node (e.g. `email`, `phone`, `company`, `job_title`, `location`, `industry`, `linkedin`, `twitter`)
+- the type of node to use as input for searching (e.g. `Company`)
+- the properties of the input node to use as search parameters (e.g. `name`, `date_created`)
+- the type of node to create as output with the response data (e.g. `Company_Details`)
+- the properties of the response to use as properties of the new node (e.g. `email`, `phone`, `company`, `location`, `industry`, `linkedin`, `employee_count`, `revenue`)
 
 ## Demo
 https://github.com/Linkurious/lke-plugin-third-party-data/assets/605880/afa43133-a7f4-4a00-900c-b91961167a3d
