@@ -32,10 +32,10 @@ export class CustomActionManager extends AbstractFormPopin<IntegrationModel> {
     const actions = await this.services.api.getCustomActions(integration);
     content.appendChild($elem('p', {}));
     if (actions.length === 0) {
-      content.append($elem('p', {}, `No custom action found for this integration`));
+      content.append($elem('p', {}, STRINGS.ui.customActionManager.noCustomActions));
     } else {
       content.append(
-        $elem('p', {}, `Found ${actions.length} custom action(s) for this integration:`),
+        $elem('p', {}, STRINGS.ui.customActionManager.listTitle(actions.length)),
         $elem(
           'ul',
           {class: 'list-group mb-3'},
@@ -71,20 +71,20 @@ export class CustomActionManager extends AbstractFormPopin<IntegrationModel> {
     content.appendChild(
       $elem('div', {class: 'row row-cols-auto'}, [
         $elem('div', {class: 'col'}, [
-          this.ui.button.create('Add custom action', {primary: true}, async () => {
-            const int = new VendorIntegrationPublic(integration);
-            const basePath = await this.services.config.getBasePath();
-            await this.services.api.server.customAction.createCustomAction(
-              int.getCustomAction(basePath)
-            );
-            await this.redrawContent();
-          })
+          this.ui.button.create(
+            STRINGS.ui.customActionManager.addButton,
+            {primary: true},
+            async () => {
+              const int = new VendorIntegrationPublic(integration);
+              const basePath = await this.services.config.getBasePath();
+              await this.services.api.server.customAction.createCustomAction(
+                int.getCustomAction(basePath)
+              );
+              await this.redrawContent();
+            }
+          )
         ]),
-        $elem(
-          'div',
-          {class: 'col mt-2 p-0'},
-          'This will create a new custom action, shared at the data-source level'
-        )
+        $elem('div', {class: 'col mt-2 p-0'}, STRINGS.ui.customActionManager.addActionDescription)
       ])
     );
   }

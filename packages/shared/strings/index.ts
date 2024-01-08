@@ -132,7 +132,12 @@ export const STRINGS = {
     customActionManager: {
       title: 'Manage custom actions for this integration',
       description: `Custom actions are used to launch an integration from a node context-menu`,
-      deleteButton: 'Delete'
+      deleteButton: 'Delete',
+      noCustomActions: `No custom action found for this integration, you can create one using the button bellow.`,
+      addActionDescription: 'This will create a new custom action, shared at the data-source level',
+      addButton: 'Add custom action',
+      listTitle: (actions: number): string =>
+        `Found ${actions} custom action(s) for this integration:`
     },
     global: {
       closeButton: 'Close',
@@ -209,6 +214,7 @@ export const STRINGS = {
       successfullyCreatedAndAdded: `Successfully imported search result in the graph. The visualization has been updated.`,
       successfullyCreated: `Successfully imported search result in the graph.`,
       confirmModalCloseButton: 'Close window'
-    }
+    },
+    createNewIntegrationSuccess: 'The new integration was successfully saved.'
   }
 };

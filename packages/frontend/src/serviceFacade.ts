@@ -100,6 +100,8 @@ export class ServiceFacade {
       await this.api.server.plugin.restartAll();
       p.update(STRINGS.ui.global.done);
     });
+    await this.ui.popIn.show('info', STRINGS.ui.createNewIntegrationSuccess);
+    await this.ui.showCustomActionManager(newIntegration);
   }
 
   async editIntegration(integrationId: string): Promise<void> {
