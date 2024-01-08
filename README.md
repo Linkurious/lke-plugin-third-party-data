@@ -25,7 +25,7 @@ https://github.com/Linkurious/lke-plugin-third-party-data/assets/605880/afa43133
 ## Using the plugin
 Installing & accessing:
 - Check the documentation on [how to install plugins](https://doc.linkurious.com/admin-manual/latest/plugins/#how-do-i-install-plugins-).
-- Once the plugin is installed, open the plugin page (default path: `/plugins/3d/`).
+- Once the plugin is installed, open the plugin page (default path: `/plugins/third-party-data/`).
 
 Features:
 - Admin: create/list/edit/delete API integrations
