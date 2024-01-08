@@ -19,8 +19,13 @@ An **API integration** is a configuration that contains:
 - the type of node to create as output with the response data (e.g. `Company_Details`)
 - the properties of the response to use as properties of the new node (e.g. `email`, `phone`, `company`, `location`, `industry`, `linkedin`, `employee_count`, `revenue`)
 
-## Demo
+## Demo & examples
+Full usage example, from Linkurious Enterprise:
+
 https://github.com/Linkurious/lke-plugin-third-party-data/assets/605880/afa43133-a7f4-4a00-900c-b91961167a3d
+
+Example screenshot of the main search interface:
+![plugin_data_preview](https://github.com/Linkurious/lke-plugin-third-party-data/assets/605880/1b91419c-f379-434e-af79-b204e1f3c488)
 
 ## Using the plugin
 Installing & accessing:
