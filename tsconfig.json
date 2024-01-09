@@ -38,7 +38,8 @@
   "include": [
     "./packages/shared",
     "./packages/backend/src",
-    "./packages/frontend/src"
+    "./packages/frontend/src",
+    "./packages/frontend/vite.config.ts"
   ],
   "exclude": [
     "node_modules",
