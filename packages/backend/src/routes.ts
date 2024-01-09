@@ -1,4 +1,4 @@
-import {PluginInterface} from '@linkurious/rest-client';
+import {PluginRouteOptions} from '@linkurious/rest-client';
 import express from 'express';
 
 import {MyPluginConfig} from '../../shared/myPluginConfig';
@@ -6,7 +6,7 @@ import {MyPluginConfig} from '../../shared/myPluginConfig';
 import {ServiceFacade} from './services/serviceFacade';
 import {SearchOptions} from './models/searchOptions';
 
-export = function (pluginInterface: PluginInterface<MyPluginConfig>): void {
+export = function (pluginInterface: PluginRouteOptions<MyPluginConfig>): void {
   const services = new ServiceFacade(pluginInterface);
 
   pluginInterface.router.get(
