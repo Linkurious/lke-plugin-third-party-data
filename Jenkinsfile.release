@@ -1,0 +1,7 @@
+@Library('linkurious-shared')_
+
+lkeSubReleaseJob {
+  // General
+  projectName = "linkurious/lke-plugin-third-party-data"
+
+}
