@@ -5,6 +5,7 @@ import {MyPluginConfig} from '../../shared/myPluginConfig';
 
 import {ServiceFacade} from './services/serviceFacade';
 import {SearchOptions} from './models/searchOptions';
+import {DetailsOptions} from './models/detailsOptions';
 
 export = function (pluginInterface: PluginRouteOptions<MyPluginConfig>): void {
   const services = new ServiceFacade(pluginInterface);
@@ -28,6 +29,14 @@ export = function (pluginInterface: PluginRouteOptions<MyPluginConfig>): void {
     respond(async (req) => {
       const searchOptions = SearchOptions.from(req.query);
       return services.search(pluginInterface.getRestClient(req), searchOptions);
+    })
+  );
+
+  pluginInterface.router.get(
+    '/details',
+    respond(async (req) => {
+      const detailsOptions = DetailsOptions.from(req.query);
+      return services.getDetails(detailsOptions);
     })
   );
 };

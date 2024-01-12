@@ -50,7 +50,7 @@ export class CustomActionManager extends AbstractFormPopin<IntegrationModel> {
                 ]),
                 this.ui.button.create(
                   STRINGS.ui.customActionManager.deleteButton,
-                  {primary: false, small: true},
+                  {type: 'danger', outline: true, small: true},
                   async () => {
                     const r = await this.services.api.server.customAction.deleteCustomAction({
                       id: action.id,
@@ -71,18 +71,14 @@ export class CustomActionManager extends AbstractFormPopin<IntegrationModel> {
     content.appendChild(
       $elem('div', {class: 'row row-cols-auto'}, [
         $elem('div', {class: 'col'}, [
-          this.ui.button.create(
-            STRINGS.ui.customActionManager.addButton,
-            {primary: true},
-            async () => {
-              const int = new VendorIntegrationPublic(integration);
-              const basePath = await this.services.config.getBasePath();
-              await this.services.api.server.customAction.createCustomAction(
-                int.getCustomAction(basePath)
-              );
-              await this.redrawContent();
-            }
-          )
+          this.ui.button.create(STRINGS.ui.customActionManager.addButton, {}, async () => {
+            const int = new VendorIntegrationPublic(integration);
+            const basePath = await this.services.config.getBasePath();
+            await this.services.api.server.customAction.createCustomAction(
+              int.getCustomAction(basePath)
+            );
+            await this.redrawContent();
+          })
         ]),
         $elem('div', {class: 'col mt-2 p-0'}, STRINGS.ui.customActionManager.addActionDescription)
       ])

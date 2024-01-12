@@ -19,15 +19,27 @@ export interface ApiError {
   message: string;
 }
 
-export interface VendorSearchResult<R extends AbstractFields = AbstractFields> {
+export interface ApiResponse {
+  error?: ApiError;
+}
+
+export interface VendorResult<R extends AbstractFields = AbstractFields> {
   id: string;
   properties: R;
 }
 
-export interface VendorSearchResponse<R extends AbstractFields = AbstractFields> {
+export interface VendorSearchResponse<R extends AbstractFields = AbstractFields>
+  extends ApiResponse {
   integrationId: string;
   inputNodeId: string;
   vendorKey: string;
-  results: VendorSearchResult<R>[];
-  error?: ApiError;
+  results: VendorResult<R>[];
+}
+
+export interface VendorDetailsResponse<R extends AbstractFields = AbstractFields>
+  extends ApiResponse {
+  integrationId: string;
+  searchResultId: string;
+  vendorKey: string;
+  result?: VendorResult<R>;
 }

@@ -1,8 +1,10 @@
-import {AnnuaireEntreprisesVendor} from './vendors/annuaireEntreprisesDataGouvFr';
 import {Vendor} from './vendor';
+import {AnnuaireEntreprisesVendor} from './vendors/annuaireEntreprisesDataGouvFr';
+import {CompanyHouseUk} from './vendors/companyHouseUk';
 
 const VENDORS: Vendor[] = [
-  new AnnuaireEntreprisesVendor()
+  new AnnuaireEntreprisesVendor(),
+  new CompanyHouseUk()
   /*, new DnbPersonLookupVendor()*/ // add it back when it's tested
 ];
 

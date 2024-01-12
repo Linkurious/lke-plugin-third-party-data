@@ -2,7 +2,6 @@ import {EntityType} from '@linkurious/rest-client';
 
 import {ServiceFacade} from '../../serviceFacade';
 import {ItemAccess} from '../../api/schema';
-import {STRINGS} from '../../../../shared/strings';
 
 import {AbstractSelector} from './abstractSelector';
 
@@ -15,10 +14,11 @@ export class NodeTypeSelector extends AbstractSelector<string> {
     services: ServiceFacade,
     sourceKey: string,
     access: ItemAccess,
+    title: string,
     description: string,
     autocomplete: boolean
   ) {
-    super(services.ui, STRINGS.ui.nodeTypeSelector.title, description, autocomplete);
+    super(services.ui, title, description, autocomplete);
     this.services = services;
     this.sourceKey = sourceKey;
     this.access = access;

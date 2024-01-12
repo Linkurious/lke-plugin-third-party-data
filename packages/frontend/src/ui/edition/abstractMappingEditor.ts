@@ -79,7 +79,7 @@ export abstract class AbstractMappingEditor extends AbstractFormPopin<FieldMappi
     label.textContent = STRINGS.ui.mappingEditor.actionColumnHead;
     col4.appendChild(label);
     col4.appendChild(
-      this.ui.button.create('Add', {primary: true, small: true}, async () => {
+      this.ui.button.create('Add', {outline: true, small: true}, async () => {
         try {
           this.assertNewModelIsValid(this.newModel, nodeTypeSchema);
           console.log('NEW Mapping: ' + JSON.stringify(this.newModel));
@@ -131,7 +131,7 @@ export abstract class AbstractMappingEditor extends AbstractFormPopin<FieldMappi
     const col4 = document.createElement('div');
     col4.classList.add('col-1');
     col4.appendChild(
-      this.ui.button.create('❌', {small: true}, async () => {
+      this.ui.button.create('❌', {small: true, type: 'danger', outline: true}, async () => {
         console.log(`Remove Mapping : ` + JSON.stringify(mapping));
         const mappings = this.getModel()!;
         const index = mappings.indexOf(mapping);

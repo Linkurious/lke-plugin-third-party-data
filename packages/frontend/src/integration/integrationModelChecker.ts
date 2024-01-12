@@ -52,39 +52,39 @@ export class IntegrationModelChecker {
    * - check that the target SearchQuery field exists (in the vendor search query fields)
    * - check that the target SearchQuery field type matches the source value (either constant or SourceNode property type)
    */
-  static checkSourceNodeMappings(
+  static checkInputNodeMappings(
     mappings: FieldMapping[] | undefined,
-    sourceNodeTypeSchema: GraphItemSchema,
+    inputNodeTypeSchema: GraphItemSchema,
     vendor: Vendor
   ): void {
     if (!mappings || mappings.length === 0) {
-      throw new Error(STRINGS.errors.checkSourceNodeMapping.noMappingsDefined);
+      throw new Error(STRINGS.errors.checkInputNodeMapping.noMappingsDefined);
     }
     for (const vendorField of vendor.searchQueryFields) {
       if (vendorField.required && !mappings.find((m) => m.outputPropertyKey === vendorField.key)) {
-        throw new Error(STRINGS.errors.checkSourceNodeMapping.requiredFieldMissing(vendorField));
+        throw new Error(STRINGS.errors.checkInputNodeMapping.requiredFieldMissing(vendorField));
       }
     }
     for (const mapping of mappings) {
-      IntegrationModelChecker.checkSourceNodeMapping(mapping, vendor, sourceNodeTypeSchema);
+      IntegrationModelChecker.checkInputNodeMapping(mapping, vendor, inputNodeTypeSchema);
     }
   }
 
-  public static checkSourceNodeMapping(
+  public static checkInputNodeMapping(
     mapping: Partial<FieldMapping>,
     vendor: Vendor,
-    sourceNodeTypeSchema: GraphItemSchema
+    inputNodeTypeSchema: GraphItemSchema
   ): asserts mapping is FieldMapping {
     const vendorField = vendor.searchQueryFields.find((f) => f.key === mapping.outputPropertyKey);
     if (!vendorField) {
-      throw new Error(STRINGS.errors.checkSourceNodeMapping.unknownField(mapping));
+      throw new Error(STRINGS.errors.checkInputNodeMapping.unknownField(mapping));
     }
     if (mapping.type === 'constant') {
       // check that the value matches the expected type
       const valueType = typeof mapping.value;
       if (valueType !== vendorField.type) {
         throw new Error(
-          STRINGS.errors.checkSourceNodeMapping.invalidConstantType(
+          STRINGS.errors.checkInputNodeMapping.invalidConstantType(
             mapping,
             valueType,
             vendorField.type
@@ -93,31 +93,31 @@ export class IntegrationModelChecker {
       }
     } else if (mapping.type === 'property') {
       if (!mapping.inputPropertyKey) {
-        throw new Error(STRINGS.errors.checkSourceNodeMapping.missingInputProperty);
+        throw new Error(STRINGS.errors.checkInputNodeMapping.missingInputProperty);
       }
       this.checkGraphPropertyToVendorFieldMapping(
         mapping.inputPropertyKey,
-        sourceNodeTypeSchema,
+        inputNodeTypeSchema,
         vendorField.type
       );
     } else {
-      throw new Error(STRINGS.errors.checkSourceNodeMapping.unknownMappingType(mapping.type));
+      throw new Error(STRINGS.errors.checkInputNodeMapping.unknownMappingType(mapping.type));
     }
   }
 
   private static checkGraphPropertyToVendorFieldMapping(
-    sourcePropertyKey: string,
+    inputPropertyKey: string,
     graphItemSchema: GraphItemSchema,
     vendorFieldType: VendorFieldTypeName
   ): void {
     // check that the property exists
     const schemaProperty = graphItemSchema.properties.find(
-      (p) => p.propertyKey === sourcePropertyKey
+      (p) => p.propertyKey === inputPropertyKey
     );
     if (!schemaProperty) {
       throw new Error(
-        STRINGS.errors.checkSourceNodeMapping.unknownProperty(
-          sourcePropertyKey,
+        STRINGS.errors.checkInputNodeMapping.unknownProperty(
+          inputPropertyKey,
           graphItemSchema.itemType
         )
       );
@@ -137,7 +137,7 @@ export class IntegrationModelChecker {
       )
     ) {
       throw new Error(
-        STRINGS.errors.checkSourceNodeMapping.invalidPropertyType(
+        STRINGS.errors.checkInputNodeMapping.invalidPropertyType(
           nodePropertySchema,
           vendorFieldType
         )
@@ -166,7 +166,7 @@ export class IntegrationModelChecker {
    * - check that the target CreateNode type can be created (writable)
    * - for each DetailsResponse to CreatedNode field mapping:
    *   - check that if target CreatedNode property exists (or can be created)
-   *   - if the target CreatedNode property exists, check that its type matches the source value (either constant or DetailsResponse field type)
+   *   - if the target CreatedNode property exists, check that its type matches the input value (either constant or DetailsResponse field type)
    */
   static checkDetailsResponseToOutputNodeMapping(
     outputNodeFieldMapping: FieldMapping[] | undefined,
@@ -185,14 +185,14 @@ export class IntegrationModelChecker {
   }
 
   private static checkVendorFieldToGraphPropertyType(
-    sourceFieldKey: string,
+    inputFieldKey: string,
     outputPropertySchema: GraphPropertySchema,
     vendor: Vendor
   ): void {
     // check that the property exists
-    const vendorField = vendor.outputFields.find((p) => p.key === sourceFieldKey);
+    const vendorField = vendor.outputFields.find((p) => p.key === inputFieldKey);
     if (!vendorField) {
-      throw new Error(STRINGS.errors.outputMapping.unknownInputField(sourceFieldKey));
+      throw new Error(STRINGS.errors.outputMapping.unknownInputField(inputFieldKey));
     }
     // check that the property type matches
     this.checkValueToGraphPropertyType('vendor field', vendorField.type, outputPropertySchema);
