@@ -32,6 +32,7 @@ export class ListMultiselector<T extends string = string> extends AbstractFormPo
       const wrapper = document.createElement('div');
       wrapper.classList.add('form-check');
       const checkbox = document.createElement('input');
+      checkbox.id = `list-multi-selector-${i}`;
       checkbox.classList.add('form-check-input');
       checkbox.setAttribute('type', 'checkbox');
       if (model.includes(item)) {
@@ -41,6 +42,7 @@ export class ListMultiselector<T extends string = string> extends AbstractFormPo
       const label = document.createElement('label');
       label.classList.add('form-check-label');
       label.textContent = this.renderer(item);
+      label.htmlFor = checkbox.id;
       wrapper.appendChild(label);
       this.list.appendChild(wrapper);
     }

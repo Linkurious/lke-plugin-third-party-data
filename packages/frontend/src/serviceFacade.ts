@@ -100,8 +100,7 @@ export class ServiceFacade {
       await this.api.server.plugin.restartAll();
       p.update(STRINGS.ui.global.done);
     });
-    await this.ui.popIn.show('info', STRINGS.ui.createNewIntegrationSuccess);
-    await this.ui.showCustomActionManager(newIntegration);
+    await this.ui.showConfirmIntegrationCreated(newIntegration);
   }
 
   async editIntegration(integrationId: string): Promise<void> {
@@ -168,22 +167,12 @@ export class ServiceFacade {
     const confirmText = addedInLKE
       ? STRINGS.ui.importSearchResult.successfullyCreatedAndAdded
       : STRINGS.ui.importSearchResult.successfullyCreated;
-    await this.ui.popIn.showElement(
-      'Success',
-      $elem('div', {class: 'my-1'}, [
-        $elem('p', {class: 'my-2'}, confirmText),
-        $elem('div', {class: 'd-flex justify-content-center'}, [
-          this.ui.button.create(
-            STRINGS.ui.importSearchResult.confirmModalCloseButton,
-            {primary: true},
-            () => {
-              this.ui.popIn.close();
-              window.close();
-            }
-          )
-        ])
-      ])
-    );
+    await this.ui.popIn.showElement('Success', $elem('p', {class: 'my-2'}, confirmText), [
+      this.ui.button.create(STRINGS.ui.importSearchResult.confirmModalCloseButton, {}, () => {
+        this.ui.popIn.close();
+        window.close();
+      })
+    ]);
   }
 
   async createCustomAction(

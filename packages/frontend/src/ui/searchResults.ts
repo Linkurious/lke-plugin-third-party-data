@@ -24,7 +24,7 @@ export class SearchResults extends BaseUI {
     }
 
     return $elem('div', {}, [
-      $elem('h2', {}, STRINGS.ui.searchResults.title),
+      //$elem('h2', {}, STRINGS.ui.searchResults.title),
       description,
       // results
       ...response.results.map((result, index) => {
@@ -38,25 +38,24 @@ export class SearchResults extends BaseUI {
           $elem('div', {class: 'col-3'}, [
             this.ui.button.create(
               STRINGS.ui.searchResults.detailsButton,
-              {primary: false, classes: ['float-end', 'mb-2']},
+              {type: 'secondary', classes: ['float-end', 'mb-2']},
               async () => {
                 const content = $elem('div', {class: 'my-1'}, [
-                  this.getSearchResultProperties(integration, result, false),
-                  $elem('div', {class: 'd-flex justify-content-end'}, [
-                    this.ui.button.create(STRINGS.ui.global.closeButton, {primary: false}, () =>
-                      this.ui.popIn.close()
-                    )
-                  ])
+                  this.getSearchResultProperties(integration, result, false)
                 ]);
+                const footer = this.ui.button.create(STRINGS.ui.global.closeButton, {}, () =>
+                  this.ui.popIn.close()
+                );
                 await this.ui.popIn.showElement(
                   STRINGS.ui.searchResults.detailsModalTitle,
-                  content
+                  content,
+                  [footer]
                 );
               }
             ),
             this.ui.button.create(
               STRINGS.ui.searchResults.importButton,
-              {primary: true, classes: ['float-end', 'mb-2']},
+              {classes: ['float-end', 'mb-2']},
               async () => {
                 await services.importSearchResult(integration, result, response.inputNodeId);
               }

@@ -19,8 +19,8 @@
         <h1>Third-Party Data</h1>
       </div>
       <div id="button-bar" class="col-6">
-        <button id="btn-integration-list" class="btn btn-secondary admin-btn float-end ms-2" type="button">See integrations</button>
-        <button id="btn-integration-add" class="btn btn-primary admin-btn float-end ms-2" type="button">Add integration</button>
+        <button id="btn-integration-list" class="btn btn-outline-secondary admin-btn float-end ms-2" type="button">See integrations</button>
+        <button id="btn-integration-add" class="btn btn-outline-primary admin-btn float-end ms-2" type="button">Add integration</button>
       </div>
     </div>
     <div id="content" class="my-4"></div>
@@ -34,19 +34,21 @@
     </div>
   </div>
 
-  <!---------------------Popin--------------------->
-  <div id="popin" class="popin">
-    <div class="popinContent">
-      <a class="close">ⓧ</a>
-      <div class="messageDisplay m-3">
-        <h2 class="popinTitle">Title</h2>
-        <div class="popinMessage"></div>
+  <!---------------------Modal--------------------->
+  <div class="modal fade" id="popin" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-modal="true">
+    <div class="modal-dialog  modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title popinTitle">Modal title</h5>
+          <button type="button" class="close btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body popinMessage">...</div>
+        <div class="modal-footer popinFooter"></div>
       </div>
     </div>
   </div>
-
-  <script type="module" src="./src/index.ts"></script>
 </div>
-
+<div id="backdrop" class="modal-backdrop fade"></div>
+<script type="module" src="./src/index.ts"></script>
 </body>
 </html>

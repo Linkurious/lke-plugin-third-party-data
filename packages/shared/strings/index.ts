@@ -15,7 +15,7 @@ export const STRINGS = {
   emptyStateLinkText: 'online documentation',
   emptyStateLinkUrl: 'https://github.com/Linkurious/lke-plugin-third-party-data#readme',
   errors: {
-    checkSourceNodeMapping: {
+    checkInputNodeMapping: {
       noMappingsDefined: 'At least one search query mapping must be defined',
       missingInputProperty: `Search query mapping: source node property must be defined`,
       requiredFieldMissing: (vf: VendorField): string =>
@@ -145,7 +145,7 @@ export const STRINGS = {
       done: 'Done'
     },
     inputMappingEditor: {
-      title: 'Search query mapping',
+      title: 'Search query mapping - [4/7]',
       description: 'Build the search query from the input node properties',
       inputTypeLabel: 'Input type',
       searchQueryFieldLabel: 'Search query field (* = required)',
@@ -153,11 +153,8 @@ export const STRINGS = {
 
       propertyInputType: (inputNodeType: string): string => `"${inputNodeType}" property`
     },
-    nodeTypeSelector: {
-      title: 'Select a node-category'
-    },
     outputMappingEditor: {
-      title: 'Output node mapping',
+      title: 'Output node mapping - [7/7]',
       description: 'Build the new node properties from the vendor details',
       apiFieldLabel: 'API field',
       defaultMappingText: 'Use default mapping for all properties',
@@ -168,19 +165,24 @@ export const STRINGS = {
       fieldInputLabel: `API response field`
     },
     sourceSelector: {
-      title: 'Select a data-source',
+      title: 'Select a data-source - [2/7]',
       description: 'Select a data-source for this integration'
     },
     vendorSelector: {
-      title: 'Select third-party vendor API',
+      title: 'Select third-party vendor API - [1/7]',
       description:
         'Select a third-party data vendor API for this new integration, and configure it.'
     },
     integrationEditor: {
-      selectSourceNodeType: 'Select the source node-category for this integration'
+      selectInputNodeTypeTitle: 'Select the input node-category - [3/7]',
+      selectInputNodeTypeDescription:
+        'Select the node-category of the node that will be used as input for this integration',
+      selectOutputNodeTypeTitle: 'Select the output node-category - [6/7]',
+      selectOutputNodeTypeDescription:
+        'Select the node-category of the node that will be created as output of this integration'
     },
     searchResultFieldSelector: {
-      title: 'Search result',
+      title: 'Search result display - [5/7]',
       description: 'Select the response fields to display in the search results'
     },
     integrationList: {
@@ -189,7 +191,11 @@ export const STRINGS = {
       editButton: 'Edit',
       installButton: 'Install',
       deleteButton: 'Delete',
-      addButton: 'Add integration'
+      addButton: 'Add integration',
+      vendorHeader: 'Vendor API',
+      dataSourceHeader: 'Data-Source',
+      inputNodeHeader: 'Input node',
+      outputNodeHeader: 'Output node'
     },
     popin: {
       info: 'Information',
@@ -197,7 +203,7 @@ export const STRINGS = {
     },
     searchResults: {
       detailsModalTitle: 'Search result details',
-      detailsButton: `See details`,
+      detailsButton: `View details`,
       title: `Search results`,
       noResults: 'No results found.',
       importButton: `Import result`
@@ -215,6 +221,11 @@ export const STRINGS = {
       successfullyCreated: `Successfully imported search result in the graph.`,
       confirmModalCloseButton: 'Close window'
     },
-    createNewIntegrationSuccess: 'The new integration was successfully saved.'
+    integrationCreated: {
+      title: 'Integration created successfully',
+      message: `The new integration was successfully saved. You can install this integration by adding a custom action to launch it from a node's context menu.`,
+      createCustomActionButton: 'Install integration',
+      dontCreateCustomActionButton: 'Later'
+    }
   }
 };

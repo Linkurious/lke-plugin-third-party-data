@@ -92,4 +92,23 @@ export class UiFacade {
       ])
     );
   }
+
+  async showConfirmIntegrationCreated(newIntegration: IntegrationModel): Promise<void> {
+    await this.popIn.showElement(
+      STRINGS.ui.integrationCreated.title,
+      $elem('p', {}, STRINGS.ui.integrationCreated.message),
+      [
+        this.button.create(
+          STRINGS.ui.integrationCreated.dontCreateCustomActionButton,
+          {type: 'secondary'},
+          () => this.popIn.close()
+        ),
+        this.button.create(
+          STRINGS.ui.integrationCreated.createCustomActionButton,
+          {},
+          async () => await this.showCustomActionManager(newIntegration)
+        )
+      ]
+    );
+  }
 }

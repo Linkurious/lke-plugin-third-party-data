@@ -55,7 +55,8 @@ export class IntegrationEditor extends BaseUI {
       this.services,
       model.sourceKey,
       'read',
-      STRINGS.ui.integrationEditor.selectSourceNodeType,
+      STRINGS.ui.integrationEditor.selectInputNodeTypeTitle,
+      STRINGS.ui.integrationEditor.selectInputNodeTypeDescription,
       false
     );
     const inputNodeCategory = await inputNodeTypeSelector.show(model.inputNodeCategory);
@@ -111,7 +112,8 @@ export class IntegrationEditor extends BaseUI {
       this.services,
       dataSource.key,
       'write',
-      'Select the node-category to create from the search result',
+      STRINGS.ui.integrationEditor.selectOutputNodeTypeTitle,
+      STRINGS.ui.integrationEditor.selectOutputNodeTypeDescription,
       true
     );
     const outputNodeCategory = await outputNodeCategorySelector.show(model.outputNodeCategory);

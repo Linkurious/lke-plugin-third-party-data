@@ -162,7 +162,7 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
     const mappings = this.getModel();
     const sourceNodeSchema = await this.getInputNodeSchema();
     try {
-      IntegrationModelChecker.checkSourceNodeMappings(
+      IntegrationModelChecker.checkInputNodeMappings(
         mappings,
         sourceNodeSchema,
         this.params.vendor
@@ -187,6 +187,6 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
     model: Partial<FieldMapping>,
     nodeTypeSchema: GraphItemSchema
   ): asserts model is FieldMapping {
-    IntegrationModelChecker.checkSourceNodeMapping(model, this.params.vendor, nodeTypeSchema);
+    IntegrationModelChecker.checkInputNodeMapping(model, this.params.vendor, nodeTypeSchema);
   }
 }
