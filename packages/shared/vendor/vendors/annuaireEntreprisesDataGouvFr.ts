@@ -7,7 +7,7 @@ export class AnnuaireEntreprisesVendor extends Vendor<
   constructor() {
     super({
       key: 'annuaire-entreprises-data-gouv-fr',
-      name: 'Annuaire des Entreprises (data.gouv.fr)',
+      name: 'Annuaire des Entreprises',
       strategy: 'search',
       description: `Search for companies in the French Government's "Annuaire des Entreprises" database, see <a target="_blank" href="https://annuaire-entreprises.data.gouv.fr/">details</a>`,
       searchQueryFields: {
@@ -25,6 +25,7 @@ export class AnnuaireEntreprisesVendor extends Vendor<
       },
       searchResponseFields: {
         siren: {type: 'string', required: true},
+        url: {type: 'string', required: true},
         nom_complet: {type: 'string', required: true},
         nom_raison_sociale: {type: 'string', required: true},
         nombre_etablissements: {type: 'number', required: true},
@@ -98,6 +99,7 @@ export type AnnuaireEntreprisesSearchQuery = {
 
 export type AnnuaireEntreprisesSearchResponse = {
   siren: string;
+  url: string;
   nom_complet: string;
   nom_raison_sociale: string;
   nombre_etablissements: number;
