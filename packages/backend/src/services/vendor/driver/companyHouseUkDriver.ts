@@ -28,7 +28,6 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     maxResults: number
   ): Promise<VendorResult<CompanyHouseUkSearchResponse>[]> {
     const url = new URL('https://api.company-information.service.gov.uk/search/companies');
-    console.log('q:' + JSON.stringify(searchQuery));
     for (const [key, value] of Object.entries(searchQuery)) {
       url.searchParams.append(key, `${value}`);
     }

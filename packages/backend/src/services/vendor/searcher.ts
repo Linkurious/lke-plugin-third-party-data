@@ -6,6 +6,7 @@ import {VendorResult} from '../../../../shared/api/response';
 import {VendorIntegration} from '../../../../shared/integration/vendorIntegration';
 import {STRINGS} from '../../../../shared/strings';
 import {DetailsOptions} from '../../models/detailsOptions';
+import {Logger, WithLogger} from '../logger';
 
 import {DetailsSearchDriver, SearchDriver} from './searchDriver';
 import {AnnuaireEntreprisesDriver} from './driver/annuaireEntreprisesDriver';
@@ -18,10 +19,11 @@ const SEARCH_DRIVERS: SearchDriver[] = [
   new CompanyHouseUkDriver()
 ];
 
-export class Searcher {
+export class Searcher extends WithLogger {
   public readonly integration: VendorIntegration;
 
-  constructor(config: Configuration, integrationId: string) {
+  constructor(logger: Logger, config: Configuration, integrationId: string) {
+    super(logger);
     this.integration = config.getIntegrationById(integrationId);
   }
 
@@ -42,6 +44,7 @@ export class Searcher {
 
     const driver = this.getSearchDriver();
     const searchQuery = this.integration.getSearchQuery(inputNode);
+    this.logger.info(`${this.integration.vendor.key}.search: ` + JSON.stringify(searchQuery));
     return driver.search(searchQuery, this.integration, searchOptions.maxResults);
   }
 
@@ -52,6 +55,7 @@ export class Searcher {
       );
     }
     const driver = this.getSearchDriver() as DetailsSearchDriver;
+    this.logger.info(`${this.integration.vendor.key}.details: ` + JSON.stringify(detailsOptions));
     return driver.getDetails(this.integration, detailsOptions);
   }
 

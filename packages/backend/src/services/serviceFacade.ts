@@ -26,6 +26,7 @@ export class ServiceFacade {
     this.logger = new Logger();
     this.config = new Configuration(options.configuration, this.logger);
     this.api = new API(options, this.logger);
+    this.logger.info('ServiceFacade initialized');
   }
 
   async currentUserIsAdmin(req: express.Request): Promise<boolean> {
@@ -50,7 +51,7 @@ export class ServiceFacade {
   ): Promise<VendorSearchResponse> {
     let results: VendorResult[] = [];
     let apiError: ApiError | undefined = undefined;
-    const searcher = new Searcher(this.config, searchOptions.integrationId);
+    const searcher = new Searcher(this.logger, this.config, searchOptions.integrationId);
     try {
       results = await searcher.getSearchResults(restClient, searchOptions);
     } catch (e) {
@@ -71,7 +72,7 @@ export class ServiceFacade {
   async getDetails(detailsOptions: DetailsOptions): Promise<VendorDetailsResponse> {
     let result: VendorResult | undefined = undefined;
     let apiError: ApiError | undefined = undefined;
-    const searcher = new Searcher(this.config, detailsOptions.integrationId);
+    const searcher = new Searcher(this.logger, this.config, detailsOptions.integrationId);
     try {
       result = await searcher.getDetails(detailsOptions);
     } catch (e) {

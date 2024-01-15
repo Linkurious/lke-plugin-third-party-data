@@ -221,8 +221,7 @@ export const STRINGS = {
       savingNewIntegration: 'Saving new integration...',
       savingIntegration: 'Updating integration',
       deletingIntegration: 'Deleting integration...',
-      restartingPlugin:
-        'Applying changes: this requires restarting the plugin (this can take several seconds)...'
+      restartingPlugin: 'Applying changes (this can take several seconds)...'
     },
     importSearchResult: {
       creatingNode: 'Creating output node...',
