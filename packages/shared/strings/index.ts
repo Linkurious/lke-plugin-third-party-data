@@ -230,7 +230,8 @@ export const STRINGS = {
       successfullyCreatedAndAdded: `Successfully imported search result in the graph. The visualization has been updated.`,
       successfullyCreated: `Successfully imported search result in the graph.`,
       confirmModalCloseButton: 'Close window',
-      gettingDetails: 'Getting details for the selected result'
+      gettingDetails: 'Getting details for the selected result',
+      title: 'Success'
     },
     integrationCreated: {
       title: 'Integration created successfully',
