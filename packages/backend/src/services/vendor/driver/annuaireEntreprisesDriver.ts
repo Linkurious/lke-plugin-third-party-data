@@ -35,9 +35,12 @@ export class AnnuaireEntreprisesDriver extends BaseSearchDriver<
       throw new Error(`Failed to get search results: ${(r.body as ResponseBody).erreur}`);
     }
     return (r.body as ResponseBody).results.map((res) => {
+      const properties = flattenJson(res) as AnnuaireEntreprisesSearchResponse;
+      // add the "url" property on each result
+      properties.url = `https://annuaire-entreprises.data.gouv.fr/entreprise/${properties.siren}}`;
       return {
         id: `siren:${res.siren as string}`,
-        properties: flattenJson(res) as AnnuaireEntreprisesSearchResponse
+        properties: properties
       };
     });
   }

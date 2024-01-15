@@ -1,5 +1,3 @@
-// api key: 946c2f5a-2b4b-4a3c-af33-4c32f636fbc3
-
 import {Vendor} from '../vendor';
 
 export class CompanyHouseUk extends Vendor<

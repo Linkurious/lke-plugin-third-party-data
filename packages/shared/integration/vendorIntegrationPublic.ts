@@ -34,14 +34,14 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
   }
   */
 
-  getOutputNode(searchResult: VendorResult): ICreateNodeParams {
+  getOutputNode(vendorResult: VendorResult): ICreateNodeParams {
     const node = {
       sourceKey: this.model.sourceKey,
       categories: [this.model.outputNodeCategory],
       properties: {} as Record<string, unknown>
     };
     for (const mapping of this.model.outputNodeFieldMapping) {
-      const inputValue = this.getVendorInputValue(mapping, searchResult);
+      const inputValue = this.getVendorInputValue(mapping, vendorResult);
       if (inputValue === undefined) {
         continue;
       }
@@ -67,7 +67,11 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
     searchResult: VendorResult
   ): VendorFieldType | undefined {
     if (mapping.type === 'constant') {
-      return mapping.value;
+      let value = mapping.value;
+      if (typeof value === 'string') {
+        value = value.replaceAll('$date', new Date().toISOString());
+      }
+      return value;
     }
     if (mapping.type === 'property') {
       return searchResult.properties[mapping.inputPropertyKey];
