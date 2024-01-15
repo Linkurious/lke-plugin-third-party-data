@@ -181,12 +181,16 @@ export class ServiceFacade {
     const confirmText = addedInLKE
       ? STRINGS.ui.importSearchResult.successfullyCreatedAndAdded
       : STRINGS.ui.importSearchResult.successfullyCreated;
-    await this.ui.popIn.showElement('Success', $elem('p', {class: 'my-2'}, confirmText), [
-      this.ui.button.create(STRINGS.ui.importSearchResult.confirmModalCloseButton, {}, () => {
-        this.ui.popIn.close();
-        window.close();
-      })
-    ]);
+    await this.ui.popIn.showElement(
+      STRINGS.ui.importSearchResult.title,
+      $elem('p', {class: 'my-2'}, confirmText),
+      [
+        this.ui.button.create(STRINGS.ui.importSearchResult.confirmModalCloseButton, {}, () => {
+          this.ui.popIn.close();
+          window.close();
+        })
+      ]
+    );
   }
 
   async createCustomAction(
