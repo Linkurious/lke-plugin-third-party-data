@@ -74,9 +74,22 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     if (r.status !== 200) {
       throw new Error(`Failed to get details results: ${JSON.stringify(r.body)}`);
     }
+
+    const properties = flattenJson(r.body as DetailsResponseBody) as CompanyHouseUkDetailsResponse;
+
+    // prefix all "links_" properties with this base URL:
+    // https://find-and-update.company-information.service.gov.uk
+    for (const [k, v] of Object.entries(properties)) {
+      const key = k as keyof CompanyHouseUkDetailsResponse;
+      if (key.startsWith('links_') && typeof v === 'string' && v.startsWith('/')) {
+        (properties[key] as string) =
+          `https://find-and-update.company-information.service.gov.uk${v}`;
+      }
+    }
+
     return {
       id: `${detailsOptions.searchResultId}`,
-      properties: flattenJson(r.body as DetailsResponseBody) as CompanyHouseUkDetailsResponse
+      properties: properties
     };
   }
 }
