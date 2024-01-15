@@ -1,6 +1,6 @@
 import {LkEdge, LkNode, LkError, Response, User} from '@linkurious/rest-client';
 
-import {VendorSearchResult} from '../../shared/api/response';
+import {VendorResult} from '../../shared/api/response';
 import {IntegrationModel, IntegrationModelPublic} from '../../shared/integration/IntegrationModel';
 import {VendorIntegrationPublic} from '../../shared/integration/vendorIntegrationPublic';
 import {asError, clone, randomString} from '../../shared/utils';
@@ -121,29 +121,43 @@ export class ServiceFacade {
 
   async importSearchResult(
     integration: IntegrationModelPublic,
-    searchResult: VendorSearchResult,
+    searchResult: VendorResult,
     inputNodeId: string
   ): Promise<void> {
     console.log('IMPORT_RESULT: ' + JSON.stringify(searchResult));
     let addedInLKE = false;
     await this.ui.longTask.run(async (p) => {
       const int = new VendorIntegrationPublic(integration);
+      let resultToImport = searchResult;
+
+      // if needed, resolve the details for the selected search result
+      if (int.vendor.strategy === 'searchAndDetails') {
+        p.update(STRINGS.ui.importSearchResult.gettingDetails);
+        const detailsR = await this.api.getDetails(integration, searchResult.id);
+        if (detailsR.result) {
+          resultToImport = detailsR.result;
+        } else {
+          throw new Error(STRINGS.errors.importResult.detailsNotFound);
+        }
+      }
 
       // create + save the target node from the search result
       p.update(STRINGS.ui.importSearchResult.creatingNode);
-      const newNodeR = await this.api.server.graphNode.createNode(int.getOutputNode(searchResult));
+      const newNodeR = await this.api.server.graphNode.createNode(
+        int.getOutputNode(resultToImport)
+      );
       if (!newNodeR.isSuccess()) {
-        throw new Error(STRINGS.errors.importSearchResult.failedToCreateNode(newNodeR.body));
+        throw new Error(STRINGS.errors.importResult.failedToCreateNode(newNodeR.body));
       }
       const newNodeId = newNodeR.body.id;
 
       // create the connecting edge
       p.update(STRINGS.ui.importSearchResult.creatingEdge);
       const newEdgeR = await this.api.server.graphEdge.createEdge(
-        int.getOutputEdge(searchResult, newNodeR.body.id, inputNodeId)
+        int.getOutputEdge(resultToImport, newNodeR.body.id, inputNodeId)
       );
       if (!newEdgeR.isSuccess()) {
-        throw new Error(STRINGS.errors.importSearchResult.failedToCreateEdge(newEdgeR.body));
+        throw new Error(STRINGS.errors.importResult.failedToCreateEdge(newEdgeR.body));
       }
 
       p.update(STRINGS.ui.global.done);

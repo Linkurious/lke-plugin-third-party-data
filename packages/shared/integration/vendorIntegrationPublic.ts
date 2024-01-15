@@ -6,7 +6,7 @@ import {
   LkNode
 } from '@linkurious/rest-client';
 
-import {VendorSearchResult} from '../api/response';
+import {VendorResult} from '../api/response';
 import {VendorFieldType} from '../vendor/vendorModel';
 import {Vendor} from '../vendor/vendor';
 import {Vendors} from '../vendor/vendors';
@@ -34,7 +34,7 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
   }
   */
 
-  getOutputNode(searchResult: VendorSearchResult): ICreateNodeParams {
+  getOutputNode(searchResult: VendorResult): ICreateNodeParams {
     const node = {
       sourceKey: this.model.sourceKey,
       categories: [this.model.outputNodeCategory],
@@ -64,7 +64,7 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
 
   private getVendorInputValue(
     mapping: FieldMapping,
-    searchResult: VendorSearchResult
+    searchResult: VendorResult
   ): VendorFieldType | undefined {
     if (mapping.type === 'constant') {
       return mapping.value;
@@ -76,7 +76,7 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
   }
 
   getOutputEdge(
-    _searchResult: VendorSearchResult,
+    _searchResult: VendorResult,
     outputNodeId: string,
     inputNodeId: string
   ): ICreateEdgeParams {

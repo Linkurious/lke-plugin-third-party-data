@@ -1,4 +1,4 @@
-import {VendorSearchResult} from '../../../../../shared/api/response';
+import {VendorResult} from '../../../../../shared/api/response';
 import {BaseSearchDriver, flattenJson} from '../baseSearchDriver';
 import {VendorIntegration} from '../../../../../shared/integration/vendorIntegration';
 import {
@@ -22,7 +22,7 @@ export class DnbPeopleLookupDriver extends BaseSearchDriver<
     searchQuery: DnbPersonLookupSearchQuery,
     integration: VendorIntegration,
     maxResults: number
-  ): Promise<VendorSearchResult<DnbPersonLookupSearchResponse>[]> {
+  ): Promise<VendorResult<DnbPersonLookupSearchResponse>[]> {
     const url = new URL('https://direct.dnb.com/V6.4/organizations');
     url.searchParams.set('CandidateMaximumQuantity', `${maxResults}`);
     url.searchParams.set('findcontact', `${true}`);

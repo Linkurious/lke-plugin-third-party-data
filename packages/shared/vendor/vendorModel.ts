@@ -1,11 +1,14 @@
-export type VendorModel<SQ extends AbstractFields, SR extends AbstractFields> =
-  | VendorModelSearch<SQ, SR>
-  | VendorModelSearchAndDetails<SQ, SR>;
+export type VendorModel<
+  SQ extends AbstractFields,
+  SR extends AbstractFields,
+  DR extends AbstractFields | NonNullable<unknown> = NonNullable<unknown>
+> = VendorModelSearch<SQ, SR> | VendorModelSearchAndDetails<SQ, SR, DR>;
 
 export interface BaseVendorModel<
   T extends VendorStrategy,
   SQ extends AbstractFields,
-  SR extends AbstractFields
+  SR extends AbstractFields,
+  DR extends AbstractFields | NonNullable<unknown> = NonNullable<unknown>
 > {
   readonly key: string;
   readonly name: string;
@@ -14,15 +17,18 @@ export interface BaseVendorModel<
   readonly searchQueryFields: FieldsDescription<SQ>;
   readonly searchResponseFields: FieldsDescription<SR>;
   readonly adminFields: VendorAdminField[];
-  readonly detailsResponseFields?: undefined | VendorField[];
+  readonly detailsResponseFields?: FieldsDescription<DR>;
 }
 export interface VendorModelSearch<SQ extends AbstractFields, SR extends AbstractFields>
   extends BaseVendorModel<'search', SQ, SR> {
   readonly detailsResponseFields?: undefined;
 }
-export interface VendorModelSearchAndDetails<SQ extends AbstractFields, SR extends AbstractFields>
-  extends BaseVendorModel<'searchAndDetails', SQ, SR> {
-  readonly detailsResponseFields: VendorField[];
+export interface VendorModelSearchAndDetails<
+  SQ extends AbstractFields,
+  SR extends AbstractFields,
+  DR extends AbstractFields
+> extends BaseVendorModel<'searchAndDetails', SQ, SR, DR> {
+  readonly detailsResponseFields: FieldsDescription<DR>;
 }
 
 export type VendorStrategy = 'search' | 'searchAndDetails';

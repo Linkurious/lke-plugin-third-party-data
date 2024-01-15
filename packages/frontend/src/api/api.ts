@@ -1,10 +1,13 @@
 import {RestClient} from '@linkurious/rest-client';
 import {CustomAction} from '@linkurious/rest-client/dist/src/api/CustomAction/types';
 
-import {ApiError, VendorSearchResponse} from '../../../shared/api/response';
+import {ApiError, VendorDetailsResponse, VendorSearchResponse} from '../../../shared/api/response';
 import {MyPluginConfig, MyPluginConfigPublic} from '../../../shared/myPluginConfig';
 import {STRINGS} from '../../../shared/strings';
-import {IntegrationModel} from '../../../shared/integration/IntegrationModel.ts';
+import {
+  IntegrationModel,
+  IntegrationModelPublic
+} from '../../../shared/integration/IntegrationModel.ts';
 
 export class API {
   private readonly restClient: RestClient;
@@ -70,6 +73,22 @@ export class API {
       STRINGS.errors.search.nodeNotFound(params)
     );
     return r as unknown as VendorSearchResponse;
+  }
+
+  async getDetails(
+    integration: IntegrationModelPublic,
+    searchResultId: string
+  ): Promise<VendorDetailsResponse> {
+    const r = await this.plugin(
+      `./api/details`,
+      {
+        searchResultId: searchResultId,
+        integrationId: integration.id
+      },
+      200,
+      STRINGS.errors.details.detailsNotFound(searchResultId)
+    );
+    return r as unknown as VendorDetailsResponse;
   }
 
   async getPluginConfiguration(): Promise<MyPluginConfig> {

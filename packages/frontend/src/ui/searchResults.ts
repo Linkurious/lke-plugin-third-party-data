@@ -1,6 +1,6 @@
 import {ServiceFacade} from '../serviceFacade';
 import {IntegrationModelPublic} from '../../../shared/integration/IntegrationModel';
-import {VendorSearchResponse, VendorSearchResult} from '../../../shared/api/response';
+import {VendorSearchResponse, VendorResult} from '../../../shared/api/response';
 import {Vendors} from '../../../shared/vendor/vendors.ts';
 import {STRINGS} from '../../../shared/strings';
 
@@ -68,7 +68,7 @@ export class SearchResults extends BaseUI {
 
   private getSearchResultProperties(
     integration: IntegrationModelPublic,
-    result: VendorSearchResult,
+    result: VendorResult,
     filterSelection: boolean
   ): HTMLElement {
     return $elem(

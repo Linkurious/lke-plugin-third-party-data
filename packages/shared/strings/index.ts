@@ -76,6 +76,10 @@ export const STRINGS = {
       invalidMaxResultsRange: (min: number, max: number): string =>
         `Invalid query-string parameter: maxResults (must be between ${min} and ${max})`
     },
+    detailsOptions: {
+      missingSearchResultId: 'Missing query-string parameter: searchResultId',
+      missingIntegrationId: 'Missing query-string parameter: integrationId'
+    },
     search: {
       vendorNotFound: (i: VendorIntegration): string =>
         `No search driver for vendor "${i.vendor.key}" (integration ${i.id})`,
@@ -86,6 +90,10 @@ export const STRINGS = {
       }): string => {
         return `Failed searching for Node ${params.nodeId} in source ${params.sourceKey}`;
       }
+    },
+    details: {
+      detailsNotFound: (searchResultId: string): string =>
+        `Could not fetch details for search result #${searchResultId}`
     },
     getAdminConfig: `Could not get the plugin's admin-configuration`,
     getUserConfig: `Could not get the plugin's user-configuration`,
@@ -102,7 +110,8 @@ export const STRINGS = {
       invalidValue: (fieldName: string): string => `Invalid value for field ${fieldName}`
     },
     searchResultFieldSelectorEmpty: 'At least one field must be selected',
-    importSearchResult: {
+    importResult: {
+      detailsNotFound: 'Could not fetch details for the selected result',
       failedToCreateNode: (error: LkError): string =>
         `Failed to create output node: ${error.message}`,
       failedToCreateEdge: (error: LkError): string =>
@@ -212,14 +221,16 @@ export const STRINGS = {
       savingNewIntegration: 'Saving new integration...',
       savingIntegration: 'Updating integration',
       deletingIntegration: 'Deleting integration...',
-      restartingPlugin: 'Restarting plugin (this could take a while)...'
+      restartingPlugin:
+        'Applying changes: this requires restarting the plugin (this can take several seconds)...'
     },
     importSearchResult: {
       creatingNode: 'Creating output node...',
       creatingEdge: 'Creating output edge...',
       successfullyCreatedAndAdded: `Successfully imported search result in the graph. The visualization has been updated.`,
       successfullyCreated: `Successfully imported search result in the graph.`,
-      confirmModalCloseButton: 'Close window'
+      confirmModalCloseButton: 'Close window',
+      gettingDetails: 'Getting details for the selected result'
     },
     integrationCreated: {
       title: 'Integration created successfully',

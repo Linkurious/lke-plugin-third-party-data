@@ -1,4 +1,4 @@
-import {VendorSearchResult} from '../../../../../shared/api/response';
+import {VendorResult} from '../../../../../shared/api/response';
 import {BaseSearchDriver, flattenJson} from '../baseSearchDriver';
 import {VendorIntegration} from '../../../../../shared/integration/vendorIntegration';
 import {
@@ -22,20 +22,16 @@ export class AnnuaireEntreprisesDriver extends BaseSearchDriver<
     searchQuery: AnnuaireEntreprisesSearchQuery,
     _integration: VendorIntegration,
     maxResults: number
-  ): Promise<VendorSearchResult<AnnuaireEntreprisesSearchResponse>[]> {
+  ): Promise<VendorResult<AnnuaireEntreprisesSearchResponse>[]> {
     const url = new URL('https://recherche-entreprises.api.gouv.fr/search');
-    console.log('q:' + JSON.stringify(searchQuery));
     for (const [key, value] of Object.entries(searchQuery)) {
       url.searchParams.append(key, `${value}`);
     }
     url.searchParams.set('page', '1');
     url.searchParams.set('per_page', `${maxResults}`);
 
-    console.log('>' + url);
-
     const r = await this.client.get(url.toString()).set('accept', 'json');
     if (r.status !== 200) {
-      console.log('R: ' + JSON.stringify(r.body, null, 2));
       throw new Error(`Failed to get search results: ${(r.body as ResponseBody).erreur}`);
     }
     return (r.body as ResponseBody).results.map((res) => {
