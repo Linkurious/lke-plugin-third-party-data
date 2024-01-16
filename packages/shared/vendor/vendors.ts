@@ -1,8 +1,12 @@
-import {AnnuaireEntreprisesVendor} from './vendors/annuaireEntreprisesDataGouvFr';
-import {DnbPersonLookupVendor} from './vendors/dnbPersonLookup';
 import {Vendor} from './vendor';
+import {AnnuaireEntreprisesVendor} from './vendors/annuaireEntreprisesDataGouvFr';
+import {CompanyHouseUk} from './vendors/companyHouseUk';
 
-const VENDORS: Vendor[] = [new AnnuaireEntreprisesVendor(), new DnbPersonLookupVendor()];
+const VENDORS: Vendor[] = [
+  new AnnuaireEntreprisesVendor(),
+  new CompanyHouseUk()
+  /*, new DnbPersonLookupVendor()*/ // add it back when it's tested
+];
 
 export class Vendors {
   static getVendorByKey(key: string): Vendor {

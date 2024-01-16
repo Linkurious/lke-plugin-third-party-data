@@ -1,12 +1,13 @@
-import {PluginInterface} from '@linkurious/rest-client';
+import {PluginRouteOptions} from '@linkurious/rest-client';
 import express from 'express';
 
 import {MyPluginConfig} from '../../shared/myPluginConfig';
 
 import {ServiceFacade} from './services/serviceFacade';
 import {SearchOptions} from './models/searchOptions';
+import {DetailsOptions} from './models/detailsOptions';
 
-export = function (pluginInterface: PluginInterface<MyPluginConfig>): void {
+export = function (pluginInterface: PluginRouteOptions<MyPluginConfig>): void {
   const services = new ServiceFacade(pluginInterface);
 
   pluginInterface.router.get(
@@ -28,6 +29,14 @@ export = function (pluginInterface: PluginInterface<MyPluginConfig>): void {
     respond(async (req) => {
       const searchOptions = SearchOptions.from(req.query);
       return services.search(pluginInterface.getRestClient(req), searchOptions);
+    })
+  );
+
+  pluginInterface.router.get(
+    '/details',
+    respond(async (req) => {
+      const detailsOptions = DetailsOptions.from(req.query);
+      return services.getDetails(detailsOptions);
     })
   );
 };

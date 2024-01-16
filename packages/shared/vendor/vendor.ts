@@ -9,11 +9,12 @@ import {
 
 export class Vendor<
   SQ extends AbstractFields = AbstractFields,
-  SR extends AbstractFields = AbstractFields
+  SR extends AbstractFields = AbstractFields,
+  DR extends AbstractFields = NonNullable<unknown>
 > {
-  private readonly model: VendorModel<SQ, SR>;
+  private readonly model: VendorModel<SQ, SR, DR>;
 
-  constructor(model: VendorModel<SQ, SR>) {
+  constructor(model: VendorModel<SQ, SR, DR>) {
     this.model = model;
   }
 
@@ -23,9 +24,7 @@ export class Vendor<
   get description(): string {
     return this.model.description;
   }
-  get detailsResponseFields(): VendorField[] | undefined {
-    return this.model.detailsResponseFields;
-  }
+
   get key(): string {
     return this.model.key;
   }
@@ -44,6 +43,6 @@ export class Vendor<
   get outputFields(): VendorField[] {
     return this.model.strategy === 'search'
       ? toVendorFields(this.model.searchResponseFields)
-      : this.model.detailsResponseFields;
+      : toVendorFields(this.model.detailsResponseFields);
   }
 }

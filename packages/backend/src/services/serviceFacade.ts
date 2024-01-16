@@ -1,11 +1,17 @@
-import {PluginInterface, RestClient} from '@linkurious/rest-client';
+import {PluginRouteOptions, RestClient} from '@linkurious/rest-client';
 import express = require('express');
 
 import {MyPluginConfig, MyPluginConfigPublic} from '../../../shared/myPluginConfig';
 import {API} from '../server/api';
-import {ApiError, VendorSearchResponse, VendorSearchResult} from '../../../shared/api/response';
+import {
+  ApiError,
+  VendorSearchResponse,
+  VendorResult,
+  VendorDetailsResponse
+} from '../../../shared/api/response';
 import {SearchOptions} from '../models/searchOptions';
 import {asError} from '../../../shared/utils';
+import {DetailsOptions} from '../models/detailsOptions';
 
 import {Configuration} from './configuration';
 import {Logger} from './logger';
@@ -16,10 +22,11 @@ export class ServiceFacade {
   public readonly api: API;
   public config: Configuration;
 
-  constructor(options: PluginInterface<MyPluginConfig>) {
+  constructor(options: PluginRouteOptions<MyPluginConfig>) {
     this.logger = new Logger();
     this.config = new Configuration(options.configuration, this.logger);
     this.api = new API(options, this.logger);
+    this.logger.info('ServiceFacade initialized');
   }
 
   async currentUserIsAdmin(req: express.Request): Promise<boolean> {
@@ -42,11 +49,11 @@ export class ServiceFacade {
     restClient: RestClient,
     searchOptions: SearchOptions
   ): Promise<VendorSearchResponse> {
-    let results: VendorSearchResult[] = [];
+    let results: VendorResult[] = [];
     let apiError: ApiError | undefined = undefined;
-    const searcher = new Searcher(this.config, searchOptions);
+    const searcher = new Searcher(this.logger, this.config, searchOptions.integrationId);
     try {
-      results = await searcher.getSearchResults(restClient);
+      results = await searcher.getSearchResults(restClient, searchOptions);
     } catch (e) {
       apiError = {
         code: 'search-error',
@@ -59,6 +66,27 @@ export class ServiceFacade {
       integrationId: searchOptions.integrationId,
       vendorKey: searcher.integration.vendor.key,
       results: results
+    };
+  }
+
+  async getDetails(detailsOptions: DetailsOptions): Promise<VendorDetailsResponse> {
+    let result: VendorResult | undefined = undefined;
+    let apiError: ApiError | undefined = undefined;
+    const searcher = new Searcher(this.logger, this.config, detailsOptions.integrationId);
+    try {
+      result = await searcher.getDetails(detailsOptions);
+    } catch (e) {
+      apiError = {
+        code: 'get-details-error',
+        message: asError(e).message
+      };
+    }
+    return {
+      error: apiError,
+      integrationId: detailsOptions.integrationId,
+      searchResultId: detailsOptions.searchResultId,
+      vendorKey: searcher.integration.vendor.key,
+      result: result
     };
   }
 }

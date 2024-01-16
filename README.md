@@ -1,10 +1,10 @@
-# LKE Plugin: Third Party Data
+# LKE Plugin: Third-Party Data
 
 ## Purpose and principles
-The plugin is used to import Third Party Data to enrich certain nodes in your graph:
+The plugin is used to import Third-Party Data to enrich some nodes in your graph:
 - For example, you may have a `Company` node in your graph, and you want to enrich it with data from the [French Official Company Information API](https://annuaire-entreprises.data.gouv.fr/).
 - You click any `Company` node in the graph, use the `custom action` menu and click `Fetch details for French Company`.
-- The plugin opens abd shows a list of matching results from the French Company Information API.
+- The plugin opens and shows a list of matching results from the French Company Information API.
 - You select the result you want to import, which creates a new `Person_Details` node in the graph with the data from the API, linked to the original `Person` node.
 
 The plugin supports multiple vendor APIs.
@@ -19,13 +19,21 @@ An **API integration** is a configuration that contains:
 - the type of node to create as output with the response data (e.g. `Company_Details`)
 - the properties of the response to use as properties of the new node (e.g. `email`, `phone`, `company`, `location`, `industry`, `linkedin`, `employee_count`, `revenue`)
 
-## Demo & examples
-Full usage example, from Linkurious Enterprise:
+## Supported APIs
+- [Annuaire des Entreprises (data.gouv.fr)](https://annuaire-entreprises.data.gouv.fr/)
+- [Company House (gov.uk)](https://find-and-update.company-information.service.gov.uk/)
 
-https://github.com/Linkurious/lke-plugin-third-party-data/assets/605880/afa43133-a7f4-4a00-900c-b91961167a3d
+## Tutorials & examples
+How to get details for a node, from Linkurious Enterprise:
 
-Example screenshot of the main search interface:
-![plugin_data_preview](https://github.com/Linkurious/lke-plugin-third-party-data/assets/605880/1b91419c-f379-434e-af79-b204e1f3c488)
+https://github.com/Linkurious/lke-plugin-third-party-data/assets/605880/d050f4a6-50ca-4961-9aeb-1795a474b425
+
+How to create a new integration:
+
+https://github.com/Linkurious/lke-plugin-third-party-data/assets/605880/29fffcc0-16d5-4699-bc3e-7e3a8660363e
+
+Screenshot of the main search interface:
+![plugin_data_preview](https://github.com/Linkurious/lke-plugin-third-party-data/assets/605880/d7937516-2932-438d-89c4-aa707017506d)
 
 ## Using the plugin
 Installing & accessing:
@@ -38,7 +46,7 @@ Features:
 - User: choose a result from the list of matching data to create a new node in the graph
 
 ## Contributing
-This project is using npm workspaces.
+This project uses npm workspaces.
 The code is distributed into 3 main locations:
 - shared code (simple folder under `packages/shared`)
 - frontend (npm workspace under `packages/frontend`

@@ -1,6 +1,6 @@
 import {ServiceFacade} from '../serviceFacade';
 import {IntegrationModelPublic} from '../../../shared/integration/IntegrationModel';
-import {VendorSearchResponse, VendorSearchResult} from '../../../shared/api/response';
+import {VendorSearchResponse, VendorResult} from '../../../shared/api/response';
 import {Vendors} from '../../../shared/vendor/vendors.ts';
 import {STRINGS} from '../../../shared/strings';
 
@@ -24,7 +24,7 @@ export class SearchResults extends BaseUI {
     }
 
     return $elem('div', {}, [
-      $elem('h2', {}, STRINGS.ui.searchResults.title),
+      //$elem('h2', {}, STRINGS.ui.searchResults.title),
       description,
       // results
       ...response.results.map((result, index) => {
@@ -38,25 +38,24 @@ export class SearchResults extends BaseUI {
           $elem('div', {class: 'col-3'}, [
             this.ui.button.create(
               STRINGS.ui.searchResults.detailsButton,
-              {primary: false, classes: ['float-end', 'mb-2']},
+              {type: 'secondary', classes: ['float-end', 'mb-2']},
               async () => {
                 const content = $elem('div', {class: 'my-1'}, [
-                  this.getSearchResultProperties(integration, result, false),
-                  $elem('div', {class: 'd-flex justify-content-end'}, [
-                    this.ui.button.create(STRINGS.ui.global.closeButton, {primary: false}, () =>
-                      this.ui.popIn.close()
-                    )
-                  ])
+                  this.getSearchResultProperties(integration, result, false)
                 ]);
+                const footer = this.ui.button.create(STRINGS.ui.global.closeButton, {}, () =>
+                  this.ui.popIn.close()
+                );
                 await this.ui.popIn.showElement(
                   STRINGS.ui.searchResults.detailsModalTitle,
-                  content
+                  content,
+                  [footer]
                 );
               }
             ),
             this.ui.button.create(
               STRINGS.ui.searchResults.importButton,
-              {primary: true, classes: ['float-end', 'mb-2']},
+              {classes: ['float-end', 'mb-2']},
               async () => {
                 await services.importSearchResult(integration, result, response.inputNodeId);
               }
@@ -69,18 +68,17 @@ export class SearchResults extends BaseUI {
 
   private getSearchResultProperties(
     integration: IntegrationModelPublic,
-    result: VendorSearchResult,
+    result: VendorResult,
     filterSelection: boolean
   ): HTMLElement {
     return $elem(
       'div',
       {class: 'mb-3'},
       // result properties
-      Object.entries(result.properties)
-        .filter(([key]) =>
-          filterSelection ? integration.searchResponseFieldSelection.includes(key) : true
-        )
-        .map(([key, value], index) =>
+      integration.searchResponseFieldSelection
+        .filter((key) => (filterSelection ? key in result.properties : true))
+        .map((key) => ({key: key, value: result.properties[key]}))
+        .map((entry, index) =>
           $elem('div', {class: 'row'}, [
             // result property key
             $elem(
@@ -88,15 +86,15 @@ export class SearchResults extends BaseUI {
               {
                 class: 'col-4 text-break font-monospace' + (index % 2 === 0 ? ' text-bg-light' : '')
               },
-              key
+              entry.key
             ),
             // result property value
             $elem(
               'div',
               {class: 'col-8 text-break' + (index % 2 === 0 ? ' text-bg-light' : '')},
-              typeof value === 'string'
-                ? value.split('\n\n').map((line) => $elem('div', {}, line))
-                : `${value}`
+              typeof entry.value === 'string'
+                ? entry.value.split('\n\n').map((line) => $elem('div', {}, line))
+                : `${entry.value}`
             )
           ])
         )

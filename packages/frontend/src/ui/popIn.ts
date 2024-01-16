@@ -1,6 +1,6 @@
 import {STRINGS} from '../../../shared/strings';
 
-import {$elem, $id} from './uiUtils';
+import {$id} from './uiUtils';
 import {BaseUI} from './baseUI';
 import {UiFacade} from './uiFacade';
 
@@ -23,13 +23,18 @@ export class PopIn extends BaseUI {
   }
 
   private init(): void {
+    $id('backdrop')!.style.display = 'none';
     document
-      .querySelectorAll('.popin a.close')
+      .querySelectorAll('#popin .close')
       .forEach((closeButton) => closeButton.addEventListener('click', () => this.close()));
   }
 
-  private get popin(): Element {
+  private get popin(): HTMLElement {
     return $id('popin')!;
+  }
+
+  private get body(): HTMLElement {
+    return document.querySelector('body')!;
   }
 
   show(style: 'info' | 'error', message: string, hideApp = false): Promise<IPopinCloseValue> {
@@ -43,13 +48,8 @@ export class PopIn extends BaseUI {
       p.textContent = line;
       content.appendChild(p);
     }
-    content.appendChild(
-      $elem('div', {class: 'd-flex justify-content-end'}, [
-        this.ui.button.create(STRINGS.ui.global.closeButton, {primary: true}, () => this.close())
-      ])
-    );
-
-    return this.showElement(title, content, hideApp);
+    const footer = this.ui.button.create(STRINGS.ui.global.closeButton, {}, () => this.close());
+    return this.showElement(title, content, [footer], hideApp);
   }
 
   /**
@@ -58,6 +58,7 @@ export class PopIn extends BaseUI {
   showElement<V = undefined>(
     title: string,
     content: HTMLElement,
+    footer: HTMLElement[],
     hideApp = false
   ): Promise<IPopinCloseValue<V>> {
     return new Promise<IPopinCloseValue<V>>((resolve, reject) => {
@@ -72,10 +73,11 @@ export class PopIn extends BaseUI {
       const close = popin.querySelector('.close')!;
       const titleElement = popin.querySelector('.popinTitle')!;
       const messageElement = popin.querySelector('.popinMessage')!;
+      const footerElement = popin.querySelector('.popinFooter')!;
 
       titleElement.textContent = title;
-      messageElement.replaceChildren();
-      messageElement.appendChild(content);
+      messageElement.replaceChildren(content);
+      footerElement.replaceChildren(...footer);
 
       if (hideApp) {
         close.classList.add('none');
@@ -85,12 +87,23 @@ export class PopIn extends BaseUI {
         popin.classList.remove('hider');
       }
 
+      popin.style.display = 'block';
       popin.classList.add('show');
+      this.body.classList.add('modal-open');
+      this.body.style.overflow = 'hidden';
+      $id('backdrop')!.style.display = 'block';
+      $id('backdrop')!.classList.add('show');
     });
   }
 
   close(): void {
+    this.popin.style.display = 'none';
     this.popin.classList.remove('show');
+    this.body.classList.remove('modal-open');
+    this.body.style.overflow = '';
+    $id('backdrop')!.style.display = 'none';
+    $id('backdrop')!.classList.remove('show');
+
     if (this.closer) {
       this.closer.resolve({closedByUser: true, value: undefined});
       this.closer = undefined;

@@ -10,16 +10,17 @@ export class Button extends BaseUI {
 
   create(
     label: string,
-    options: {primary?: boolean; small?: boolean; outline?: boolean; classes?: string[]},
+    options: {
+      type?: 'primary' | 'secondary' | 'danger';
+      small?: boolean;
+      outline?: boolean;
+      classes?: string[];
+    },
     handler: () => void | Promise<void>
   ): HTMLButtonElement {
     const button = document.createElement('button');
     const outline = options.outline ? 'outline-' : '';
-    button.classList.add(
-      'btn',
-      options.primary ? `btn-${outline}primary` : `btn-${outline}secondary`,
-      'ms-2'
-    );
+    button.classList.add('btn', `btn-${outline}${options.type ?? 'primary'}`, 'ms-2');
     if (options.classes) {
       button.classList.add(...options.classes);
     }

@@ -1,11 +1,12 @@
 import * as superagent from 'superagent';
 
 import {AbstractFields, VendorFieldType} from '../../../../shared/vendor/vendorModel';
-import {VendorSearchResult} from '../../../../shared/api/response';
+import {VendorResult} from '../../../../shared/api/response';
 import {VendorIntegration} from '../../../../shared/integration/vendorIntegration';
 import {Vendor} from '../../../../shared/vendor/vendor';
+import {DetailsOptions} from '../../models/detailsOptions';
 
-import {SearchDriver} from './searchDriver';
+import {DetailsSearchDriver, SearchDriver} from './searchDriver';
 
 export abstract class BaseSearchDriver<SQ extends AbstractFields, SR extends AbstractFields>
   implements SearchDriver<SQ, SR>
@@ -22,7 +23,33 @@ export abstract class BaseSearchDriver<SQ extends AbstractFields, SR extends Abs
     searchQuery: SQ,
     integration: VendorIntegration,
     maxResults: number
-  ): Promise<VendorSearchResult<SR>[]>;
+  ): Promise<VendorResult<SR>[]>;
+}
+
+export abstract class BaseDetailsSearchDriver<
+  SQ extends AbstractFields,
+  SR extends AbstractFields,
+  DR extends AbstractFields
+> implements DetailsSearchDriver<SQ, SR, DR>
+{
+  public readonly vendorKey: string;
+  protected readonly client: typeof superagent;
+
+  protected constructor(vendor: Vendor<SQ, SR>) {
+    this.vendorKey = vendor.key;
+    this.client = superagent;
+  }
+
+  abstract search(
+    searchQuery: SQ,
+    integration: VendorIntegration,
+    maxResults: number
+  ): Promise<VendorResult<SR>[]>;
+
+  abstract getDetails(
+    integration: VendorIntegration,
+    detailsOptions: DetailsOptions
+  ): Promise<VendorResult<DR>>;
 }
 
 export function flattenJson(json: Record<string, unknown>): Record<string, VendorFieldType> {

@@ -107,15 +107,20 @@ export abstract class AbstractFormPopin<T> extends BaseUI {
     this.validationMessage.textContent = '';
     content.appendChild(this.validationMessage);
 
-    const buttons = $elem('div', {class: 'd-flex justify-content-end'});
-    content.appendChild(buttons);
+    const buttons: HTMLElement[] = [];
 
     // buttons & validation message
     return new Promise<T | undefined>((resolve) => {
       const config = this.getButtonsConfig();
+      buttons.push(
+        this.ui.button.create(config.closeText, {type: 'secondary'}, () => {
+          this.ui.popIn.close();
+          resolve(undefined);
+        })
+      );
       if (config.saveText) {
-        buttons.appendChild(
-          this.ui.button.create(config.saveText, {primary: true}, async () => {
+        buttons.push(
+          this.ui.button.create(config.saveText, {}, async () => {
             // handle validation error
             const error = await this.getValidationError();
             if (this.setValidationError(error)) {
@@ -129,14 +134,8 @@ export abstract class AbstractFormPopin<T> extends BaseUI {
           })
         );
       }
-      buttons.appendChild(
-        this.ui.button.create(config.closeText, {}, () => {
-          this.ui.popIn.close();
-          resolve(undefined);
-        })
-      );
 
-      void this.ui.popIn.showElement(this.title, content, true);
+      void this.ui.popIn.showElement(this.title, content, buttons, true);
     });
   }
 }
