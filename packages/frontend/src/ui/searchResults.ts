@@ -75,11 +75,10 @@ export class SearchResults extends BaseUI {
       'div',
       {class: 'mb-3'},
       // result properties
-      Object.entries(result.properties)
-        .filter(([key]) =>
-          filterSelection ? integration.searchResponseFieldSelection.includes(key) : true
-        )
-        .map(([key, value], index) =>
+      integration.searchResponseFieldSelection
+        .filter((key) => (filterSelection ? key in result.properties : true))
+        .map((key) => ({key: key, value: result.properties[key]}))
+        .map((entry, index) =>
           $elem('div', {class: 'row'}, [
             // result property key
             $elem(
@@ -87,15 +86,15 @@ export class SearchResults extends BaseUI {
               {
                 class: 'col-4 text-break font-monospace' + (index % 2 === 0 ? ' text-bg-light' : '')
               },
-              key
+              entry.key
             ),
             // result property value
             $elem(
               'div',
               {class: 'col-8 text-break' + (index % 2 === 0 ? ' text-bg-light' : '')},
-              typeof value === 'string'
-                ? value.split('\n\n').map((line) => $elem('div', {}, line))
-                : `${value}`
+              typeof entry.value === 'string'
+                ? entry.value.split('\n\n').map((line) => $elem('div', {}, line))
+                : `${entry.value}`
             )
           ])
         )

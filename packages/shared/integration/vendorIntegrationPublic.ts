@@ -69,7 +69,7 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
     if (mapping.type === 'constant') {
       let value = mapping.value;
       if (typeof value === 'string') {
-        value = value.replaceAll('$date', new Date().toISOString());
+        value = value.replace(/\$date/g, new Date().toISOString());
       }
       return value;
     }
