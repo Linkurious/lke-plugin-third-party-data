@@ -24,9 +24,9 @@ An **API integration** is a configuration that contains:
 - [Company House (gov.uk)](https://find-and-update.company-information.service.gov.uk/)
 
 ## Tutorials & examples
-How to get details for node, from Linkurious Enterprise:
+How to get details for a node, from Linkurious Enterprise:
 
-https://github.com/Linkurious/lke-plugin-third-party-data/assets/605880/afa43133-a7f4-4a00-900c-b91961167a3d
+https://github.com/Linkurious/lke-plugin-third-party-data/assets/605880/d050f4a6-50ca-4961-9aeb-1795a474b425
 
 How to create a new integration:
 
