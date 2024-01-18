@@ -11,7 +11,7 @@ const settings = {
   buildDir: '../../dist/frontend',
   devPluginUrlPrefix: '/plugins/3d',
   frontendDevServerPort: 4000,
-  backendDevServerPort: undefined // set 3000 to proxy backend requests to localhost:3000
+  backendDevServerPort: 3000 // set 3000 to proxy backend requests to localhost:3000
 };
 
 // noinspection JSUnusedGlobalSymbols

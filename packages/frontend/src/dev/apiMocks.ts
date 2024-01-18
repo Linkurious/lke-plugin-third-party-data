@@ -34,7 +34,7 @@ const publicIntegrationModel: IntegrationModelPublic = {
   searchQueryFieldMapping: [
     {outputPropertyKey: 'q', type: 'property', inputPropertyKey: 'full_name'}
   ],
-  searchResponseFieldSelection: ['firstName', 'lastName'],
+  searchResponseFieldSelection: ['nom_complet', 'siege_adresse'],
   outputEdgeType: outputEdgeType,
   outputNodeCategory: outputNodeType,
   outputNodeFieldMapping: [
@@ -86,21 +86,21 @@ export const API_MOCKS: ApiMock[] = [
           {
             id: 'duns:123',
             properties: {
-              firstName: 'Patrick',
-              lastName: 'Starfish',
-              address: '10, Fish street, Bikini Bottoms',
-              age: 12,
-              suspicious: true
+              nom_complet: 'Patrick',
+              nom_raison_sociale: 'Starfish',
+              siege_adresse: '10, Fish street, Bikini Bottoms',
+              nombre_etablissements: 12,
+              siege_est_siege: true
             }
           },
           {
             id: 'duns:456',
             properties: {
-              firstName: 'Bob',
-              lastName: 'Sponge',
-              address: '12, Pineapple street, Bikini Bottoms',
-              age: 11,
-              suspicious: true
+              nom_complet: 'Bob',
+              nom_raison_sociale: 'Sponge',
+              siege_adresse: '12, Pineapple street, Bikini Bottoms',
+              nombre_etablissements: 11,
+              siege_est_siege: true
             }
           }
         ]

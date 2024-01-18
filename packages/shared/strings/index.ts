@@ -83,12 +83,12 @@ export const STRINGS = {
     search: {
       vendorNotFound: (i: VendorIntegration): string =>
         `No search driver for vendor "${i.vendor.key}" (integration ${i.id})`,
-      nodeNotFound: (params: {
+      searchFailed: (params: {
         integrationId: string;
         sourceKey: string;
         nodeId: string;
       }): string => {
-        return `Failed searching for Node ${params.nodeId} in source ${params.sourceKey}`;
+        return `Failed searching for Node #${params.nodeId} from data-source ${params.sourceKey}`;
       }
     },
     details: {
@@ -213,7 +213,6 @@ export const STRINGS = {
     searchResults: {
       detailsModalTitle: 'Search result details',
       detailsButton: `View details`,
-      title: `Search results`,
       noResults: 'No results found.',
       importButton: `Import result`
     },
