@@ -7,7 +7,8 @@ import {
   ApiError,
   VendorSearchResponse,
   VendorResult,
-  VendorDetailsResponse
+  VendorDetailsResponse,
+  ApiResponse
 } from '../../../shared/api/response';
 import {SearchOptions} from '../models/searchOptions';
 import {asError} from '../../../shared/utils';
@@ -37,11 +38,11 @@ export class ServiceFacade {
     return false;
   }
 
-  async getConfigAdmin(): Promise<MyPluginConfig> {
+  async getConfigAdmin(): Promise<MyPluginConfig & ApiResponse> {
     return this.config.config;
   }
 
-  async getConfigUser(): Promise<MyPluginConfigPublic> {
+  async getConfigUser(): Promise<MyPluginConfigPublic & ApiResponse> {
     return this.config.getPublicConfig();
   }
 

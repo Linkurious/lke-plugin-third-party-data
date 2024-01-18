@@ -2,6 +2,7 @@ import {PluginRouteOptions} from '@linkurious/rest-client';
 import express from 'express';
 
 import {MyPluginConfig} from '../../shared/myPluginConfig';
+import {ApiResponse} from '../../shared/api/response';
 
 import {ServiceFacade} from './services/serviceFacade';
 import {SearchOptions} from './models/searchOptions';
@@ -42,21 +43,27 @@ export = function (pluginInterface: PluginRouteOptions<MyPluginConfig>): void {
 };
 
 function respond(
-  handler: (req: express.Request) => Promise<unknown>,
+  handler: (req: express.Request) => Promise<ApiResponse>,
   successStatus = 200
 ): express.RequestHandler {
   return (req, res) => {
     Promise.resolve(handler(req))
       .then((response) => {
-        res.status(successStatus);
+        if (response.error) {
+          res.status(500);
+        } else {
+          res.status(successStatus);
+        }
         res.json(response);
       })
       .catch((e) => {
+        const response: ApiResponse = {};
         if (e instanceof Error) {
-          res.status(500).json({error: e.name, message: e.message});
+          response.error = {code: e.name, message: e.message};
         } else {
-          res.status(500).json({error: 'unexpected', message: JSON.stringify(e)});
+          response.error = {code: 'unexpected', message: JSON.stringify(e)};
         }
+        res.status(500).json(response);
       });
   };
 }
