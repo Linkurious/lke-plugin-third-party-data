@@ -1,6 +1,6 @@
 {
   "name": "@linkurious/lke-plugin-third-party-data",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "LKE Plugin - Third Party Data",
   "homepage": "https://github.com/Linkurious/lke-plugin-third-party-data#readme",
   "bugs": {
@@ -17,8 +17,7 @@
     "name": "David Rapin",
     "email": "david@linkurio.us"
   },
-  "config": {
-  },
+  "config": {},
   "scripts": {
     "npm-package-name": "echo ${npm_package_name}-${npm_package_version}.tgz | sed -e 's/@//' -e 's/\\//-/'",
     "plugin-name": "echo ${npm_package_name} | sed -e 's/^@.*\\///' -e s/^lke-plugin-//",
@@ -61,7 +60,6 @@
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-import": "2.29.1",
     "eslint-plugin-prettier": "5.1.2",
-
     "typescript": "5.3.3"
   },
   "workspaces": [
