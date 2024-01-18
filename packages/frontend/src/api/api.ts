@@ -1,7 +1,11 @@
 import {RestClient} from '@linkurious/rest-client';
 import {CustomAction} from '@linkurious/rest-client/dist/src/api/CustomAction/types';
 
-import {ApiError, VendorDetailsResponse, VendorSearchResponse} from '../../../shared/api/response';
+import {
+  ApiResponse,
+  VendorDetailsResponse,
+  VendorSearchResponse
+} from '../../../shared/api/response';
 import {MyPluginConfig, MyPluginConfigPublic} from '../../../shared/myPluginConfig';
 import {STRINGS} from '../../../shared/strings';
 import {
@@ -70,7 +74,7 @@ export class API {
         nodeId: params.nodeId
       },
       200,
-      STRINGS.errors.search.nodeNotFound(params)
+      STRINGS.errors.search.searchFailed(params)
     );
     return r as unknown as VendorSearchResponse;
   }
@@ -103,8 +107,12 @@ export class API {
 
   private async getPluginResponseError(r: Response): Promise<string> {
     try {
-      const body = (await r.json()) as ApiError;
-      return body.message;
+      const body = (await r.json()) as ApiResponse;
+      if (body.error) {
+        return body.error.message;
+      } else {
+        return `Unexpected HTTP status ${r.status}`;
+      }
     } catch (e) {
       return `Unexpected HTTP status ${r.status}`;
     }

@@ -24,7 +24,6 @@ export class SearchResults extends BaseUI {
     }
 
     return $elem('div', {}, [
-      //$elem('h2', {}, STRINGS.ui.searchResults.title),
       description,
       // results
       ...response.results.map((result, index) => {
@@ -71,12 +70,19 @@ export class SearchResults extends BaseUI {
     result: VendorResult,
     filterSelection: boolean
   ): HTMLElement {
+    /*
+     * Properties to display: either just the selected field for the search results list, or
+     * all of them, for te details view.
+     */
+    const propertyKeys = filterSelection
+      ? integration.searchResponseFieldSelection
+      : Vendors.getVendorByKey(integration.vendorKey).searchResponseFields.map((f) => f.key);
+
     return $elem(
       'div',
       {class: 'mb-3'},
-      // result properties
-      integration.searchResponseFieldSelection
-        .filter((key) => (filterSelection ? key in result.properties : true))
+      propertyKeys
+        .filter((key) => key in result.properties)
         .map((key) => ({key: key, value: result.properties[key]}))
         .map((entry, index) =>
           $elem('div', {class: 'row'}, [
