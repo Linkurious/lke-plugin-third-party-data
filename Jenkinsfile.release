@@ -3,5 +3,6 @@
 lkeSubReleaseJob {
   // General
   projectName = "linkurious/lke-plugin-third-party-data"
+  runAssetWaiter = false
 
 }
