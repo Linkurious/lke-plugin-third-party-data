@@ -23,6 +23,8 @@ An **API integration** is a configuration that contains:
 - [Annuaire des Entreprises (data.gouv.fr)](https://annuaire-entreprises.data.gouv.fr/)
 - [Company House (gov.uk)](https://find-and-update.company-information.service.gov.uk/)
 
+If you would like to use other APIs with this plugin, please [💌 **get in touch**](https://linkurious.com/contact-us/).
+
 ## Tutorials & examples
 How to get details for a node, from Linkurious Enterprise:
 

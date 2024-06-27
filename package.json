@@ -1,6 +1,6 @@
 {
   "name": "@linkurious/lke-plugin-third-party-data",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "LKE Plugin - Third Party Data",
   "homepage": "https://github.com/Linkurious/lke-plugin-third-party-data#readme",
   "bugs": {
@@ -28,7 +28,7 @@
     "lint:fix": "npm run lint:fix -ws",
     "lint:ci": "eslint -f checkstyle -o reports/checkstyle.xml .",
     "build": "npm run build -ws",
-    "postbuild": "npm pack && mv $(npm run --silent npm-package-name) $(npm run --silent artifact-name)",
+    "postbuild": "mkdir -p tmp/github_release && npm pack && mv $(npm run --silent npm-package-name) $(npm run --silent artifact-name) && ln -sf $(pwd)/$(npm run --silent artifact-name) $(pwd)/tmp/github_release/lke-plugin-$(npm run --silent plugin-name)-v$(cat .version).lke",
     "//deploy:login": "curl -X POST $npm_config_deploy_url/api/auth/login --cookie-jar 'lke.cookie' -H 'Content-type: application/json' -d '{ \"usernameOrEmail\": \"'$npm_config_deploy_user'\", \"password\": \"'$npm_config_deploy_pass'\" }'",
     "//deploy:logout": "curl -X GET $npm_config_deploy_url/api/auth/logout --cookie 'lke.cookie'  -H 'Content-type: application/json' && rm lke.cookie",
     "//predeploy:restart-plugins": "npm run deploy:login",
