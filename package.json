@@ -11,7 +11,7 @@
     "url": "https://github.com/Linkurious/lke-plugin-third-party-data"
   },
   "engines": {
-    "node": "18.18.2"
+    "node": "20.18.0"
   },
   "author": {
     "name": "David Rapin",
@@ -19,23 +19,18 @@
   },
   "config": {},
   "scripts": {
+    "start": "npm start -w=packages/frontend",
     "npm-package-name": "echo ${npm_package_name}-${npm_package_version}.tgz | sed -e 's/@//' -e 's/\\//-/'",
     "plugin-name": "echo ${npm_package_name} | sed -e 's/^@.*\\///' -e s/^lke-plugin-//",
     "artifact-name": "echo lke-plugin-$(npm run --silent plugin-name).lke",
-    "clean": "rm -rf ./dist *.tgz *.lke",
+    "clean": "rm -rf ./tmp ./dist *.tgz *.lke ./reports",
     "clean:modules": "rm -rf ./package-lock.json ./node_modules",
     "lint": "npm run lint -ws",
     "lint:fix": "npm run lint:fix -ws",
     "lint:ci": "eslint -f checkstyle -o reports/checkstyle.xml .",
     "build": "npm run build -ws",
+    "test": "npm test -w=packages/backend",
     "postbuild": "mkdir -p tmp/github_release && npm pack && mv $(npm run --silent npm-package-name) $(npm run --silent artifact-name) && ln -sf $(pwd)/$(npm run --silent artifact-name) $(pwd)/tmp/github_release/lke-plugin-$(npm run --silent plugin-name)-v$(cat .version).lke",
-    "//deploy:login": "curl -X POST $npm_config_deploy_url/api/auth/login --cookie-jar 'lke.cookie' -H 'Content-type: application/json' -d '{ \"usernameOrEmail\": \"'$npm_config_deploy_user'\", \"password\": \"'$npm_config_deploy_pass'\" }'",
-    "//deploy:logout": "curl -X GET $npm_config_deploy_url/api/auth/logout --cookie 'lke.cookie'  -H 'Content-type: application/json' && rm lke.cookie",
-    "//predeploy:restart-plugins": "npm run deploy:login",
-    "//deploy:restart-plugins": "curl -X POST $npm_config_deploy_url/api/admin/plugins/restart-all --cookie 'lke.cookie'",
-    "//postdeploy:restart-plugins": "npm run deploy:logout",
-    "//deploy": "cp $(npm run --silent artifact-name) $npm_config_deploy_plugin_folder",
-    "//postdeploy": "npm run deploy:restart-plugins",
     "build-deploy": "npm run build && npm run deploy",
     "manual-upload": "gh release create \"v$(cat .version)\" $(npm run --silent artifact-name)",
     "bump:patch": "bump2version patch && npm version --no-git-tag-version patch",
@@ -50,7 +45,7 @@
   ],
   "bundledDependencies": true,
   "dependencies": {
-    "@linkurious/rest-client": "4.0.19",
+    "@linkurious/rest-client": "4.1.6",
     "express": "4.17.3",
     "superagent": "8.1.2"
   },
