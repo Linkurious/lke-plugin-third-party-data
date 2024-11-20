@@ -1,3 +1,5 @@
+import {Response} from 'superagent';
+
 import {VendorResult} from '../../../../../shared/api/response';
 import {BaseDetailsSearchDriver, flattenJson} from '../baseSearchDriver';
 import {VendorIntegration} from '../../../../../shared/integration/vendorIntegration';
@@ -37,7 +39,7 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     const r = await this.client
       .get(url.toString())
       .auth(integration.getAdminSettings('apiKey'), '', {type: 'basic'})
-      .set('accept', 'json');
+      .set('accept', 'application/json');
     if (r.status === 401) {
       throw new Error(`Invalid API key`);
     }
@@ -45,6 +47,8 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
       throw new Error(`Failed to get search results: ${JSON.stringify(r.body)}`);
     }
     return (r.body as SearchResponseBody).items.map((company) => {
+      delete company.kind;
+      delete company.snippet;
       delete company.address_snippet;
       delete company.matches;
       return {
@@ -64,10 +68,18 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     const url = new URL(
       `https://api.company-information.service.gov.uk/company/${detailsOptions.searchResultId}`
     );
-    const r = await this.client
-      .get(url.toString())
-      .auth(integration.getAdminSettings('apiKey'), '', {type: 'basic'})
-      .set('accept', 'json');
+    let r: Response;
+    try {
+      r = await this.client
+        .get(url.toString())
+        .auth(integration.getAdminSettings('apiKey'), '', {type: 'basic'})
+        .set('accept', 'application/json');
+    } catch (e) {
+      if (process.env.DEBUG) {
+        console.log('HTTP error: ' + JSON.stringify(e));
+      }
+      throw e;
+    }
     if (r.status === 401) {
       throw new Error(`Invalid API key`);
     }

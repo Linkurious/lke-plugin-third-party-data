@@ -6,7 +6,7 @@ export class DetailsOptions {
   public readonly integrationId: string;
   public readonly searchResultId: string;
 
-  private constructor(params: {integrationId: string; searchResultId: string}) {
+  constructor(params: {integrationId: string; searchResultId: string}) {
     this.integrationId = params.integrationId;
     this.searchResultId = params.searchResultId;
   }

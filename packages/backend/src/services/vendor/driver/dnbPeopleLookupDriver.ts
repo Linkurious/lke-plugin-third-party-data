@@ -44,7 +44,7 @@ export class DnbPeopleLookupDriver extends BaseSearchDriver<
     const r = await this.client
       .get(url.toString())
       .auth(token, {type: 'bearer'})
-      .set('accept', 'json');
+      .set('accept', 'application/json');
     if (r.status !== 200) {
       throw new Error(`Failed to get search results (http ${r.status})`);
     }
