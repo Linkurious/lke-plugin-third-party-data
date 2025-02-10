@@ -1,3 +1,4 @@
+import * as fs from 'node:fs';
 import {Response} from 'superagent';
 
 import {VendorResult} from '../../../../../shared/api/response';
@@ -38,6 +39,8 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
 
     const r = await this.client
       .get(url.toString())
+      .ca(fs.readFileSync('path/to/wss.pem', {encoding: 'utf-8'}))
+      .disableTLSCerts()
       .auth(integration.getAdminSettings('apiKey'), '', {type: 'basic'})
       .set('accept', 'application/json');
     if (r.status === 401) {
