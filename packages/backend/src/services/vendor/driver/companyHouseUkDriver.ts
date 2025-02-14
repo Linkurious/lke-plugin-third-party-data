@@ -1,4 +1,5 @@
 import * as process from 'node:process';
+
 import {Response} from 'superagent';
 
 import {VendorResult} from '../../../../../shared/api/response';
@@ -34,7 +35,7 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     for (const [key, value] of Object.entries(searchQuery)) {
       url.searchParams.append(key, `${value}`);
     }
-    url.searchParams.set('start_index', '1');
+    url.searchParams.set('start_index', '0');
     url.searchParams.set('items_per_page', `${maxResults}`);
 
     const response = await this.request(url)

@@ -1,22 +1,22 @@
+import process from 'node:process';
+
 import superagent, {SuperAgentRequest} from 'superagent';
-import enableProxy from 'superagent-proxy';
+import {HttpsProxyAgent} from 'https-proxy-agent';
 
 import {AbstractFields, VendorFieldType} from '../../../../shared/vendor/vendorModel';
 import {VendorResult} from '../../../../shared/api/response';
 import {VendorIntegration} from '../../../../shared/integration/vendorIntegration';
 import {Vendor} from '../../../../shared/vendor/vendor';
 import {DetailsOptions} from '../../models/detailsOptions';
-
-import {DetailsSearchDriver, SearchDriver} from './searchDriver';
-import process from 'node:process';
 import {Logger, WithLogger} from '../logger';
 
-abstract class ProxyClient extends WithLogger {
+import {DetailsSearchDriver, SearchDriver} from './searchDriver';
+
+export class ProxyClient extends WithLogger {
   private readonly client: typeof superagent;
 
-  protected constructor() {
+  constructor(private readonly env = process.env) {
     super(new Logger());
-    enableProxy(superagent);
     this.client = superagent;
   }
 
@@ -25,23 +25,24 @@ abstract class ProxyClient extends WithLogger {
    */
   protected request(url: URL, verb: 'get' | 'post' = 'get'): SuperAgentRequest {
     let proxyUrl: string | undefined;
+
     if (url.protocol === 'https:') {
-      proxyUrl = process.env.HTTPS_PROXY ?? process.env.https_proxy;
+      proxyUrl = this.env.HTTPS_PROXY ?? this.env.https_proxy;
       if (proxyUrl) {
+        if (!proxyUrl.startsWith('http:')) {
+          proxyUrl = `http://${proxyUrl}`;
+        }
         this.logger.info(`HTTP Client: using HTTPS proxy ${proxyUrl}`);
       }
-    } else if (url.protocol === 'http:') {
-      proxyUrl = process.env.HTTP_PROXY ?? process.env.http_proxy;
-      if (proxyUrl) {
-        this.logger.info(`HTTP Client: using HTTP proxy ${proxyUrl}`);
-      }
     }
-    const request = this.client[verb](url.toString());
+
+    const sUrl = url.toString();
+    const request = this.client[verb](sUrl);
     if (proxyUrl) {
-      this.logger.info(`HTTP Client: Sending ${verb} request (via proxy) to ${url}`);
-      return request.proxy(proxyUrl);
+      this.logger.info(`HTTP Client: Sending "${verb}" request (via proxy) to ${sUrl}`);
+      return request.agent(new HttpsProxyAgent(proxyUrl));
     } else {
-      this.logger.info(`HTTP Client: Sending ${verb} request to ${url}`);
+      this.logger.info(`HTTP Client: Sending "${verb}" request to ${sUrl}`);
       return request;
     }
   }
@@ -66,10 +67,12 @@ export abstract class BaseSearchDriver<SQ extends AbstractFields, SR extends Abs
 }
 
 export abstract class BaseDetailsSearchDriver<
-  SQ extends AbstractFields,
-  SR extends AbstractFields,
-  DR extends AbstractFields
-> extends ProxyClient implements DetailsSearchDriver<SQ, SR, DR>
+    SQ extends AbstractFields,
+    SR extends AbstractFields,
+    DR extends AbstractFields
+  >
+  extends ProxyClient
+  implements DetailsSearchDriver<SQ, SR, DR>
 {
   public readonly vendorKey: string;
 
