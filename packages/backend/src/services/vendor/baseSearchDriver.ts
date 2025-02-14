@@ -23,14 +23,25 @@ abstract class ProxyClient extends WithLogger {
   /**
    * Uses a proxy if needed
    */
-  protected request(url: URL | string, verb: 'get' | 'post' = 'get'): SuperAgentRequest {
-    const proxyUrl = process.env.HTTPS_PROXY ?? process.env.https_proxy ?? process.env.HTTP_PROXY ?? process.env.http_proxy;
+  protected request(url: URL, verb: 'get' | 'post' = 'get'): SuperAgentRequest {
+    let proxyUrl: string | undefined;
+    if (url.protocol === 'https:') {
+      proxyUrl = process.env.HTTPS_PROXY ?? process.env.https_proxy;
+      if (proxyUrl) {
+        this.logger.info(`HTTP Client: using HTTPS proxy ${proxyUrl}`);
+      }
+    } else if (url.protocol === 'http:') {
+      proxyUrl = process.env.HTTP_PROXY ?? process.env.http_proxy;
+      if (proxyUrl) {
+        this.logger.info(`HTTP Client: using HTTP proxy ${proxyUrl}`);
+      }
+    }
     const request = this.client[verb](url.toString());
     if (proxyUrl) {
-      this.logger.info(`Sending HTTP ${verb} (via proxy ${proxyUrl}) to ${url}`);
+      this.logger.info(`HTTP Client: Sending ${verb} request (via proxy) to ${url}`);
       return request.proxy(proxyUrl);
     } else {
-      this.logger.info(`Sending HTTP ${verb} to ${url}`);
+      this.logger.info(`HTTP Client: Sending ${verb} request to ${url}`);
       return request;
     }
   }
