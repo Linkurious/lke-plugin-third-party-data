@@ -1,4 +1,5 @@
-import * as superagent from 'superagent';
+import superagent, {SuperAgentRequest} from 'superagent';
+import enableProxy from 'superagent-proxy';
 
 import {AbstractFields, VendorFieldType} from '../../../../shared/vendor/vendorModel';
 import {VendorResult} from '../../../../shared/api/response';
@@ -7,16 +8,43 @@ import {Vendor} from '../../../../shared/vendor/vendor';
 import {DetailsOptions} from '../../models/detailsOptions';
 
 import {DetailsSearchDriver, SearchDriver} from './searchDriver';
+import process from 'node:process';
+import {Logger, WithLogger} from '../logger';
+
+abstract class ProxyClient extends WithLogger {
+  private readonly client: typeof superagent;
+
+  protected constructor() {
+    super(new Logger());
+    enableProxy(superagent);
+    this.client = superagent;
+  }
+
+  /**
+   * Uses a proxy if needed
+   */
+  protected request(url: URL | string, verb: 'get' | 'post' = 'get'): SuperAgentRequest {
+    const proxyUrl = process.env.HTTPS_PROXY ?? process.env.https_proxy ?? process.env.HTTP_PROXY ?? process.env.http_proxy;
+    const request = this.client[verb](url.toString());
+    if (proxyUrl) {
+      this.logger.info(`Sending HTTP ${verb} (via proxy ${proxyUrl}) to ${url}`);
+      return request.proxy(proxyUrl);
+    } else {
+      this.logger.info(`Sending HTTP ${verb} to ${url}`);
+      return request;
+    }
+  }
+}
 
 export abstract class BaseSearchDriver<SQ extends AbstractFields, SR extends AbstractFields>
+  extends ProxyClient
   implements SearchDriver<SQ, SR>
 {
   public readonly vendorKey: string;
-  protected readonly client: typeof superagent;
 
   protected constructor(vendor: Vendor<SQ, SR>) {
+    super();
     this.vendorKey = vendor.key;
-    this.client = superagent;
   }
 
   abstract search(
@@ -30,14 +58,13 @@ export abstract class BaseDetailsSearchDriver<
   SQ extends AbstractFields,
   SR extends AbstractFields,
   DR extends AbstractFields
-> implements DetailsSearchDriver<SQ, SR, DR>
+> extends ProxyClient implements DetailsSearchDriver<SQ, SR, DR>
 {
   public readonly vendorKey: string;
-  protected readonly client: typeof superagent;
 
   protected constructor(vendor: Vendor<SQ, SR>) {
+    super();
     this.vendorKey = vendor.key;
-    this.client = superagent;
   }
 
   abstract search(
