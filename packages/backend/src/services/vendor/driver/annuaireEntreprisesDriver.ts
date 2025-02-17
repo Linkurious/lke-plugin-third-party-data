@@ -30,7 +30,7 @@ export class AnnuaireEntreprisesDriver extends BaseSearchDriver<
     url.searchParams.set('page', '1');
     url.searchParams.set('per_page', `${maxResults}`);
 
-    const r = await this.client.get(url.toString()).set('accept', 'application/json');
+    const r = await this.request(url).set('accept', 'application/json');
     if (r.status !== 200) {
       throw new Error(`Failed to get search results: ${(r.body as ResponseBody).erreur}`);
     }

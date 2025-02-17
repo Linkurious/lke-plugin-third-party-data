@@ -1,3 +1,5 @@
+import * as process from 'node:process';
+
 import {Response} from 'superagent';
 
 import {VendorResult} from '../../../../../shared/api/response';
@@ -33,20 +35,19 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     for (const [key, value] of Object.entries(searchQuery)) {
       url.searchParams.append(key, `${value}`);
     }
-    url.searchParams.set('start_index', '1');
+    url.searchParams.set('start_index', '0');
     url.searchParams.set('items_per_page', `${maxResults}`);
 
-    const r = await this.client
-      .get(url.toString())
+    const response = await this.request(url)
       .auth(integration.getAdminSettings('apiKey'), '', {type: 'basic'})
       .set('accept', 'application/json');
-    if (r.status === 401) {
+    if (response.status === 401) {
       throw new Error(`Invalid API key`);
     }
-    if (r.status !== 200) {
-      throw new Error(`Failed to get search results: ${JSON.stringify(r.body)}`);
+    if (response.status !== 200) {
+      throw new Error(`Failed to get search results: ${JSON.stringify(response.body)}`);
     }
-    return (r.body as SearchResponseBody).items.map((company) => {
+    return (response.body as SearchResponseBody).items.map((company) => {
       delete company.kind;
       delete company.snippet;
       delete company.address_snippet;
@@ -70,8 +71,7 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     );
     let r: Response;
     try {
-      r = await this.client
-        .get(url.toString())
+      r = await this.request(url)
         .auth(integration.getAdminSettings('apiKey'), '', {type: 'basic'})
         .set('accept', 'application/json');
     } catch (e) {
