@@ -6,7 +6,7 @@ import {
   LkNode
 } from '@linkurious/rest-client';
 
-import {VendorResult} from '../api/response';
+import {NeighborResult, VendorResult} from '../api/response';
 import {VendorFieldType} from '../vendor/vendorModel';
 import {Vendor} from '../vendor/vendor';
 import {Vendors} from '../vendor/vendors';
@@ -202,5 +202,27 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
         );
       }
     }
+  }
+
+  public getNeighborNode(neighbor: NeighborResult): ICreateNodeParams {
+    return {
+      sourceKey: this.model.sourceKey,
+      categories: [neighbor.nodeCategory],
+      properties: neighbor.properties
+    };
+  }
+
+  public getNeighborEdge(
+    neighbor: NeighborResult,
+    mainNodeId: string,
+    neighborNodeId: string
+  ): ICreateEdgeParams {
+    return {
+      sourceKey: this.model.sourceKey,
+      type: neighbor.edgeType,
+      source: mainNodeId,
+      target: neighborNodeId,
+      properties: {}
+    };
   }
 }

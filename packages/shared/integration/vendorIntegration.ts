@@ -9,6 +9,10 @@ export class VendorIntegration extends VendorIntegrationPublic<IntegrationModel>
   }
 
   getAdminSettings(key: string): string {
+    /*const field = this.vendor.adminFields.find((field) => field.name === key);
+    if (!field) {
+      throw new Error(STRINGS.errors.missingAdminSetting(this.vendor, key));
+    }*/
     const value = this.model.adminSettings[key];
     if (value === undefined) {
       throw new Error(STRINGS.errors.missingAdminSetting(this.vendor, key));

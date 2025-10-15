@@ -93,8 +93,11 @@ export abstract class BaseDetailsSearchDriver<
   ): Promise<VendorResult<DR>>;
 }
 
-export function flattenJson(json: Record<string, unknown>): Record<string, VendorFieldType> {
+export function flattenJson(json: unknown): Record<string, VendorFieldType> {
   const result: Record<string, VendorFieldType> = {};
+  if (typeof json !== 'object' || json === null) {
+    return result;
+  }
   for (const [key, value] of Object.entries(json)) {
     if (value !== null && typeof value === 'object') {
       flattenJsonField(result, key, value as Record<string, unknown>);

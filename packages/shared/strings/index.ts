@@ -123,7 +123,7 @@ export const STRINGS = {
       `Integration not found: ${integrationId}`,
     getDataSources: (error: LkError): string =>
       `Get connected sources: could not get list of sources (${error.message})`,
-    updateIntegratioNotFound: (integrationId: string): string =>
+    updateIntegrationNotFound: (integrationId: string): string =>
       `Cannot update integration ${integrationId}: integration not found`,
     integrationNotFound: (integrationId: string): string =>
       `Integration ${integrationId} was not found`

@@ -19,10 +19,12 @@ export interface BaseVendorModel<
   readonly adminFields: VendorAdminField[];
   readonly detailsResponseFields?: FieldsDescription<DR>;
 }
+
 export interface VendorModelSearch<SQ extends AbstractFields, SR extends AbstractFields>
   extends BaseVendorModel<'search', SQ, SR> {
   readonly detailsResponseFields?: undefined;
 }
+
 export interface VendorModelSearchAndDetails<
   SQ extends AbstractFields,
   SR extends AbstractFields,

@@ -13,10 +13,19 @@ export = function (pluginInterface: PluginRouteOptions<MyPluginConfig>): void {
 
   pluginInterface.router.get(
     '/admin-config',
-    respond(async () => {
-      return services.getConfigAdmin();
+    respond(async (req) => {
+      return services.getConfigAdmin(req);
     })
   );
+
+  /*
+  pluginInterface.router.post(
+    '/admin-config',
+    respond(async (req) => {
+      return services.setConfigAdmin(req.body);
+    })
+  );
+   */
 
   pluginInterface.router.get(
     '/config',

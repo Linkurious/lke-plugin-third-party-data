@@ -62,7 +62,7 @@ export class Configuration {
     const config = await this.getConfig();
     const index = config.integrations.findIndex((int) => int.id === model.id);
     if (index < 0) {
-      throw new Error(STRINGS.errors.updateIntegratioNotFound(model.id));
+      throw new Error(STRINGS.errors.updateIntegrationNotFound(model.id));
     }
     config.integrations[index] = model;
     await this.saveConfig(config);

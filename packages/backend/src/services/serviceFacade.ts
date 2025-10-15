@@ -38,9 +38,24 @@ export class ServiceFacade {
     return false;
   }
 
-  async getConfigAdmin(): Promise<MyPluginConfig & ApiResponse> {
+  private async ensureAdmin(req: express.Request): Promise<void> {
+    const isAdmin = await this.currentUserIsAdmin(req);
+    if (!isAdmin) {
+      throw new Error('Not authorized');
+    }
+  }
+
+  async getConfigAdmin(req: express.Request): Promise<MyPluginConfig & ApiResponse> {
+    await this.ensureAdmin(req);
     return this.config.config;
   }
+
+  /*
+  async setConfigAdmin(req: express.Request): Promise<void> {
+    await this.ensureAdmin(req);
+    // todo
+  }
+  */
 
   async getConfigUser(): Promise<MyPluginConfigPublic & ApiResponse> {
     return this.config.getPublicConfig();
