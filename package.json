@@ -28,6 +28,7 @@
     "lint": "npm run lint -ws",
     "lint:fix": "npm run lint:fix -ws",
     "lint:ci": "eslint -f checkstyle -o reports/checkstyle.xml .",
+    "tsc": "npm run build -ws",
     "build": "npm run build -ws",
     "test": "npm test -w=packages/backend",
     "postbuild": "mkdir -p tmp/github_release && npm pack && mv $(npm run --silent npm-package-name) $(npm run --silent artifact-name) && ln -sf $(pwd)/$(npm run --silent artifact-name) $(pwd)/tmp/github_release/lke-plugin-$(npm run --silent plugin-name)-v$(cat .version).lke",
@@ -52,7 +53,8 @@
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-import": "2.29.1",
     "eslint-plugin-prettier": "5.1.2",
-    "typescript": "5.3.3"
+    "typescript": "5.3.3",
+    "https-proxy-agent": "7.0.6"
   },
   "workspaces": [
     "packages/backend",

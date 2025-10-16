@@ -23,6 +23,7 @@
   "devDependencies": {
     "@types/express": "4.17.21",
     "@types/node": "22.18.10",
-    "@types/superagent": "8.1.9"
+    "@types/superagent": "8.1.9",
+    "@types/http-proxy-agent": "4.0.1"
   }
 }
