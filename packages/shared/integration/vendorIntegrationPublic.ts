@@ -181,7 +181,7 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
         this.model.id
       }&sourceKey=${this.model.sourceKey}&nodeId={{node:${JSON.stringify(
         this.model.inputNodeCategory
-      )}}}`,
+      )}}}#linkurious-modal`,
       sharing: SharingMode.SOURCE,
       sharedWithGroups: undefined
     };
