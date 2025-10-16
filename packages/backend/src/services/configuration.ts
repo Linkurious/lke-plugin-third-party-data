@@ -6,9 +6,9 @@ import {IntegrationModelPublic} from '../../../shared/integration/IntegrationMod
 import {VendorIntegration} from '../../../shared/integration/vendorIntegration';
 import {STRINGS} from '../../../shared/strings';
 import {API} from '../server/api';
+import {ConfigOptions} from '../models/configOptions';
 
 import {Logger} from './logger';
-import {ConfigOptions} from '../models/configOptions';
 
 type RequiredFields<T, K extends keyof T> = T & Required<Pick<T, K>>;
 

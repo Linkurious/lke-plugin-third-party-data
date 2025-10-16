@@ -3,12 +3,12 @@ import express from 'express';
 
 import {MyPluginConfig} from '../../shared/myPluginConfig';
 import {ApiResponse} from '../../shared/api/response';
+import {asError} from '../../shared/utils';
 
 import {ServiceFacade} from './services/serviceFacade';
 import {SearchOptions} from './models/searchOptions';
 import {DetailsOptions} from './models/detailsOptions';
 import {ConfigOptions} from './models/configOptions';
-import {asError} from '../../shared/utils';
 
 export = function (pluginInterface: PluginRouteOptions<MyPluginConfig>): void {
   const services = new ServiceFacade(pluginInterface);
