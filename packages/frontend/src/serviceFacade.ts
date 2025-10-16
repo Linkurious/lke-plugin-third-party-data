@@ -202,10 +202,19 @@ export class ServiceFacade {
         try {
           const addedGraph = await ogma.addGraph(itemsToAdd, {ignoreInvalid: true});
           addedInLKE = true;
+
+          // select added nodes
           ogma.clearSelection();
           addedGraph.nodes.setSelected(true);
-          await addedGraph.nodes.locate();
-          void ogma.layouts.force({nodes: [inputNodeId, ...addedGraph.nodes.getId()]});
+
+          // layout only newly added nodes
+          const previousNodes = addedGraph.nodes.inverse();
+          await previousNodes.setAttribute('layoutable', false);
+          try {
+            await ogma.layouts.force({locate: true});
+          } finally {
+            await previousNodes.setAttribute('layoutable', true);
+          }
         } catch (e) {
           console.warn('Could not add node/edge in LKE', e);
         }
@@ -276,7 +285,7 @@ interface OgmaInterface {
     options: {ignoreInvalid: boolean}
   ) => Promise<{nodes: OgmaNodeList; edges: OgmaEdgeList}>;
   layouts: {
-    force: (params: {nodes: string[]}) => Promise<void>;
+    force: (params: {locate: boolean}) => Promise<void>;
   };
 }
 
@@ -284,6 +293,8 @@ interface OgmaNodeList {
   setSelected(s: boolean): void;
   locate(): Promise<void>;
   getId(): string[];
+  inverse(): OgmaNodeList;
+  setAttribute(path: 'layoutable', value: boolean): Promise<OgmaNodeList>;
 }
 
 interface OgmaEdgeList {}
