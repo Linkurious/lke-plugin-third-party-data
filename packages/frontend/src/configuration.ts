@@ -5,7 +5,6 @@ import {STRINGS} from '../../shared/strings';
 import {API} from './api/api';
 
 export class Configuration {
-  private static MY_CONFIG_KEY = 'third-party-data';
   private readonly api: API;
   private configData?: MyPluginConfig;
   private configDataPublic?: MyPluginConfigPublic;
@@ -35,11 +34,7 @@ export class Configuration {
   }
 
   private async saveConfig(config: MyPluginConfig): Promise<void> {
-    await this.api.server.config.updateConfiguration({
-      path: ['plugins', Configuration.MY_CONFIG_KEY].join('.'),
-      configuration: config
-    });
-    this.configData = config;
+    await this.api.updatePluginConfig(config);
   }
 
   /**

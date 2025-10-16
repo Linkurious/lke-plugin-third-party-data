@@ -96,8 +96,8 @@ export class ServiceFacade {
     await this.ui.longTask.run(async (p) => {
       p.update(STRINGS.ui.editIntegration.savingNewIntegration);
       await this.config.saveNewIntegration(newIntegration);
-      p.update(STRINGS.ui.editIntegration.restartingPlugin);
-      await this.api.server.plugin.restartAll();
+      //p.update(STRINGS.ui.editIntegration.restartingPlugin);
+      //await this.api.server.plugin.restartAll();
       p.update(STRINGS.ui.global.done);
     });
     await this.ui.showConfirmIntegrationCreated(newIntegration);
@@ -113,8 +113,8 @@ export class ServiceFacade {
     await this.ui.longTask.run(async (p) => {
       p.update(STRINGS.ui.editIntegration.savingIntegration);
       await this.config.saveExistingIntegration(newModel);
-      p.update(STRINGS.ui.editIntegration.restartingPlugin);
-      await this.api.server.plugin.restartAll();
+      //p.update(STRINGS.ui.editIntegration.restartingPlugin);
+      //await this.api.server.plugin.restartAll();
       p.update(STRINGS.ui.global.done);
     });
   }
@@ -262,8 +262,8 @@ export class ServiceFacade {
     await this.ui.longTask.run(async (p) => {
       p.update(STRINGS.ui.editIntegration.deletingIntegration);
       await this.config.deleteIntegration(integrationId);
-      p.update(STRINGS.ui.editIntegration.restartingPlugin);
-      await this.api.server.plugin.restartAll();
+      //p.update(STRINGS.ui.editIntegration.restartingPlugin);
+      //await this.api.server.plugin.restartAll();
       p.update(STRINGS.ui.global.done);
     });
   }

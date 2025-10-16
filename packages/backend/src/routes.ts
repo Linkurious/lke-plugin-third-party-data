@@ -7,10 +7,14 @@ import {ApiResponse} from '../../shared/api/response';
 import {ServiceFacade} from './services/serviceFacade';
 import {SearchOptions} from './models/searchOptions';
 import {DetailsOptions} from './models/detailsOptions';
+import {ConfigOptions} from './models/configOptions';
+import {asError} from '../../shared/utils';
 
 export = function (pluginInterface: PluginRouteOptions<MyPluginConfig>): void {
   const services = new ServiceFacade(pluginInterface);
+  pluginInterface.router.use(express.json());
 
+  // read the admin config
   pluginInterface.router.get(
     '/admin-config',
     respond(async (req) => {
@@ -18,14 +22,14 @@ export = function (pluginInterface: PluginRouteOptions<MyPluginConfig>): void {
     })
   );
 
-  /*
+  // update the admin config
   pluginInterface.router.post(
     '/admin-config',
-    respond(async (req) => {
-      return services.setConfigAdmin(req.body);
-    })
+    respond(async (req: express.Request) => {
+      const config = ConfigOptions.from(req.body);
+      return services.setConfigAdmin(req, config);
+    }, 201)
   );
-   */
 
   pluginInterface.router.get(
     '/config',
@@ -52,13 +56,13 @@ export = function (pluginInterface: PluginRouteOptions<MyPluginConfig>): void {
 };
 
 function respond(
-  handler: (req: express.Request) => Promise<ApiResponse>,
+  handler: (req: express.Request) => Promise<ApiResponse | undefined>,
   successStatus = 200
 ): express.RequestHandler {
   return (req, res) => {
     Promise.resolve(handler(req))
       .then((response) => {
-        if (response.error) {
+        if (response && response.error) {
           res.status(500);
         } else {
           res.status(successStatus);
@@ -68,9 +72,10 @@ function respond(
       .catch((e) => {
         const response: ApiResponse = {};
         if (e instanceof Error) {
+          console.error(e.stack);
           response.error = {code: e.name, message: e.message};
         } else {
-          response.error = {code: 'unexpected', message: JSON.stringify(e)};
+          response.error = {code: 'unexpected', message: asError(e).message};
         }
         res.status(500).json(response);
       });

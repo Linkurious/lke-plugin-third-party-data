@@ -96,6 +96,7 @@ export const STRINGS = {
         `Could not fetch details for search result #${searchResultId}`
     },
     getAdminConfig: `Could not get the plugin's admin-configuration`,
+    setAdminConfig: `Could not update the plugin's admin-configuration`,
     getUserConfig: `Could not get the plugin's user-configuration`,
     customActions: {
       loadFailed: (error: LkError): string => `Failed to get custom actions: ${error.message}`,
