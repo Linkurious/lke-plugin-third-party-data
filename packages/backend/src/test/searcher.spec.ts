@@ -20,9 +20,7 @@ const myConfig: MyPluginConfig = {
       id: 'ch',
       vendorKey: 'company-house-uk',
       adminSettings: {
-        apiKey: '05efd800-e2e7-4f46-919c-d831365a42fc',
-        officers: 'No',
-        'persons-with-significant-control': 'No'
+        apiKey: '05efd800-e2e7-4f46-919c-d831365a42fc'
       },
       inputNodeCategory: 'Company',
       outputNodeCategory: 'Company_details',

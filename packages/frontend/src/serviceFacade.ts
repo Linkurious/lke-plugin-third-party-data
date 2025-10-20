@@ -12,6 +12,7 @@ import {Schema} from './api/schema';
 import {SearchSuccessState, UrlParams} from './urlParams';
 import {Configuration} from './configuration';
 import {$elem} from './ui/uiUtils.ts';
+import {IWaitingMessage} from './ui/longTask.ts';
 
 export class ServiceFacade {
   private readonly urlParams;
@@ -96,8 +97,6 @@ export class ServiceFacade {
     await this.ui.longTask.run(async (p) => {
       p.update(STRINGS.ui.editIntegration.savingNewIntegration);
       await this.config.saveNewIntegration(newIntegration);
-      //p.update(STRINGS.ui.editIntegration.restartingPlugin);
-      //await this.api.server.plugin.restartAll();
       p.update(STRINGS.ui.global.done);
     });
     await this.ui.showConfirmIntegrationCreated(newIntegration);
@@ -113,8 +112,6 @@ export class ServiceFacade {
     await this.ui.longTask.run(async (p) => {
       p.update(STRINGS.ui.editIntegration.savingIntegration);
       await this.config.saveExistingIntegration(newModel);
-      //p.update(STRINGS.ui.editIntegration.restartingPlugin);
-      //await this.api.server.plugin.restartAll();
       p.update(STRINGS.ui.global.done);
     });
   }
@@ -165,38 +162,9 @@ export class ServiceFacade {
       }
       itemsToAdd.edges.push(newEdgeR.body);
 
-      let failedNodes = 0;
-      let failedEdges = 0;
-      const neighbors = resultToImport.neighbors ?? [];
-
-      for (let i = 0; i < neighbors.length; i++) {
-        const neighbor = neighbors[i];
-        // create the neighbor node
-        p.update(STRINGS.ui.importSearchResult.creatingNode + ` (${i + 2}/${totalNodes})`);
-        const nodeData = int.getNeighborNode(neighbor);
-        const newNeighborNodeR = await this.api.server.graphNode.createNode(nodeData);
-        if (!newNeighborNodeR.isSuccess()) {
-          failedNodes++;
-          continue;
-        }
-        itemsToAdd.nodes.push(newNeighborNodeR.body);
-        // create the neighbor edge
-        p.update(STRINGS.ui.importSearchResult.creatingNode + ` (${i + 2}/${totalNodes})`);
-        const edgeData = int.getNeighborEdge(neighbor, newNodeId, newNeighborNodeR.body.id);
-        const newNeighborEdgeR = await this.api.server.graphEdge.createEdge(edgeData);
-        if (!newNeighborEdgeR.isSuccess()) {
-          failedEdges++;
-          continue;
-        }
-        itemsToAdd.edges.push(newNeighborEdgeR.body);
-      }
-
-      if (failedEdges + failedNodes > 0) {
-        console.log(`Failed to created ${failedNodes} nodes and ${failedEdges} edges`);
-      }
+      await this.importNeighbors(int, resultToImport, newNodeId, p, itemsToAdd);
 
       p.update(STRINGS.ui.global.done);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       const ogma = this.getOgma();
       if (ogma) {
         try {
@@ -239,9 +207,14 @@ export class ServiceFacade {
   }
 
   private getOgma(): OgmaInterface | undefined {
-    // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    return (window.parent?.ogma ?? window.opener?.ogma ?? undefined) as OgmaInterface | undefined;
+    try {
+      // @ts-ignore
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      return (window.parent?.ogma ?? window.opener?.ogma ?? undefined) as OgmaInterface | undefined;
+    } catch (e) {
+      console.log('Could not reach Ogma: ' + asError(e).message);
+      return undefined;
+    }
   }
 
   private closePlugin(): void {
@@ -271,10 +244,47 @@ export class ServiceFacade {
     await this.ui.longTask.run(async (p) => {
       p.update(STRINGS.ui.editIntegration.deletingIntegration);
       await this.config.deleteIntegration(integrationId);
-      //p.update(STRINGS.ui.editIntegration.restartingPlugin);
-      //await this.api.server.plugin.restartAll();
       p.update(STRINGS.ui.global.done);
     });
+  }
+
+  private async importNeighbors(
+    int: VendorIntegrationPublic,
+    resultToImport: VendorResult,
+    newNodeId: string,
+    p: IWaitingMessage<unknown>,
+    itemsToAdd: {nodes: LkNode[]; edges: LkEdge[]}
+  ): Promise<void> {
+    let failedNodes = 0;
+    let failedEdges = 0;
+    const neighbors = resultToImport.neighbors ?? [];
+    const totalNodes = neighbors.length + 1;
+
+    for (let i = 0; i < neighbors.length; i++) {
+      const neighbor = neighbors[i];
+      // create the neighbor node
+      p.update(STRINGS.ui.importSearchResult.creatingNode + ` (${i + 2}/${totalNodes})`);
+      const nodeData = int.getNeighborNode(neighbor);
+      const newNeighborNodeR = await this.api.server.graphNode.createNode(nodeData);
+      if (!newNeighborNodeR.isSuccess()) {
+        failedNodes++;
+        continue;
+      }
+      itemsToAdd.nodes.push(newNeighborNodeR.body);
+      // create the neighbor edge
+      p.update(STRINGS.ui.importSearchResult.creatingNode + ` (${i + 2}/${totalNodes})`);
+      const edgeData = int.getNeighborEdge(neighbor, newNodeId, newNeighborNodeR.body.id);
+      const newNeighborEdgeR = await this.api.server.graphEdge.createEdge(edgeData);
+      if (!newNeighborEdgeR.isSuccess()) {
+        failedEdges++;
+        continue;
+      }
+      itemsToAdd.edges.push(newNeighborEdgeR.body);
+    }
+
+    if (failedEdges + failedNodes > 0) {
+      console.log(`Failed to created ${failedNodes} nodes and ${failedEdges} edges`);
+    }
   }
 }
 

@@ -11,13 +11,12 @@ export class CompanyHouseUk extends Vendor<
       strategy: 'searchAndDetails',
       description: `Search for companies using the Company House UK API, see <a target="_blank" href="https://developer.company-information.service.gov.uk/">details</a>`,
       adminFields: [
-        {key: 'apiKey', name: 'API Key', required: true},
-        {key: 'officers', name: 'Load officers', required: true, enum: ['No', 'Yes']},
+        {type: 'string', key: 'apiKey', name: 'API Key', required: true},
+        {type: 'boolean', key: 'officers', name: 'Load officers'},
         {
+          type: 'boolean',
           key: 'persons-with-significant-control',
-          name: 'Load persons with significant control',
-          required: true,
-          enum: ['No', 'Yes']
+          name: 'Load persons with significant control'
         }
       ],
       searchQueryFields: {

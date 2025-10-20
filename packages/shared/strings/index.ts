@@ -120,6 +120,8 @@ export const STRINGS = {
     },
     missingAdminSetting: (vendor: Vendor, key: string): string =>
       `${vendor.key}: missing admin setting ${key}`,
+    unknownAdminSetting: (vendor: Vendor, key: string): string =>
+      `${vendor.key}: unknown admin setting ${key}`,
     getIntegrationById: (integrationId: string): string =>
       `Integration not found: ${integrationId}`,
     getDataSources: (error: LkError): string =>
@@ -220,8 +222,7 @@ export const STRINGS = {
     editIntegration: {
       savingNewIntegration: 'Saving new integration...',
       savingIntegration: 'Updating integration',
-      deletingIntegration: 'Deleting integration...',
-      restartingPlugin: 'Applying changes (this can take several seconds)...'
+      deletingIntegration: 'Deleting integration...'
     },
     importSearchResult: {
       creatingNode: 'Creating output node...',

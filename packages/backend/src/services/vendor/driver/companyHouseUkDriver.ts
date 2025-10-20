@@ -12,8 +12,9 @@ import {
   CompanyHouseUkSearchResponse
 } from '../../../../../shared/vendor/vendors/companyHouseUk';
 import {DetailsOptions} from '../../../models/detailsOptions';
+import {VendorFieldType} from '../../../../../shared/vendor/vendorModel';
 
-const CH_DOMAIN = 'api.company-information.service.gov.uk';
+const COMPANY_HOUSE_DOMAIN = 'api.company-information.service.gov.uk';
 
 export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
   CompanyHouseUkSearchQuery,
@@ -33,7 +34,7 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     integration: VendorIntegration,
     maxResults: number
   ): Promise<VendorResult<CompanyHouseUkSearchResponse>[]> {
-    const url = new URL(`https://${CH_DOMAIN}/search/companies`);
+    const url = new URL(`https://${COMPANY_HOUSE_DOMAIN}/search/companies`);
     for (const [key, value] of Object.entries(searchQuery)) {
       url.searchParams.append(key, `${value}`);
     }
@@ -61,24 +62,23 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     integration: VendorIntegration,
     detailsOptions: DetailsOptions
   ): Promise<VendorResult<CompanyHouseUkDetailsResponse>> {
-    const url = new URL(`https://${CH_DOMAIN}/company/${detailsOptions.searchResultId}`);
+    const url = new URL(`https://${COMPANY_HOUSE_DOMAIN}/company/${detailsOptions.searchResultId}`);
     const result = await this.get<DetailsResponseBody>(integration, url);
-    const properties = flattenJson(result) as CompanyHouseUkDetailsResponse;
-    this.fixLinks(properties);
+    const properties = fixLinks(flattenJson(result)) as CompanyHouseUkDetailsResponse;
 
     // load optional neighbors
     const neighbors: NeighborResult[] = [];
-    if (integration.getAdminSettings('officers') === 'Yes') {
+    if (integration.getAdminSettings('officers') === true) {
       const officers = await this.getCompanyOfficers(integration, result.company_number);
       neighbors.push(
         ...officers.map((o) => ({
           edgeType: 'HAS_OFFICER',
           nodeCategory: 'Officer',
-          properties: flattenJson(o)
+          properties: fixLinks(flattenJson(o))
         }))
       );
     }
-    if (integration.getAdminSettings('persons-with-significant-control') === 'Yes') {
+    if (integration.getAdminSettings('persons-with-significant-control') === true) {
       const personsWithControl = await this.getCompanyPersonWithControl(
         integration,
         result.company_number
@@ -87,7 +87,7 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
         ...personsWithControl.map((p) => ({
           edgeType: 'HAS_PERSON_WITH_SIGNIFICANT_CONTROL',
           nodeCategory: 'PersonWithSignificantControl',
-          properties: flattenJson(p)
+          properties: fixLinks(flattenJson(p))
         }))
       );
     }
@@ -99,17 +99,6 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     };
   }
 
-  private fixLinks(properties: Record<string, unknown>): void {
-    // prefix all "links_" properties with this base URL:
-    // https://find-and-update.company-information.service.gov.uk
-    for (const [key, value] of Object.entries(properties)) {
-      if (key.startsWith('links_') && typeof value === 'string' && value.startsWith('/')) {
-        (properties[key] as string) =
-          `https://find-and-update.company-information.service.gov.uk${value}`;
-      }
-    }
-  }
-
   /**
    * GET /company/{company_number}/officers
    * see https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/officers/list
@@ -118,7 +107,7 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     integration: VendorIntegration,
     companyNumber: string
   ): Promise<CompanyHouseOfficer[]> {
-    const url = new URL(`https://${CH_DOMAIN}/company/${companyNumber}/officers`);
+    const url = new URL(`https://${COMPANY_HOUSE_DOMAIN}/company/${companyNumber}/officers`);
     return await this.getItemsByPage<CompanyHouseOfficer>(integration, url);
   }
 
@@ -131,7 +120,7 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     companyNumber: string
   ): Promise<CompanyHousePersonWithControl[]> {
     const url = new URL(
-      `https://${CH_DOMAIN}/company/${companyNumber}/persons-with-significant-control`
+      `https://${COMPANY_HOUSE_DOMAIN}/company/${companyNumber}/persons-with-significant-control`
     );
     return await this.getItemsByPage<CompanyHousePersonWithControl>(integration, url);
   }
@@ -143,12 +132,17 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
   ): Promise<T[]> {
     let hasMore = true;
     const items: Array<T> = [];
-    while (hasMore) {
+    const maxPages = 50;
+    let currentPage = 0;
+    while (hasMore && currentPage++ < maxPages) {
       url.searchParams.set('items_per_page', pageSize + '');
       url.searchParams.set('start_index', items.length + '');
       const response = await this.get<{total_results: number; items: T[]}>(integration, url);
       items.push(...response.items);
       hasMore = items.length < response.total_results;
+    }
+    if (hasMore) {
+      this.logger.info(`Truncated results after ${currentPage} pages (url: ${url.toString()})`);
     }
     return items;
   }
@@ -157,7 +151,7 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     let response: Response;
     try {
       response = await this.request(url)
-        .auth(integration.getAdminSettings('apiKey'), '', {type: 'basic'})
+        .auth(integration.getAdminSettings('apiKey') as string, '', {type: 'basic'})
         .set('accept', 'application/json');
     } catch (e) {
       if (process.env.DEBUG) {
@@ -173,6 +167,20 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     }
     return response.body as T;
   }
+}
+
+export function fixLinks(
+  properties: Record<string, VendorFieldType>
+): Record<string, VendorFieldType> {
+  // prefix all "links_" properties with this base URL:
+  // https://find-and-update.company-information.service.gov.uk
+  for (const [key, value] of Object.entries(properties)) {
+    if (key.startsWith('links_') && typeof value === 'string' && value.startsWith('/')) {
+      (properties[key] as string) =
+        `https://find-and-update.company-information.service.gov.uk${value}`;
+    }
+  }
+  return properties;
 }
 
 interface SearchResponseBody {

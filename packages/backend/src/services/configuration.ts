@@ -7,6 +7,7 @@ import {VendorIntegration} from '../../../shared/integration/vendorIntegration';
 import {STRINGS} from '../../../shared/strings';
 import {API} from '../server/api';
 import {ConfigOptions} from '../models/configOptions';
+import {Vendors} from '../../../shared/vendor/vendors';
 
 import {Logger} from './logger';
 
@@ -89,6 +90,34 @@ export class Configuration {
     }
     if (config.integrations === undefined) {
       config.integrations = [];
+    }
+    for (const integration of config.integrations) {
+      const vendor = Vendors.getVendorByKey(integration.vendorKey);
+      const as = integration.adminSettings;
+      if (typeof as !== 'object' || as === null) {
+        throw new Error(`${vendor.key}: "adminSettings" is invalid (must be an object)`);
+      }
+      for (const [key, value] of Object.entries(as)) {
+        const field = vendor.adminFields.find((adminField) => adminField.key === key);
+        if (!field) {
+          throw new Error(`${vendor.key}: "adminSettings" field ${key} is unexpected`);
+        }
+        if (value === undefined) {
+          if (field.required) {
+            throw new Error(`${vendor.key}: adminSettings.${key} is required`);
+          } else {
+            // not required and undefined, okay
+          }
+        } else {
+          // value is defined
+          if (field.type === 'string' && typeof value !== 'string') {
+            throw new Error(`${vendor.key}: adminSettings.${key} must be a string`);
+          }
+          if (field.type === 'boolean' && typeof value !== 'boolean') {
+            throw new Error(`${vendor.key}: adminSettings.${key} must be a boolean`);
+          }
+        }
+      }
     }
     /*
     if (config.mandatoryParam === null || config.mandatoryParam === undefined) {
