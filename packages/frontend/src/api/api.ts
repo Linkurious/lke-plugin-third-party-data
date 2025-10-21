@@ -42,23 +42,29 @@ export class API {
     path: string,
     queryString: Record<string, string | number | boolean>,
     expectedStatus: number,
-    failureMessage: string
+    failureMessage: string,
+    postBody?: Record<string, unknown>
   ): Promise<Record<string, unknown>> {
     const qs = new URLSearchParams();
     Object.entries(queryString).forEach(([key, value]) => {
       qs.set(key, `${value}`);
     });
 
+    const verb = postBody === undefined ? 'GET' : 'POST';
     const fixedPath = path.startsWith('/') ? `.${path}` : path;
     const url = `${fixedPath}?${qs.toString()}`;
-    console.log('GET ' + url);
-    const r = await fetch(url);
+    console.log(verb + ' ' + url);
+    const r = await fetch(url, {
+      method: verb,
+      body: postBody ? JSON.stringify(postBody) : undefined,
+      headers: postBody ? {'Content-Type': 'application/json'} : undefined
+    });
     if (expectedStatus && r.status !== expectedStatus) {
       const cause = await this.getPluginResponseError(r);
       const message = failureMessage ? `${failureMessage}:\n${cause}` : cause;
       throw new Error(message);
     }
-    return (await r.json()) as Record<string, unknown>;
+    return (expectedStatus === 201 ? {} : await r.json()) as Record<string, unknown>;
   }
 
   async searchNode(params: {
@@ -126,5 +132,9 @@ export class API {
       throw new Error(STRINGS.errors.customActions.loadFailed(actionsR.body));
     }
     return actionsR.body.filter((a) => a.urlTemplate.includes(`integrationId=${integration.id}`));
+  }
+
+  async updatePluginConfig(config: MyPluginConfig): Promise<void> {
+    await this.plugin('./api/admin-config', {}, 201, STRINGS.errors.setAdminConfig, config);
   }
 }

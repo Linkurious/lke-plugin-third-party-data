@@ -23,9 +23,16 @@ export interface ApiResponse {
   error?: ApiError;
 }
 
+export interface NeighborResult {
+  edgeType: string;
+  nodeCategory: string;
+  properties: Record<string, string | number | boolean>;
+}
+
 export interface VendorResult<R extends AbstractFields = AbstractFields> {
   id: string;
   properties: R;
+  neighbors?: NeighborResult[];
 }
 
 export interface VendorSearchResponse<R extends AbstractFields = AbstractFields>

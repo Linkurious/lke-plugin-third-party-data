@@ -2,7 +2,7 @@ import * as process from 'node:process';
 
 import {Response} from 'superagent';
 
-import {VendorResult} from '../../../../../shared/api/response';
+import {NeighborResult, VendorResult} from '../../../../../shared/api/response';
 import {BaseDetailsSearchDriver, flattenJson} from '../baseSearchDriver';
 import {VendorIntegration} from '../../../../../shared/integration/vendorIntegration';
 import {
@@ -12,6 +12,9 @@ import {
   CompanyHouseUkSearchResponse
 } from '../../../../../shared/vendor/vendors/companyHouseUk';
 import {DetailsOptions} from '../../../models/detailsOptions';
+import {VendorFieldType} from '../../../../../shared/vendor/vendorModel';
+
+const COMPANY_HOUSE_DOMAIN = 'api.company-information.service.gov.uk';
 
 export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
   CompanyHouseUkSearchQuery,
@@ -23,7 +26,7 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
   }
 
   /**
-   * https://api.company-information.service.gov.uk/search/companies
+   * GET /search/companies
    * https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/search/search-companies
    */
   async search(
@@ -31,23 +34,15 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     integration: VendorIntegration,
     maxResults: number
   ): Promise<VendorResult<CompanyHouseUkSearchResponse>[]> {
-    const url = new URL('https://api.company-information.service.gov.uk/search/companies');
+    const url = new URL(`https://${COMPANY_HOUSE_DOMAIN}/search/companies`);
     for (const [key, value] of Object.entries(searchQuery)) {
       url.searchParams.append(key, `${value}`);
     }
     url.searchParams.set('start_index', '0');
     url.searchParams.set('items_per_page', `${maxResults}`);
 
-    const response = await this.request(url)
-      .auth(integration.getAdminSettings('apiKey'), '', {type: 'basic'})
-      .set('accept', 'application/json');
-    if (response.status === 401) {
-      throw new Error(`Invalid API key`);
-    }
-    if (response.status !== 200) {
-      throw new Error(`Failed to get search results: ${JSON.stringify(response.body)}`);
-    }
-    return (response.body as SearchResponseBody).items.map((company) => {
+    const result = await this.get<SearchResponseBody>(integration, url);
+    return result.items.map((company) => {
       delete company.kind;
       delete company.snippet;
       delete company.address_snippet;
@@ -60,19 +55,103 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
   }
 
   /**
-   * https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/company-profile/company-profile
+   * GET /company/{companyNumber}
+   * see https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/company-profile/company-profile
    */
   async getDetails(
     integration: VendorIntegration,
     detailsOptions: DetailsOptions
   ): Promise<VendorResult<CompanyHouseUkDetailsResponse>> {
+    const url = new URL(`https://${COMPANY_HOUSE_DOMAIN}/company/${detailsOptions.searchResultId}`);
+    const result = await this.get<DetailsResponseBody>(integration, url);
+    const properties = fixLinks(flattenJson(result)) as CompanyHouseUkDetailsResponse;
+
+    // load optional neighbors
+    const neighbors: NeighborResult[] = [];
+    if (integration.getAdminSettings('officers') === true) {
+      const officers = await this.getCompanyOfficers(integration, result.company_number);
+      neighbors.push(
+        ...officers.map((o) => ({
+          edgeType: 'HAS_OFFICER',
+          nodeCategory: 'Officer',
+          properties: fixLinks(flattenJson(o))
+        }))
+      );
+    }
+    if (integration.getAdminSettings('persons-with-significant-control') === true) {
+      const personsWithControl = await this.getCompanyPersonWithControl(
+        integration,
+        result.company_number
+      );
+      neighbors.push(
+        ...personsWithControl.map((p) => ({
+          edgeType: 'HAS_PERSON_WITH_SIGNIFICANT_CONTROL',
+          nodeCategory: 'PersonWithSignificantControl',
+          properties: fixLinks(flattenJson(p))
+        }))
+      );
+    }
+
+    return {
+      id: `${detailsOptions.searchResultId}`,
+      properties: properties,
+      neighbors: neighbors
+    };
+  }
+
+  /**
+   * GET /company/{company_number}/officers
+   * see https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/officers/list
+   */
+  async getCompanyOfficers(
+    integration: VendorIntegration,
+    companyNumber: string
+  ): Promise<CompanyHouseOfficer[]> {
+    const url = new URL(`https://${COMPANY_HOUSE_DOMAIN}/company/${companyNumber}/officers`);
+    return await this.getItemsByPage<CompanyHouseOfficer>(integration, url);
+  }
+
+  /**
+   * GET /company/{company_number}/persons-with-significant-control
+   * see https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/persons-with-significant-control/list
+   */
+  async getCompanyPersonWithControl(
+    integration: VendorIntegration,
+    companyNumber: string
+  ): Promise<CompanyHousePersonWithControl[]> {
     const url = new URL(
-      `https://api.company-information.service.gov.uk/company/${detailsOptions.searchResultId}`
+      `https://${COMPANY_HOUSE_DOMAIN}/company/${companyNumber}/persons-with-significant-control`
     );
-    let r: Response;
+    return await this.getItemsByPage<CompanyHousePersonWithControl>(integration, url);
+  }
+
+  private async getItemsByPage<T>(
+    integration: VendorIntegration,
+    url: URL,
+    pageSize = 10
+  ): Promise<T[]> {
+    let hasMore = true;
+    const items: Array<T> = [];
+    const maxPages = 50;
+    let currentPage = 0;
+    while (hasMore && currentPage++ < maxPages) {
+      url.searchParams.set('items_per_page', pageSize + '');
+      url.searchParams.set('start_index', items.length + '');
+      const response = await this.get<{total_results: number; items: T[]}>(integration, url);
+      items.push(...response.items);
+      hasMore = items.length < response.total_results;
+    }
+    if (hasMore) {
+      this.logger.warn(`Truncated results after ${currentPage} pages (url: ${url.toString()})`);
+    }
+    return items;
+  }
+
+  private async get<T>(integration: VendorIntegration, url: URL): Promise<T> {
+    let response: Response;
     try {
-      r = await this.request(url)
-        .auth(integration.getAdminSettings('apiKey'), '', {type: 'basic'})
+      response = await this.request(url)
+        .auth(integration.getAdminSettings('apiKey') as string, '', {type: 'basic'})
         .set('accept', 'application/json');
     } catch (e) {
       if (process.env.DEBUG) {
@@ -80,30 +159,28 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
       }
       throw e;
     }
-    if (r.status === 401) {
+    if (response.status === 401) {
       throw new Error(`Invalid API key`);
     }
-    if (r.status !== 200) {
-      throw new Error(`Failed to get details results: ${JSON.stringify(r.body)}`);
+    if (response.status !== 200) {
+      throw new Error(`Failed to get ${url.toString()}: ${JSON.stringify(response.body)}`);
     }
-
-    const properties = flattenJson(r.body as DetailsResponseBody) as CompanyHouseUkDetailsResponse;
-
-    // prefix all "links_" properties with this base URL:
-    // https://find-and-update.company-information.service.gov.uk
-    for (const [k, v] of Object.entries(properties)) {
-      const key = k as keyof CompanyHouseUkDetailsResponse;
-      if (key.startsWith('links_') && typeof v === 'string' && v.startsWith('/')) {
-        (properties[key] as string) =
-          `https://find-and-update.company-information.service.gov.uk${v}`;
-      }
-    }
-
-    return {
-      id: `${detailsOptions.searchResultId}`,
-      properties: properties
-    };
+    return response.body as T;
   }
+}
+
+export function fixLinks(
+  properties: Record<string, VendorFieldType>
+): Record<string, VendorFieldType> {
+  // prefix all "links_" properties with this base URL:
+  // https://find-and-update.company-information.service.gov.uk
+  for (const [key, value] of Object.entries(properties)) {
+    if (key.startsWith('links_') && typeof value === 'string' && value.startsWith('/')) {
+      (properties[key] as string) =
+        `https://find-and-update.company-information.service.gov.uk${value}`;
+    }
+  }
+  return properties;
 }
 
 interface SearchResponseBody {
@@ -114,7 +191,188 @@ interface SearchResponseBody {
   items: Record<string, unknown>[];
 }
 
+/**
+ * https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/resources/companyprofile?v=latest
+ */
 interface DetailsResponseBody extends Record<string, unknown> {
   company_name: string;
   company_number: string;
+}
+
+/**
+ * https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/resources/officerlist?v=latest
+ */
+interface CompanyHouseOfficer {
+  name: string;
+  /**
+   * Possible values are:
+   *     cic-manager
+   *     corporate-director
+   *     corporate-llp-designated-member
+   *     corporate-llp-member
+   *     corporate-manager-of-an-eeig
+   *     corporate-managing-officer
+   *     corporate-member-of-a-management-organ
+   *     corporate-member-of-a-supervisory-organ
+   *     corporate-member-of-an-administrative-organ
+   *     corporate-nominee-director
+   *     corporate-nominee-secretary
+   *     corporate-secretary
+   *     director
+   *     general-partner-in-a-limited-partnership
+   *     judicial-factor
+   *     limited-partner-in-a-limited-partnership
+   *     llp-designated-member
+   *     llp-member
+   *     manager-of-an-eeig
+   *     managing-officer
+   *     member-of-a-management-organ
+   *     member-of-a-supervisory-organ
+   *     member-of-an-administrative-organ
+   *     nominee-director
+   *     nominee-secretary
+   *     person-authorised-to-accept
+   *     person-authorised-to-represent
+   *     person-authorised-to-represent-and-accept
+   *     receiver-and-manager
+   *     secretary
+   */
+  officer_role: string;
+  appointed_on?: string; // iso
+  address?: {
+    address_line_1?: string;
+    address_line_2?: string;
+    care_of?: string;
+    country?: string;
+    locality?: string;
+    po_box?: string;
+    postal_code?: string;
+    premises?: string;
+    region?: string;
+  };
+  date_of_birth?: {
+    month: number;
+    year: number;
+  };
+
+  // bellow this line are fields no one asked for
+
+  links: {
+    officer: {
+      appointments: string;
+    };
+    self: string;
+  };
+
+  appointed_before?: string;
+  contact_details?: {
+    contact_name?: string;
+  };
+  country_of_residence?: string;
+  etag?: string;
+  former_names?: [
+    {
+      forenames?: string;
+      surname?: string;
+    }
+  ];
+  identification?: {
+    identification_type?: string;
+    legal_authority?: string;
+    legal_form?: string;
+    place_registered?: string;
+    registration_number?: string;
+  };
+  is_pre_1992_appointment?: boolean;
+  nationality?: string;
+  occupation?: string;
+  person_number?: string;
+  principal_office_address?: {
+    address_line_1?: string;
+    address_line_2?: string;
+    care_of?: string;
+    country?: string;
+    locality?: string;
+    po_box?: string;
+    postal_code?: string;
+    premises?: string;
+    region?: string;
+  };
+  resigned_on?: string; // iso
+  responsibilities?: string;
+}
+
+/**
+ * https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/resources/list?v=latest
+ */
+interface CompanyHousePersonWithControl {
+  name: string;
+  name_elements: {
+    forename: string;
+    middle_name: string;
+    surname: string;
+    title: string;
+  };
+  /**
+   * Possible values are:
+   *     individual-person-with-significant-control
+   *     corporate-entity-person-with-significant-control
+   *     legal-person-with-significant-control
+   *     super-secure-person-with-significant-control
+   *     individual-beneficial-owner
+   *     corporate-entity-beneficial-owner
+   *     legal-person-beneficial-owner
+   *     super-secure-beneficial-owner
+   */
+  kind: string;
+  // appointed date?
+  notified_on: string; // 'date';
+  address: {
+    address_line_1: string;
+    address_line_2: string;
+    care_of: string;
+    country: string;
+    locality: string;
+    po_box: string;
+    postal_code: string;
+    premises: string;
+    region: string;
+  };
+  date_of_birth: {
+    month: number;
+    year: number;
+  };
+  nationality: string;
+  country_of_residence: string;
+  natures_of_control: string[];
+
+  // bellow this line are fields no one asked for
+
+  ceased: boolean;
+  ceased_on: string; // 'date';
+  description: string;
+  etag: string;
+  identification: {
+    country_registered: string;
+    legal_authority: string;
+    legal_form: string;
+    place_registered: string;
+    registration_number: string;
+  };
+  is_sanctioned: boolean;
+  links: {
+    self: string;
+    statement: string;
+  };
+  principal_office_address: {
+    address_line_1: string;
+    address_line_2: string;
+    care_of: string;
+    country: string;
+    locality: string;
+    po_box: string;
+    postal_code: string;
+    premises: string;
+    region: string;
+  };
 }

@@ -18,7 +18,7 @@ const mockUser: User = {
   username: 'test',
   email: 'test@test.com',
   id: 1,
-  groups: [{name: 'admin', id: 5, sourceKey: '*'}],
+  groups: [{uuid: '5', name: 'admin', id: 5, sourceKey: '*'}],
   actions: {},
   accessRights: {},
   createdAt: '2021-01-01T00:00:00.000Z',

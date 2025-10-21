@@ -10,7 +10,9 @@
     "lint:fix": "eslint ./src ../shared --ext .ts --fix"
   },
   "dependencies": {
-    "bootstrap": "5.3.2"
+    "bootstrap": "5.3.2",
+    "@linkurious/rest-client": "4.2.5",
+    "superagent": "10.2.2"
   },
   "devDependencies": {
     "@types/bootstrap": "5.2.10",

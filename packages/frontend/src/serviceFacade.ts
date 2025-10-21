@@ -12,6 +12,7 @@ import {Schema} from './api/schema';
 import {SearchSuccessState, UrlParams} from './urlParams';
 import {Configuration} from './configuration';
 import {$elem} from './ui/uiUtils.ts';
+import {IWaitingMessage} from './ui/longTask.ts';
 
 export class ServiceFacade {
   private readonly urlParams;
@@ -96,8 +97,6 @@ export class ServiceFacade {
     await this.ui.longTask.run(async (p) => {
       p.update(STRINGS.ui.editIntegration.savingNewIntegration);
       await this.config.saveNewIntegration(newIntegration);
-      p.update(STRINGS.ui.editIntegration.restartingPlugin);
-      await this.api.server.plugin.restartAll();
       p.update(STRINGS.ui.global.done);
     });
     await this.ui.showConfirmIntegrationCreated(newIntegration);
@@ -113,8 +112,6 @@ export class ServiceFacade {
     await this.ui.longTask.run(async (p) => {
       p.update(STRINGS.ui.editIntegration.savingIntegration);
       await this.config.saveExistingIntegration(newModel);
-      p.update(STRINGS.ui.editIntegration.restartingPlugin);
-      await this.api.server.plugin.restartAll();
       p.update(STRINGS.ui.global.done);
     });
   }
@@ -142,7 +139,10 @@ export class ServiceFacade {
       }
 
       // create + save the target node from the search result
-      p.update(STRINGS.ui.importSearchResult.creatingNode);
+      const totalNodes = (resultToImport.neighbors?.length ?? 0) + 1;
+      const itemsToAdd: {nodes: LkNode[]; edges: LkEdge[]} = {nodes: [], edges: []};
+
+      p.update(STRINGS.ui.importSearchResult.creatingNode + ` (1/${totalNodes})`);
       const newNodeR = await this.api.server.graphNode.createNode(
         int.getOutputNode(resultToImport)
       );
@@ -150,31 +150,44 @@ export class ServiceFacade {
         throw new Error(STRINGS.errors.importResult.failedToCreateNode(newNodeR.body));
       }
       const newNodeId = newNodeR.body.id;
+      itemsToAdd.nodes.push(newNodeR.body);
 
       // create the connecting edge
-      p.update(STRINGS.ui.importSearchResult.creatingEdge);
+      p.update(STRINGS.ui.importSearchResult.creatingEdge + ` (1/${totalNodes})`);
       const newEdgeR = await this.api.server.graphEdge.createEdge(
         int.getOutputEdge(resultToImport, newNodeR.body.id, inputNodeId)
       );
       if (!newEdgeR.isSuccess()) {
         throw new Error(STRINGS.errors.importResult.failedToCreateEdge(newEdgeR.body));
       }
+      itemsToAdd.edges.push(newEdgeR.body);
+
+      await this.importNeighbors(int, resultToImport, newNodeId, p, itemsToAdd);
 
       p.update(STRINGS.ui.global.done);
-      if (window.opener) {
+      const ogma = this.getOgma();
+      if (ogma) {
         try {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          const ogma = window.opener.ogma as OgmaInterface;
-          const ogmaNode = ogma.addNode(newNodeR.body);
-          ogma.addEdge(newEdgeR.body);
+          const addedGraph = await ogma.addGraph(itemsToAdd, {ignoreInvalid: true});
           addedInLKE = true;
+
+          // select added nodes
           ogma.clearSelection();
-          ogmaNode.setSelected(true);
-          ogmaNode.locate();
-          void ogma.layouts.force({nodes: [newNodeId, inputNodeId]});
+          addedGraph.nodes.setSelected(true);
+
+          // layout only newly added nodes
+          const previousNodes = addedGraph.nodes.inverse();
+          await previousNodes.setAttribute('layoutable', false);
+          try {
+            await ogma.layouts.force({locate: true});
+          } finally {
+            await previousNodes.setAttribute('layoutable', true);
+          }
         } catch (e) {
           console.warn('Could not add node/edge in LKE', e);
         }
+      } else {
+        console.log('Ogma not available, cannot add graph to viz');
       }
     });
 
@@ -187,10 +200,33 @@ export class ServiceFacade {
       [
         this.ui.button.create(STRINGS.ui.importSearchResult.confirmModalCloseButton, {}, () => {
           this.ui.popIn.close();
-          window.close();
+          this.closePlugin();
         })
       ]
     );
+  }
+
+  private getOgma(): OgmaInterface | undefined {
+    try {
+      // @ts-ignore
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      return (window.parent?.ogma ?? window.opener?.ogma ?? undefined) as OgmaInterface | undefined;
+    } catch (e) {
+      console.log('Could not reach Ogma: ' + asError(e).message);
+      return undefined;
+    }
+  }
+
+  private closePlugin(): void {
+    const inIframe = window.parent !== window;
+    if (inIframe) {
+      const button = window.parent.document.querySelector('s-popin .close button');
+      if (button && 'click' in button && typeof button.click === 'function') {
+        button.click();
+      }
+    } else {
+      window.close();
+    }
   }
 
   async createCustomAction(
@@ -208,23 +244,67 @@ export class ServiceFacade {
     await this.ui.longTask.run(async (p) => {
       p.update(STRINGS.ui.editIntegration.deletingIntegration);
       await this.config.deleteIntegration(integrationId);
-      p.update(STRINGS.ui.editIntegration.restartingPlugin);
-      await this.api.server.plugin.restartAll();
       p.update(STRINGS.ui.global.done);
     });
+  }
+
+  private async importNeighbors(
+    int: VendorIntegrationPublic,
+    resultToImport: VendorResult,
+    newNodeId: string,
+    p: IWaitingMessage<unknown>,
+    itemsToAdd: {nodes: LkNode[]; edges: LkEdge[]}
+  ): Promise<void> {
+    let failedNodes = 0;
+    let failedEdges = 0;
+    const neighbors = resultToImport.neighbors ?? [];
+    const totalNodes = neighbors.length + 1;
+
+    for (let i = 0; i < neighbors.length; i++) {
+      const neighbor = neighbors[i];
+      // create the neighbor node
+      p.update(STRINGS.ui.importSearchResult.creatingNode + ` (${i + 2}/${totalNodes})`);
+      const nodeData = int.getNeighborNode(neighbor);
+      const newNeighborNodeR = await this.api.server.graphNode.createNode(nodeData);
+      if (!newNeighborNodeR.isSuccess()) {
+        failedNodes++;
+        continue;
+      }
+      itemsToAdd.nodes.push(newNeighborNodeR.body);
+      // create the neighbor edge
+      p.update(STRINGS.ui.importSearchResult.creatingNode + ` (${i + 2}/${totalNodes})`);
+      const edgeData = int.getNeighborEdge(neighbor, newNodeId, newNeighborNodeR.body.id);
+      const newNeighborEdgeR = await this.api.server.graphEdge.createEdge(edgeData);
+      if (!newNeighborEdgeR.isSuccess()) {
+        failedEdges++;
+        continue;
+      }
+      itemsToAdd.edges.push(newNeighborEdgeR.body);
+    }
+
+    if (failedEdges + failedNodes > 0) {
+      console.log(`Failed to created ${failedNodes} nodes and ${failedEdges} edges`);
+    }
   }
 }
 
 interface OgmaInterface {
   clearSelection: () => void;
-  addNode: (node: LkNode) => OgmaNode;
-  addEdge: (edge: LkEdge) => void;
+  addGraph: (
+    graph: {nodes: LkNode[]; edges: LkEdge[]},
+    options: {ignoreInvalid: boolean}
+  ) => Promise<{nodes: OgmaNodeList; edges: OgmaEdgeList}>;
   layouts: {
-    force: (params: {nodes: string[]}) => Promise<void>;
+    force: (params: {locate: boolean}) => Promise<void>;
   };
 }
 
-interface OgmaNode {
+interface OgmaNodeList {
   setSelected(s: boolean): void;
-  locate(): void;
+  locate(): Promise<void>;
+  getId(): string[];
+  inverse(): OgmaNodeList;
+  setAttribute(path: 'layoutable', value: boolean): Promise<OgmaNodeList>;
 }
+
+interface OgmaEdgeList {}

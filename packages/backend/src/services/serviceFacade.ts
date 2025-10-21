@@ -13,6 +13,7 @@ import {
 import {SearchOptions} from '../models/searchOptions';
 import {asError} from '../../../shared/utils';
 import {DetailsOptions} from '../models/detailsOptions';
+import {ConfigOptions} from '../models/configOptions';
 
 import {Configuration} from './configuration';
 import {Logger} from './logger';
@@ -25,8 +26,8 @@ export class ServiceFacade {
 
   constructor(options: PluginRouteOptions<MyPluginConfig>) {
     this.logger = new Logger();
-    this.config = new Configuration(options.configuration, this.logger);
     this.api = new API(options, this.logger);
+    this.config = new Configuration(options.configuration, this.api, this.logger);
     this.logger.info('ServiceFacade initialized');
   }
 
@@ -38,8 +39,21 @@ export class ServiceFacade {
     return false;
   }
 
-  async getConfigAdmin(): Promise<MyPluginConfig & ApiResponse> {
-    return this.config.config;
+  private async ensureAdmin(req: express.Request): Promise<void> {
+    const isAdmin = await this.currentUserIsAdmin(req);
+    if (!isAdmin) {
+      throw new Error('Not authorized');
+    }
+  }
+
+  async getConfigAdmin(req: express.Request): Promise<MyPluginConfig & ApiResponse> {
+    await this.ensureAdmin(req);
+    return this.config.getConfigFull();
+  }
+
+  async setConfigAdmin(req: express.Request, config: ConfigOptions): Promise<undefined> {
+    await this.ensureAdmin(req);
+    await this.config.setConfigFull(req, config);
   }
 
   async getConfigUser(): Promise<MyPluginConfigPublic & ApiResponse> {

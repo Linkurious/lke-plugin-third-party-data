@@ -23,7 +23,7 @@ plugin({
     }
     return new RestClient({
       baseUrl: '/',
-      agent: agent
+      agent: agent as unknown as superagent.SuperAgentStatic
     });
   },
   configuration: {
