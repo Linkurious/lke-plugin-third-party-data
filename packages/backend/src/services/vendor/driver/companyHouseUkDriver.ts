@@ -142,7 +142,7 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
       hasMore = items.length < response.total_results;
     }
     if (hasMore) {
-      this.logger.info(`Truncated results after ${currentPage} pages (url: ${url.toString()})`);
+      this.logger.warn(`Truncated results after ${currentPage} pages (url: ${url.toString()})`);
     }
     return items;
   }
