@@ -10,7 +10,7 @@ export class DnbPersonLookupVendor extends Vendor<
       name: 'Dun & Bradstreet - Basic Person Lookup',
       strategy: 'search',
       description: `Search for people using the DnB "Basic Contact Lookup" API, see <a target="_blank" href="https://docs.dnb.com/direct/2.0/en-US/entitylist/latest/findcontact/rest-API">details</a>`,
-      adminFields: [{key: 'apiToken', name: 'API Token', required: true}],
+      adminFields: [{type: 'string', key: 'apiToken', name: 'API Token', required: true}],
       searchQueryFields: {
         KeywordText: {type: 'string', required: true}
       },

@@ -96,6 +96,7 @@ export const STRINGS = {
         `Could not fetch details for search result #${searchResultId}`
     },
     getAdminConfig: `Could not get the plugin's admin-configuration`,
+    setAdminConfig: `Could not update the plugin's admin-configuration`,
     getUserConfig: `Could not get the plugin's user-configuration`,
     customActions: {
       loadFailed: (error: LkError): string => `Failed to get custom actions: ${error.message}`,
@@ -119,11 +120,13 @@ export const STRINGS = {
     },
     missingAdminSetting: (vendor: Vendor, key: string): string =>
       `${vendor.key}: missing admin setting ${key}`,
+    unknownAdminSetting: (vendor: Vendor, key: string): string =>
+      `${vendor.key}: unknown admin setting ${key}`,
     getIntegrationById: (integrationId: string): string =>
       `Integration not found: ${integrationId}`,
     getDataSources: (error: LkError): string =>
       `Get connected sources: could not get list of sources (${error.message})`,
-    updateIntegratioNotFound: (integrationId: string): string =>
+    updateIntegrationNotFound: (integrationId: string): string =>
       `Cannot update integration ${integrationId}: integration not found`,
     integrationNotFound: (integrationId: string): string =>
       `Integration ${integrationId} was not found`
@@ -219,8 +222,7 @@ export const STRINGS = {
     editIntegration: {
       savingNewIntegration: 'Saving new integration...',
       savingIntegration: 'Updating integration',
-      deletingIntegration: 'Deleting integration...',
-      restartingPlugin: 'Applying changes (this can take several seconds)...'
+      deletingIntegration: 'Deleting integration...'
     },
     importSearchResult: {
       creatingNode: 'Creating output node...',

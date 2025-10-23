@@ -10,7 +10,15 @@ export class CompanyHouseUk extends Vendor<
       name: 'Company House UK',
       strategy: 'searchAndDetails',
       description: `Search for companies using the Company House UK API, see <a target="_blank" href="https://developer.company-information.service.gov.uk/">details</a>`,
-      adminFields: [{key: 'apiKey', name: 'API Key', required: true}],
+      adminFields: [
+        {type: 'string', key: 'apiKey', name: 'API Key', required: true},
+        {type: 'boolean', key: 'officers', name: 'Load officers'},
+        {
+          type: 'boolean',
+          key: 'persons-with-significant-control',
+          name: 'Load persons with significant control'
+        }
+      ],
       searchQueryFields: {
         q: {type: 'string', required: true},
         restrictions: {type: 'string', required: false}
@@ -36,6 +44,7 @@ export class CompanyHouseUk extends Vendor<
         links_self: {type: 'string', required: true}
       },
       detailsResponseFields: {
+        // accounts
         accounts_accounting_reference_date_day: {type: 'number', required: true},
         accounts_accounting_reference_date_month: {type: 'number', required: true},
         accounts_last_accounts_made_up_to: {type: 'string', required: true},
@@ -43,10 +52,13 @@ export class CompanyHouseUk extends Vendor<
         accounts_next_due: {type: 'string', required: true},
         accounts_next_made_up_to: {type: 'string', required: true},
         accounts_overdue: {type: 'boolean', required: true},
+
+        // annual_return
         annual_return_last_made_up_to: {type: 'string', required: true},
         annual_return_next_due: {type: 'string', required: true},
         annual_return_next_made_up_to: {type: 'string', required: true},
         annual_return_overdue: {type: 'boolean', required: true},
+
         branch_company_details_business_activity: {type: 'string', required: true},
         branch_company_details_parent_company_name: {type: 'string', required: true},
         branch_company_details_parent_company_number: {type: 'string', required: true},
@@ -55,12 +67,17 @@ export class CompanyHouseUk extends Vendor<
         company_number: {type: 'string', required: true},
         company_status: {type: 'string', required: true},
         company_status_detail: {type: 'string', required: true},
+
+        // confirmation_statement
         confirmation_statement_last_made_up_to: {type: 'string', required: true},
         confirmation_statement_next_due: {type: 'string', required: true},
         confirmation_statement_next_made_up_to: {type: 'string', required: true},
         confirmation_statement_overdue: {type: 'boolean', required: true},
+
         date_of_cessation: {type: 'string', required: false},
         date_of_creation: {type: 'string', required: true},
+
+        // foreign_company_details
         foreign_company_details_accounting_requirement_foreign_account_type: {
           type: 'string',
           required: true
@@ -102,17 +119,30 @@ export class CompanyHouseUk extends Vendor<
         },
         foreign_company_details_originating_registry_name: {type: 'string', required: true},
         foreign_company_details_registration_number: {type: 'string', required: true},
+
         has_been_liquidated: {type: 'boolean', required: true},
         has_charges: {type: 'boolean', required: true},
         has_insolvency_history: {type: 'boolean', required: true},
         is_community_interest_company: {type: 'boolean', required: true},
         jurisdiction: {type: 'string', required: true},
         last_full_members_list_date: {type: 'string', required: true},
-        links_persons_with_significant_control: {type: 'string', required: true},
-        links_persons_with_significant_control_statements: {type: 'string', required: true},
-        links_registers: {type: 'string', required: true},
+
+        // links
+        links_charges: {type: 'string', required: false},
+        links_exemptions: {type: 'string', required: false},
+        links_filing_history: {type: 'string', required: false},
+        links_insolvency: {type: 'string', required: false},
+        links_officers: {type: 'string', required: false},
+        links_overseas: {type: 'string', required: false},
+        links_persons_with_significant_control: {type: 'string', required: false},
+        links_persons_with_significant_control_statements: {type: 'string', required: false},
+        links_registers: {type: 'string', required: false},
         links_self: {type: 'string', required: true},
+        'links_uk-establishments': {type: 'string', required: false},
+
         previous_company_names: {type: 'string', required: true},
+
+        // registered_office_address
         registered_office_address_address_line_1: {type: 'string', required: true},
         registered_office_address_address_line_2: {type: 'string', required: true},
         registered_office_address_care_of: {type: 'string', required: false},
@@ -123,6 +153,8 @@ export class CompanyHouseUk extends Vendor<
         registered_office_address_premises: {type: 'string', required: false},
         registered_office_address_region: {type: 'string', required: true},
         registered_office_is_in_dispute: {type: 'boolean', required: true},
+
+        // service_address
         service_address_address_line_1: {type: 'string', required: true},
         service_address_address_line_2: {type: 'string', required: true},
         service_address_care_of: {type: 'string', required: false},
@@ -131,6 +163,7 @@ export class CompanyHouseUk extends Vendor<
         service_address_po_box: {type: 'string', required: false},
         service_address_postal_code: {type: 'string', required: true},
         service_address_region: {type: 'string', required: true},
+
         sic_codes: {type: 'string', required: true},
         super_secure_managing_officer_count: {type: 'number', required: true},
         type: {type: 'string', required: true},

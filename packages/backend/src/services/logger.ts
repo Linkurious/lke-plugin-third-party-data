@@ -9,6 +9,10 @@ export class Logger {
     console.log(this.date + ' - ' + message);
   }
 
+  warn(message: string): void {
+    console.warn(this.date + ' - ' + message);
+  }
+
   error(message: string, error?: Error): void {
     console.error(this.date + ' - ' + message + (error ? ': ' + error.stack : ''));
   }

@@ -8,17 +8,13 @@
     "lint": "eslint ./src ../shared --ext .ts",
     "lint:fix": "eslint ./src ../shared --ext .ts --fix"
   },
-  "bundledDependencies": [
-    "express",
-    "superagent"
-  ],
-  "dependencies": {
-    "express": "4.17.3",
-    "superagent": "8.1.2"
-  },
+  "type": "module",
+  "bundledDependencies": true,
+  "dependencies": {},
   "devDependencies": {
     "@types/express": "4.17.21",
-    "@types/node": "18.19.3",
-    "@types/superagent": "4.1.15"
+    "@types/node": "22.18.10",
+    "@types/superagent": "8.1.9",
+    "@types/http-proxy-agent": "4.0.1"
   }
 }

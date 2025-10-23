@@ -10,6 +10,7 @@ import {MyPluginConfig} from '../../../shared/myPluginConfig';
 import {CompanyHouseUkSearchResponse} from '../../../shared/vendor/vendors/companyHouseUk';
 import {CompanyHouseUkDriver} from '../services/vendor/driver/companyHouseUkDriver';
 import {DetailsOptions} from '../models/detailsOptions';
+import {API} from '../server/api';
 
 const myConfig: MyPluginConfig = {
   basePath: '/',
@@ -58,7 +59,7 @@ const facebookNode: LkNode = {
 
 void describe('Searcher', () => {
   const logger = new Logger();
-  const config: Configuration = new Configuration(myConfig, logger);
+  const config: Configuration = new Configuration(myConfig, undefined as unknown as API, logger);
 
   void it('should search for facebook with company house', async () => {
     const s = new Searcher(logger, config, 'ch');

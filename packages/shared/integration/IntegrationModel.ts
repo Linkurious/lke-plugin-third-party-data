@@ -11,7 +11,7 @@ export interface IntegrationModelPublic {
 }
 
 export interface IntegrationModel extends IntegrationModelPublic {
-  adminSettings: Record<string, string | undefined>;
+  adminSettings: Record<string, string | boolean | undefined>;
 }
 
 export type FieldMappingType = 'constant' | 'property';

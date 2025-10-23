@@ -40,9 +40,8 @@ export class DnbPeopleLookupDriver extends BaseSearchDriver<
     for (const [key, value] of Object.entries(searchQuery)) {
       url.searchParams.append(key, `${value}`);
     }
-    const token = integration.getAdminSettings('apiToken');
-    const r = await this.client
-      .get(url.toString())
+    const token = integration.getAdminSettings('apiToken') as string;
+    const r = await this.request(url)
       .auth(token, {type: 'bearer'})
       .set('accept', 'application/json');
     if (r.status !== 200) {
