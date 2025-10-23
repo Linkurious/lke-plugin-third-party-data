@@ -9,17 +9,8 @@
     "lint:fix": "eslint ./src ../shared --ext .ts --fix"
   },
   "type": "module",
-  "bundledDependencies": [
-    "express",
-    "superagent",
-    "https-proxy-agent"
-  ],
-  "dependencies": {
-    "@linkurious/rest-client": "4.2.5",
-    "express": "4.21.2",
-    "superagent": "10.2.2",
-    "https-proxy-agent": "7.0.6"
-  },
+  "bundledDependencies": true,
+  "dependencies": {},
   "devDependencies": {
     "@types/express": "4.17.21",
     "@types/node": "22.18.10",

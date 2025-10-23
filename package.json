@@ -45,16 +45,20 @@
     "LICENSE"
   ],
   "bundledDependencies": true,
-  "dependencies": {},
-  "devDependencies": {
+  "dependencies": {
+    "@linkurious/rest-client": "4.2.5",
+    "express": "4.21.2",
+    "qs": "6.14.0",
     "superagent": "10.2.2",
+    "https-proxy-agent": "7.0.6"
+  },
+  "devDependencies": {
     "@typescript-eslint/eslint-plugin": "6.16.0",
     "eslint": "8.56.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-import": "2.29.1",
     "eslint-plugin-prettier": "5.1.2",
-    "typescript": "5.3.3",
-    "https-proxy-agent": "7.0.6"
+    "typescript": "5.3.3"
   },
   "workspaces": [
     "packages/backend",
