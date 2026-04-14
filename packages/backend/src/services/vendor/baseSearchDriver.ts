@@ -67,10 +67,10 @@ export abstract class BaseSearchDriver<SQ extends AbstractFields, SR extends Abs
 }
 
 export abstract class BaseDetailsSearchDriver<
-    SQ extends AbstractFields,
-    SR extends AbstractFields,
-    DR extends AbstractFields
-  >
+  SQ extends AbstractFields,
+  SR extends AbstractFields,
+  DR extends AbstractFields
+>
   extends ProxyClient
   implements DetailsSearchDriver<SQ, SR, DR>
 {

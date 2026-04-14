@@ -35,16 +35,18 @@ export interface VendorResult<R extends AbstractFields = AbstractFields> {
   neighbors?: NeighborResult[];
 }
 
-export interface VendorSearchResponse<R extends AbstractFields = AbstractFields>
-  extends ApiResponse {
+export interface VendorSearchResponse<
+  R extends AbstractFields = AbstractFields
+> extends ApiResponse {
   integrationId: string;
   inputNodeId: string;
   vendorKey: string;
   results: VendorResult<R>[];
 }
 
-export interface VendorDetailsResponse<R extends AbstractFields = AbstractFields>
-  extends ApiResponse {
+export interface VendorDetailsResponse<
+  R extends AbstractFields = AbstractFields
+> extends ApiResponse {
   integrationId: string;
   searchResultId: string;
   vendorKey: string;
