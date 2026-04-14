@@ -1,5 +1,6 @@
 import {PluginRouteOptions} from '@linkurious/rest-client';
-import express from 'express';
+import type {Request, RequestHandler} from 'express';
+import bodyParser from 'body-parser';
 
 import {MyPluginConfig} from '../../shared/myPluginConfig';
 import {ApiResponse} from '../../shared/api/response';
@@ -12,7 +13,7 @@ import {ConfigOptions} from './models/configOptions';
 
 export = function (pluginInterface: PluginRouteOptions<MyPluginConfig>): void {
   const services = new ServiceFacade(pluginInterface);
-  pluginInterface.router.use(express.json());
+  pluginInterface.router.use(bodyParser.json());
 
   // read the admin config
   pluginInterface.router.get(
@@ -25,7 +26,7 @@ export = function (pluginInterface: PluginRouteOptions<MyPluginConfig>): void {
   // update the admin config
   pluginInterface.router.post(
     '/admin-config',
-    respond(async (req: express.Request) => {
+    respond(async (req: Request) => {
       const config = ConfigOptions.from(req.body);
       return services.setConfigAdmin(req, config);
     }, 201)
@@ -56,9 +57,9 @@ export = function (pluginInterface: PluginRouteOptions<MyPluginConfig>): void {
 };
 
 function respond(
-  handler: (req: express.Request) => Promise<ApiResponse | undefined>,
+  handler: (req: Request) => Promise<ApiResponse | undefined>,
   successStatus = 200
-): express.RequestHandler {
+): RequestHandler {
   return (req, res) => {
     Promise.resolve(handler(req))
       .then((response) => {

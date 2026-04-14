@@ -1,7 +1,6 @@
 import * as http from 'node:http';
 
 import express from 'express';
-import * as superagent from 'superagent';
 import {RestClient} from '@linkurious/rest-client';
 
 import plugin from '../routes';
@@ -16,14 +15,9 @@ apiRouter.get('/test', (_req, res) => {
 plugin({
   router: apiRouter,
   getRestClient: (req) => {
-    const agent = superagent.agent();
-    if (req.headers.cookie !== undefined) {
-      agent.jar.setCookie(req.headers.cookie);
-      void agent.set('x-lke-secret', /*config.secret*/ '123');
-    }
     return new RestClient({
       baseUrl: '/',
-      agent: agent as unknown as superagent.SuperAgentStatic
+      headers: [['Cookie', req.headers.cookie ?? '']]
     });
   },
   configuration: {
