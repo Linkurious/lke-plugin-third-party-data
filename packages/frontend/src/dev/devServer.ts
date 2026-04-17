@@ -1,7 +1,7 @@
 import http from 'node:http';
 import url from 'node:url';
 
-import * as vite from 'vite';
+import type {ProxyOptions, UserConfig} from 'vite';
 
 export interface ApiMockResponse {
   status?: number;
@@ -43,9 +43,9 @@ export class DevServer {
     this.mockServerPort = options.frontendDevServerPort + (Math.floor(Math.random() * 100) + 100);
   }
 
-  public createViteConfig(): vite.UserConfig['server'] {
+  public createViteConfig(): UserConfig['server'] {
     const mockServer = this.createMockServer();
-    const apiMockHandler: vite.ProxyOptions = {
+    const apiMockHandler: ProxyOptions = {
       target: `http://localhost:${this.mockServerPort}`,
       changeOrigin: true,
       secure: false,
@@ -56,7 +56,7 @@ export class DevServer {
         proxy.on('close', () => mockServer.close());
       }
     };
-    const backendApiHandler: vite.ProxyOptions =
+    const backendApiHandler: ProxyOptions =
       this.backendDevServerPort === undefined
         ? apiMockHandler
         : {

@@ -14,7 +14,6 @@ const settings = {
   backendDevServerPort: 3000 // set 3000 to proxy backend requests to localhost:3000
 };
 
-// noinspection JSUnusedGlobalSymbols
 /**
  * Vite LKE-plugin boilerplate
  */
