@@ -1,4 +1,4 @@
-import vite, {type UserConfig} from 'vite';
+import * as vite from 'vite';
 
 import {DevServer} from './src/dev/devServer';
 import {API_MOCKS} from './src/dev/apiMocks';
@@ -14,12 +14,11 @@ const settings = {
   backendDevServerPort: 3000 // set 3000 to proxy backend requests to localhost:3000
 };
 
-// noinspection JSUnusedGlobalSymbols
 /**
  * Vite LKE-plugin boilerplate
  */
 export default vite.defineConfig((env) => {
-  const config: UserConfig = {
+  const config: vite.UserConfig = {
     base: env.command === 'serve' ? `${settings.devPluginUrlPrefix}/` : './',
     build: {
       outDir: settings.buildDir,
