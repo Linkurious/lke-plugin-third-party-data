@@ -17,7 +17,6 @@ apiRouter.get('/test', (_req, res) => {
 plugin({
   router: apiRouter,
   getRestClient: (req) => {
-    console.log('H++' + req.headers.host);
     return new RestClient({
       baseUrl: `http://localhost:4000/`, // go through the frontend dev server on port 4000
       headers: [['Cookie', req.headers.cookie ?? '']]
