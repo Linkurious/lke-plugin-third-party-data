@@ -7,7 +7,8 @@
     "build": "vite build",
     "clean": "rm -rf ../../dist/frontend ./node_modules/.vite",
     "lint": "npx tsc && eslint ./src ../shared --ext .ts",
-    "lint:fix": "eslint ./src ../shared --ext .ts --fix"
+    "lint:fix": "eslint ./src ../shared --ext .ts --fix",
+    "lint:ci": "eslint -f checkstyle -o reports/checkstyle.xml ./src ../shared --ext .ts"
   },
   "dependencies": {
     "bootstrap": "5.3.8",

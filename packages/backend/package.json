@@ -6,7 +6,8 @@
     "build": "tsc -b tsconfig.json",
     "test": "node --test ../../dist/backend/src/test/*.js",
     "lint": "eslint ./src ../shared --ext .ts",
-    "lint:fix": "eslint ./src ../shared --ext .ts --fix"
+    "lint:fix": "eslint ./src ../shared --ext .ts --fix",
+    "lint:ci": "eslint -f checkstyle -o reports/checkstyle.xml ./src ../shared --ext .ts"
   },
   "type": "module",
   "bundledDependencies": true,
