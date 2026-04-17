@@ -1,4 +1,4 @@
-import * as vite from 'vite';
+import vite, {type UserConfig} from 'vite';
 
 import {DevServer} from './src/dev/devServer';
 import {API_MOCKS} from './src/dev/apiMocks';
@@ -19,7 +19,7 @@ const settings = {
  * Vite LKE-plugin boilerplate
  */
 export default vite.defineConfig((env) => {
-  const config: vite.UserConfig = {
+  const config: UserConfig = {
     base: env.command === 'serve' ? `${settings.devPluginUrlPrefix}/` : './',
     build: {
       outDir: settings.buildDir,

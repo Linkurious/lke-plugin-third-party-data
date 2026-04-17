@@ -5,9 +5,10 @@
   "scripts": {
     "start": "vite serve",
     "build": "vite build",
-    "clean": "rm -rf ../../dist/frontend ./node_modules/.vite",
-    "lint": "npx tsc && eslint ./src ../shared --ext .ts",
-    "lint:fix": "eslint ./src ../shared --ext .ts --fix"
+    "clean": "rm -rf ../../dist/frontend ./node_modules/.vite ./reports",
+    "lint": "tsc && eslint ./vite.config.ts ./src ../shared --ext .ts",
+    "lint:fix": "eslint ./vite.config.ts ./src ../shared --ext .ts --fix",
+    "lint:ci": "eslint -f checkstyle -o reports/checkstyle.xml ./vite.config.ts ./src ../shared --ext .ts "
   },
   "dependencies": {
     "bootstrap": "5.3.8",

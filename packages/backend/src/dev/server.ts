@@ -5,9 +5,11 @@ import {RestClient} from '@linkurious/rest-client';
 
 import plugin from '../routes';
 
+const port = 3000;
 const app = express();
 app.use(express.json());
 const apiRouter = express.Router();
+
 apiRouter.get('/test', (_req, res) => {
   res.end('hello');
 });
@@ -15,8 +17,9 @@ apiRouter.get('/test', (_req, res) => {
 plugin({
   router: apiRouter,
   getRestClient: (req) => {
+    console.log('H++' + req.headers.host);
     return new RestClient({
-      baseUrl: '/',
+      baseUrl: `http://localhost:4000/`, // go through the frontend dev server on port 4000
       headers: [['Cookie', req.headers.cookie ?? '']]
     });
   },
@@ -271,6 +274,6 @@ plugin({
 });
 
 app.use('/plugins/3d/api', apiRouter);
-http.createServer(app).listen(3000, () => {
-  console.log('listening on port 3000');
+http.createServer(app).listen(port, () => {
+  console.log(`listening on port ${port}`);
 });
