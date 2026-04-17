@@ -22,8 +22,9 @@ interface BaseQueryFieldMapping<T extends FieldMappingType> {
   type: T;
 }
 
-interface BaseConstantFieldMapping<T extends ConstantFieldTypeName>
-  extends BaseQueryFieldMapping<'constant'> {
+interface BaseConstantFieldMapping<
+  T extends ConstantFieldTypeName
+> extends BaseQueryFieldMapping<'constant'> {
   valueType: T;
   value: string | number | boolean;
 }

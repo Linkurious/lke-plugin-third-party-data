@@ -13,10 +13,14 @@ import {
   IntegrationModelPublic
 } from '../../../shared/integration/IntegrationModel.ts';
 
+function getBaseUrl(relativeUrl: string): string {
+  return new URL(relativeUrl, document.baseURI).toString();
+}
+
 export class API {
   private readonly restClient: RestClient;
   constructor() {
-    this.restClient = new RestClient({baseUrl: '../..'});
+    this.restClient = new RestClient({baseUrl: getBaseUrl('../..')});
   }
 
   get server(): RestClient {

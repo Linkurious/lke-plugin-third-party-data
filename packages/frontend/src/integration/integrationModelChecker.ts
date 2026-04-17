@@ -173,6 +173,7 @@ export class IntegrationModelChecker {
     outputNodeSchema: GraphItemSchema,
     vendor: Vendor
   ): void {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
     if (outputNodeSchema.access !== ItemTypeAccessRightType.WRITE) {
       throw new Error(STRINGS.errors.outputMapping.outputNodeNotWritable(outputNodeSchema));
     }

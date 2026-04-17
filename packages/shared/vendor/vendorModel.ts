@@ -20,8 +20,10 @@ export interface BaseVendorModel<
   readonly detailsResponseFields?: FieldsDescription<DR>;
 }
 
-export interface VendorModelSearch<SQ extends AbstractFields, SR extends AbstractFields>
-  extends BaseVendorModel<'search', SQ, SR> {
+export interface VendorModelSearch<
+  SQ extends AbstractFields,
+  SR extends AbstractFields
+> extends BaseVendorModel<'search', SQ, SR> {
   readonly detailsResponseFields?: undefined;
 }
 
