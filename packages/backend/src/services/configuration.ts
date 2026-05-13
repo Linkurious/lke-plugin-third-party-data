@@ -70,7 +70,9 @@ export class Configuration {
         return `plugins.${Configuration.MY_CONFIG_KEY}.0`;
       }
       const basePath = this.config.basePath;
-      const index = configs.findIndex((config) => config.basePath === basePath);
+      const index = configs.findIndex(
+        (config: Record<string, unknown>) => config.basePath === basePath
+      );
       if (index < 0) {
         throw new Error(`Cannot find the configuration path for ${Configuration.MY_CONFIG_KEY}`);
       }
