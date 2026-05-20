@@ -28,7 +28,30 @@ export class ServiceFacade {
     this.logger = new Logger();
     this.api = new API(options, this.logger);
     this.config = new Configuration(options.configuration, this.api, this.logger);
+    this.postMetadata();
     this.logger.info('ServiceFacade initialized');
+  }
+
+  private postMetadata(): void {
+    const {basePath, integrations} = this.config.getConfigFull();
+    const metadata = {
+      actions: [
+        {
+          name: 'Configure integrations',
+          urlTemplate: `{{baseURL}}plugins/${basePath}/`,
+          access: 'admin' as const
+        },
+        ...(integrations
+          ?.map(({id}) => this.config.getIntegrationById(id).getCustomAction(basePath))
+          .map((action) => ({
+            name: action.name,
+            sourceKey: action.sourceKey,
+            urlTemplate: action.urlTemplate,
+            access: '*' as const
+          })) ?? [])
+      ]
+    };
+    this.api.parentProcess?.postMetadata(metadata);
   }
 
   async currentUserIsAdmin(req: express.Request): Promise<boolean> {
@@ -54,6 +77,7 @@ export class ServiceFacade {
   async setConfigAdmin(req: express.Request, config: ConfigOptions): Promise<undefined> {
     await this.ensureAdmin(req);
     await this.config.setConfigFull(req, config);
+    this.postMetadata();
   }
 
   async getConfigUser(): Promise<MyPluginConfigPublic & ApiResponse> {
