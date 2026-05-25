@@ -33,25 +33,18 @@ export class ServiceFacade {
   }
 
   private postMetadata(): void {
-    const {basePath, integrations} = this.config.getConfigFull();
-    const metadata = {
+    this.api.parentProcess?.postMetadata({
       actions: [
         {
           name: 'Configure integrations',
-          urlTemplate: `{{baseURL}}plugins/${basePath}/`,
-          access: 'admin' as const
+          urlTemplate: '/',
+          access: 'admin'
         },
-        ...(integrations
-          ?.map(({id}) => this.config.getIntegrationById(id).getCustomAction(basePath))
-          .map((action) => ({
-            name: action.name,
-            sourceKey: action.sourceKey,
-            urlTemplate: action.urlTemplate,
-            access: '*' as const
-          })) ?? [])
+        ...(this.config
+          .getConfigFull()
+          .integrations?.map(({id}) => this.config.getIntegrationById(id).getPluginAction()) ?? [])
       ]
-    };
-    this.api.parentProcess?.postMetadata(metadata);
+    });
   }
 
   async currentUserIsAdmin(req: express.Request): Promise<boolean> {
