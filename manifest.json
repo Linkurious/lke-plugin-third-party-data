@@ -1,10 +1,8 @@
 {
   "name": "third-party-data",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "pluginApiVersion": "1.0.0",
   "publicRoute": "dist/frontend",
   "singlePageAppIndex": "index.html",
-  "backendFiles": [
-    "dist/backend/src/routes.js"
-  ]
+  "backendFiles": ["dist/backend/src/routes.js"]
 }
