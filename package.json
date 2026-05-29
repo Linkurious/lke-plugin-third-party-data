@@ -41,7 +41,7 @@
   "license": "Apache 2",
   "files": [
     "dist",
-    "manifest.json",
+    "manifest*.json",
     "LICENSE"
   ],
   "bundledDependencies": true,
