@@ -3,7 +3,7 @@
 ## Purpose and principles
 The plugin is used to import Third-Party Data to enrich some nodes in your graph:
 - For example, you may have a `Company` node in your graph, and you want to enrich it with data from the [French Official Company Information API](https://annuaire-entreprises.data.gouv.fr/).
-- You click any `Company` node in the graph, use the `Plugins` menu and click `Fetch details for French Company`.
+- You click any `Company` node in the graph, use the `custom action` menu and click `Fetch details for French Company`.
 - The plugin opens and shows a list of matching results from the French Company Information API.
 - You select the result you want to import, which creates a new `Person_Details` node in the graph with the data from the API, linked to the original `Person` node.
 

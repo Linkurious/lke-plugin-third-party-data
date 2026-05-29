@@ -54,6 +54,13 @@ export class IntegrationList extends BaseUI {
               this.services.editIntegration(int.id)
             ),
             this.ui.button.create(
+              STRINGS.ui.integrationList.installButton,
+              {small: true, outline: true},
+              () => {
+                return this.services.createCustomAction(int, 'integration-list');
+              }
+            ),
+            this.ui.button.create(
               STRINGS.ui.integrationList.deleteButton,
               {type: 'danger', outline: true, small: true},
               async () => {

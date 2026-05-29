@@ -13,6 +13,7 @@ import {IntegrationList} from './integrationList';
 import {IntegrationEditor} from './integrationEditor';
 import {Button} from './button';
 import {SearchResults} from './searchResults';
+import {CustomActionManager} from './edition/customActionManager';
 
 export class UiFacade {
   private readonly services: ServiceFacade;
@@ -78,6 +79,11 @@ export class UiFacade {
     await integrationList.show();
   }
 
+  async showCustomActionManager(integration: IntegrationModel): Promise<void> {
+    const cam = new CustomActionManager(this.services);
+    await cam.show(integration);
+  }
+
   async showEmptyState(): Promise<void> {
     this.showContent(
       $elem('div', {class: 'alert alert-primary', role: 'alert'}, [
@@ -87,13 +93,20 @@ export class UiFacade {
     );
   }
 
-  async showConfirmIntegrationCreated(): Promise<void> {
+  async showConfirmIntegrationCreated(newIntegration: IntegrationModel): Promise<void> {
     await this.popIn.showElement(
       STRINGS.ui.integrationCreated.title,
       $elem('p', {}, STRINGS.ui.integrationCreated.message),
       [
-        this.button.create(STRINGS.ui.integrationCreated.confirmModalCloseButton, {}, () =>
-          this.popIn.close()
+        this.button.create(
+          STRINGS.ui.integrationCreated.dontCreateCustomActionButton,
+          {type: 'secondary'},
+          () => this.popIn.close()
+        ),
+        this.button.create(
+          STRINGS.ui.integrationCreated.createCustomActionButton,
+          {},
+          async () => await this.showCustomActionManager(newIntegration)
         )
       ]
     );
