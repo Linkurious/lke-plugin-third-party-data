@@ -6,6 +6,7 @@ import {
   LkNode
 } from '@linkurious/rest-client';
 
+import {PluginAction} from '../../backend/src/server/api';
 import {NeighborResult, VendorResult} from '../api/response';
 import {VendorFieldType} from '../vendor/vendorModel';
 import {Vendor} from '../vendor/vendor';
@@ -26,13 +27,6 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
   get id(): string {
     return this.model.id;
   }
-  /*
-  async check(): Promise<void> {
-    const vendor = Vendors.getVendorByKey(this.model.vendorKey);
-    const checker = new IntegrationModelChecker(this.model, vendor);
-    await checker.check(services);
-  }
-  */
 
   getOutputNode(vendorResult: VendorResult): ICreateNodeParams {
     const node = {
@@ -165,7 +159,6 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
         // return date/datetime as string for now
         return inputValue.value;
       } else {
-        // console.warn(`Reading node property: unknown property type ${inputValue['type']}`);
         return undefined;
       }
     }
@@ -184,6 +177,19 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
       )}}}#linkurious-modal`,
       sharing: SharingMode.SOURCE,
       sharedWithGroups: undefined
+    };
+  }
+
+  getPluginAction(): PluginAction {
+    return {
+      sourceKey: this.model.sourceKey,
+      name: STRINGS.pluginAction.name(this.vendor),
+      urlTemplate: `/?action=search&integrationId=${
+        this.model.id
+      }&sourceKey=${this.model.sourceKey}&nodeId={{node:${JSON.stringify(
+        this.model.inputNodeCategory
+      )}}}#linkurious-modal`,
+      access: '*'
     };
   }
 

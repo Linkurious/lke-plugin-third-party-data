@@ -1,6 +1,6 @@
 {
   "name": "@linkurious/lke-plugin-third-party-data",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "LKE Plugin - Third Party Data",
   "homepage": "https://github.com/Linkurious/lke-plugin-third-party-data#readme",
   "bugs": {
@@ -41,12 +41,12 @@
   "license": "Apache 2",
   "files": [
     "dist",
-    "manifest.json",
+    "manifest*.json",
     "LICENSE"
   ],
   "bundledDependencies": true,
   "dependencies": {
-    "@linkurious/rest-client": "4.3.4",
+    "@linkurious/rest-client": "4.3.5",
     "body-parser": "2.2.2",
     "qs": "6.15.1",
     "superagent": "10.3.0",
