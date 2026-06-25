@@ -1,10 +1,4 @@
-import {
-  ICreateNodeParams,
-  ICreateEdgeParams,
-  ICreateCustomActionParams,
-  SharingMode,
-  LkNode
-} from '@linkurious/rest-client';
+import {ICreateNodeParams, ICreateEdgeParams, LkNode} from '@linkurious/rest-client';
 
 import {PluginAction} from '../../backend/src/server/api';
 import {NeighborResult, VendorResult} from '../api/response';
@@ -163,21 +157,6 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
       }
     }
     return inputValue;
-  }
-
-  getCustomAction(basePath: string): ICreateCustomActionParams {
-    return {
-      sourceKey: this.model.sourceKey,
-      name: STRINGS.customAction.name(this.vendor),
-      description: STRINGS.customAction.details(this.vendor),
-      urlTemplate: `{{baseURL}}plugins/${basePath}/?action=search&integrationId=${
-        this.model.id
-      }&sourceKey=${this.model.sourceKey}&nodeId={{node:${JSON.stringify(
-        this.model.inputNodeCategory
-      )}}}#linkurious-modal`,
-      sharing: SharingMode.SOURCE,
-      sharedWithGroups: undefined
-    };
   }
 
   getPluginAction(): PluginAction {

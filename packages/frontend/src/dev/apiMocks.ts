@@ -1,4 +1,4 @@
-import {User, CustomAction} from '@linkurious/rest-client';
+import {User} from '@linkurious/rest-client';
 
 import {
   IntegrationModel,
@@ -263,37 +263,6 @@ export const API_MOCKS: ApiMock[] = [
           }
         ]
       }
-    }
-  },
-  // lit custom actions for valid data-source
-  {
-    match: `/api/${validSourceKey}/customAction`,
-    response: {
-      body: [
-        {
-          id: 1,
-          name: 'fetch person info from DnB',
-          description: 'fetch person info from DnB yeah and some details too',
-          sourceKey: validSourceKey,
-          urlTemplate: `{{baseURL}}plugin/3d/?integrationId=${defaultIntegrationId}&nodeId={{node}}&sourceKey={{sourceKey}}&noise=1234356743245678543234567865432134567865432`
-        },
-        {
-          id: 2,
-          name: 'other action',
-          description: 'this action is unrelated to this plugin',
-          sourceKey: validSourceKey,
-          urlTemplate: `{{baseURL}}plugin/image-export/?viz={{visualization}}&sourceKey={{sourceKey}}`
-        }
-      ] as CustomAction[]
-    }
-  },
-  // create custom action
-  {
-    verb: 'POST',
-    match: `/api/${validSourceKey}/customAction`,
-    response: {
-      body: {},
-      status: 201
     }
   }
 ];
