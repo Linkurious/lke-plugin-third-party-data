@@ -1,6 +1,6 @@
 {
   "name": "third-party-data",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "pluginApiVersion": "1.0.0",
   "publicRoute": "dist/frontend",
   "singlePageAppIndex": "index.html",
