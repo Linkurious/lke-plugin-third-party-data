@@ -1,5 +1,4 @@
 import {RestClient} from '@linkurious/rest-client';
-import {CustomAction} from '@linkurious/rest-client/dist/src/api/CustomAction/types';
 
 import {
   ApiResponse,
@@ -8,10 +7,7 @@ import {
 } from '../../../shared/api/response';
 import {MyPluginConfig, MyPluginConfigPublic} from '../../../shared/myPluginConfig';
 import {STRINGS} from '../../../shared/strings';
-import {
-  IntegrationModel,
-  IntegrationModelPublic
-} from '../../../shared/integration/IntegrationModel.ts';
+import {IntegrationModelPublic} from '../../../shared/integration/IntegrationModel.ts';
 
 function getBaseUrl(relativeUrl: string): string {
   return new URL(relativeUrl, document.baseURI).toString();
@@ -126,16 +122,6 @@ export class API {
     } catch (e) {
       return `Unexpected HTTP status ${r.status}`;
     }
-  }
-
-  async getCustomActions(integration: IntegrationModel): Promise<CustomAction[]> {
-    const actionsR = await this.server.customAction.getCustomActions({
-      sourceKey: integration.sourceKey
-    });
-    if (!actionsR.isSuccess()) {
-      throw new Error(STRINGS.errors.customActions.loadFailed(actionsR.body));
-    }
-    return actionsR.body.filter((a) => a.urlTemplate.includes(`integrationId=${integration.id}`));
   }
 
   async updatePluginConfig(config: MyPluginConfig): Promise<void> {

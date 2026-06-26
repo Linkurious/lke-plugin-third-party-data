@@ -1,7 +1,7 @@
 import {LkEdge, LkNode, LkError, Response, User} from '@linkurious/rest-client';
 
 import {VendorResult} from '../../shared/api/response';
-import {IntegrationModel, IntegrationModelPublic} from '../../shared/integration/IntegrationModel';
+import {IntegrationModelPublic} from '../../shared/integration/IntegrationModel';
 import {VendorIntegrationPublic} from '../../shared/integration/vendorIntegrationPublic';
 import {asError, clone, randomString} from '../../shared/utils';
 import {STRINGS} from '../../shared/strings';
@@ -99,7 +99,7 @@ export class ServiceFacade {
       await this.config.saveNewIntegration(newIntegration);
       p.update(STRINGS.ui.global.done);
     });
-    await this.ui.showConfirmIntegrationCreated(newIntegration);
+    await this.ui.showConfirmIntegrationCreated();
   }
 
   async editIntegration(integrationId: string): Promise<void> {
@@ -226,17 +226,6 @@ export class ServiceFacade {
       }
     } else {
       window.close();
-    }
-  }
-
-  async createCustomAction(
-    integration: IntegrationModel,
-    backTo: 'integration-list'
-  ): Promise<void> {
-    console.log('CREATE_CUSTOM_ACTION: ' + JSON.stringify(integration));
-    await this.ui.showCustomActionManager(integration);
-    if (backTo === 'integration-list') {
-      await this.ui.showIntegrationsList();
     }
   }
 
