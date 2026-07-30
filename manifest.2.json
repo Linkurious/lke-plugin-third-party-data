@@ -9,6 +9,14 @@
       "title": "Données externes",
       "description": "Enrichissez les entreprises et les personnes de votre graphe à l'aide de données provenant d'API de fournisseurs externes."
     },
+    "it": {
+      "title": "Dati di terze parti",
+      "description": "Arricchisci aziende e persone nel tuo grafo utilizzando dati provenienti da API di fornitori esterni."
+    },
+    "es": {
+      "title": "Datos de terceros",
+      "description": "Enriquece empresas y personas en tu grafo utilizando datos de API de proveedores externos."
+    },
     "ja": {
       "title": "第三者データ",
       "description": "外部データベンダーのAPIを使用して、グラフ内の企業や人物の情報を拡充します。"
