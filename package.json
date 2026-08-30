@@ -11,7 +11,7 @@
     "url": "https://github.com/Linkurious/lke-plugin-third-party-data"
   },
   "engines": {
-    "node": "24.14.1"
+    "node": "24.20.0"
   },
   "author": {
     "name": "David Rapin",
