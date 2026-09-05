@@ -48,7 +48,7 @@
   "dependencies": {
     "@linkurious/rest-client": "4.3.5",
     "body-parser": "2.2.2",
-    "qs": "6.15.1",
+    "qs": "6.16.0",
     "superagent": "10.3.0",
     "https-proxy-agent": "7.0.6"
   },
