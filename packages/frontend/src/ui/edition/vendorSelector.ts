@@ -6,6 +6,7 @@ import {Vendors} from '../../../../shared/vendor/vendors.ts';
 import {STRINGS} from '../../../../shared/strings';
 
 import {AbstractSelector} from './abstractSelector';
+import {FileAdminFieldController} from './fileAdminFieldController';
 
 export type VendorEditorModel = {
   vendor: Vendor;
@@ -13,6 +14,8 @@ export type VendorEditorModel = {
 };
 
 export class VendorSelector extends AbstractSelector<VendorEditorModel> {
+  private readonly fileAdminFieldController = new FileAdminFieldController();
+
   constructor(ui: UiFacade) {
     super(ui, STRINGS.ui.vendorSelector.title, STRINGS.ui.vendorSelector.description);
   }
@@ -107,15 +110,36 @@ export class VendorSelector extends AbstractSelector<VendorEditorModel> {
         model.adminSettings[field.key] = input.checked;
       });
       parent.appendChild(input);
+    } else if (field.type === 'file') {
+      const input = document.createElement('input');
+      input.setAttribute('type', 'file');
+      input.id = id;
+      this.fileAdminFieldController.bindFileInput({
+        fieldKey: field.key,
+        fieldName: field.name,
+        input: input,
+        setValue: (value) => {
+          model.adminSettings[field.key] = value;
+        },
+        invalidValueMessage: (fieldName) => STRINGS.errors.vendorSelector.invalidValue(fieldName)
+      });
+      parent.appendChild(input);
     }
   }
 
   protected override async getValidationError(): Promise<string | undefined> {
+    // Let file reads finish before validating, so that we can check for file read errors.
+    await this.fileAdminFieldController.waitForPendingReads();
+
     const model = this.getModel();
     if (!model) {
       return STRINGS.errors.vendorSelector.noVendorSelected;
     }
     for (const field of model.vendor.adminFields) {
+      const fileReadError = this.fileAdminFieldController.getReadError(field.key);
+      if (fileReadError) {
+        return fileReadError;
+      }
       const value = model.adminSettings[field.key];
       if (field.required && (value === undefined || value === null)) {
         return STRINGS.errors.vendorSelector.missingRequiredField(field.name);
