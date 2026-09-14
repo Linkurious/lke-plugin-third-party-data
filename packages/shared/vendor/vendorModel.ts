@@ -52,7 +52,8 @@ export type VendorField =
 
 export type VendorAdminField =
   | BaseAdminField<'string', {enum?: string[]}>
-  | BaseAdminField<'boolean', undefined>;
+  | BaseAdminField<'boolean', undefined>
+  | BaseAdminField<'file', undefined>;
 interface BaseAdminField<TYPE, OPTIONS> {
   type: TYPE;
   key: string;
