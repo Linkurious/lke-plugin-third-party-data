@@ -6,12 +6,24 @@ export type FileFieldBinding = {
   invalidValueMessage: (fieldName: string) => string;
 };
 
+/**
+ * Controller for file admin fields, which handles reading the file and storing its base64 content.
+ * Each field has a FileReader associated to handle the file reading and the controller gives a way
+ * to wait for all pending reads to finish. A given reader can be aborted if the user selects a new
+ * file, and the controller will store any read errors that occur for each field.
+ */
 export class FileAdminFieldController {
+  // All pending reads to finish before proceeding.
   private readonly pendingReads = new Map<string, Promise<void>>();
+  // Error messages for file reads that failed. Cleared when the user selects a new file.
   private readonly readErrors = new Map<string, string>();
+  // Active file readers, so that we can abort them if the user selects a new file.
   private readonly activeReaders = new Map<string, FileReader>();
 
-  bindFileInput(binding: FileFieldBinding): void {
+  /**
+   * Bind a file input to the controller, so that it can read the file and store its base64 content.
+   */
+  public bindFileInput(binding: FileFieldBinding): void {
     const {fieldKey, fieldName, input, setValue, invalidValueMessage} = binding;
     input.addEventListener('change', () => {
       this.readErrors.delete(fieldKey);
@@ -75,11 +87,17 @@ export class FileAdminFieldController {
     });
   }
 
-  async waitForPendingReads(): Promise<void> {
+  /**
+   * Wait for all pending file reads to finish.
+   */
+  public async waitForPendingReads(): Promise<void> {
     await Promise.allSettled(this.pendingReads.values());
   }
 
-  getReadError(fieldKey: string): string | undefined {
+  /**
+   * Get the read error for a specific field, if any.
+   */
+  public getReadError(fieldKey: string): string | undefined {
     return this.readErrors.get(fieldKey);
   }
 }
