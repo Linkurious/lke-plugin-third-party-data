@@ -23,13 +23,44 @@ export class SearchResults extends BaseUI {
       return $elem('p', {class: 'text-center my-3'}, STRINGS.ui.searchResults.noResults);
     }
 
+    const results = new Set<VendorResult>();
+    const selectionCount = $elem('span');
+    const selectionText = $elem('span');
+    const importButton = this.ui.button.create(
+      STRINGS.ui.searchResults.importSelectionButton,
+      {classes: ['mb-2', 'col-5']},
+      async () => {
+        await services.importSearchResults(integration, Array.from(results), response.inputNodeId);
+      }
+    );
+
+    function updateSelection(): void {
+      selectionCount.innerText = `${results.size} `;
+      selectionText.innerText =
+        results.size === 1
+          ? 'matched result selected for import'
+          : 'matched results selected for import';
+      importButton.disabled = results.size === 0;
+    }
+    updateSelection();
+
     return $elem('div', {}, [
       description,
       // results
       ...response.results.map((result, index) => {
         return $elem('div', {class: 'row mb-3'}, [
+          $elem('div', {class: 'col-1'}, [
+            this.ui.checkbox.create(async (checked) => {
+              if (checked) {
+                results.add(result);
+              } else if (results.has(result)) {
+                results.delete(result);
+              }
+              updateSelection();
+            })
+          ]),
           $elem('div', {class: 'col-1'}, [$elem('em', {}, `#${index}`)]),
-          $elem('div', {class: 'col-8'}, [
+          $elem('div', {class: 'col-7'}, [
             this.getSearchResultProperties(integration, result, true),
             // result separator
             $elem('hr', {})
@@ -61,7 +92,18 @@ export class SearchResults extends BaseUI {
             )
           ])
         ]);
-      })
+      }),
+      $elem('div', {class: 'mb-3'}, [selectionCount, selectionText]),
+      $elem('div', {class: 'row mb-3'}, [
+        importButton,
+        this.ui.button.create(
+          STRINGS.ui.searchResults.cancelButton,
+          {type: 'secondary', classes: ['mb-2', 'col-5']},
+          async () => {
+            services.closePlugin();
+          }
+        )
+      ])
     ]);
   }
 

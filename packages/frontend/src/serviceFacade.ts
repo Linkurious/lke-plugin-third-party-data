@@ -116,6 +116,17 @@ export class ServiceFacade {
     });
   }
 
+  public async importSearchResults(
+    integration: IntegrationModelPublic,
+    searchResults: VendorResult[],
+    inputNodeId: string
+  ): Promise<void> {
+    for (let i = 0; i < searchResults.length; i++) {
+      const searchResult = searchResults[i];
+      await this.importSearchResult(integration, searchResult, inputNodeId);
+    }
+  }
+
   async importSearchResult(
     integration: IntegrationModelPublic,
     searchResult: VendorResult,
@@ -217,7 +228,7 @@ export class ServiceFacade {
     }
   }
 
-  private closePlugin(): void {
+  public closePlugin(): void {
     const inIframe = window.parent !== window;
     if (inIframe) {
       const button = window.parent.document.querySelector('s-popin .close button');

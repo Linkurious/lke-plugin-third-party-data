@@ -200,7 +200,9 @@ export const STRINGS = {
       detailsModalTitle: 'Search result details',
       detailsButton: `View details`,
       noResults: 'No results found.',
-      importButton: `Import result`
+      importButton: `Import result`,
+      importSelectionButton: `Import`,
+      cancelButton: `Cancel`
     },
     editIntegration: {
       savingNewIntegration: 'Saving new integration...',
