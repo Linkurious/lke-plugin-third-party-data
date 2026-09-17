@@ -4,6 +4,7 @@ import superagent, {SuperAgentRequest} from 'superagent';
 import {HttpsProxyAgent} from 'https-proxy-agent';
 
 import {AbstractFields, VendorFieldType} from '../../../../shared/vendor/vendorModel';
+import {VendorContext} from '../../../../shared/vendor/vendorContext';
 import {VendorResult} from '../../../../shared/api/response';
 import {VendorIntegration} from '../../../../shared/integration/vendorIntegration';
 import {Vendor} from '../../../../shared/vendor/vendor';
@@ -48,9 +49,13 @@ export class ProxyClient extends WithLogger {
   }
 }
 
-export abstract class BaseSearchDriver<SQ extends AbstractFields, SR extends AbstractFields>
+export abstract class BaseSearchDriver<
+  SQ extends AbstractFields,
+  SR extends AbstractFields,
+  ER extends AbstractFields = AbstractFields
+>
   extends ProxyClient
-  implements SearchDriver<SQ, SR>
+  implements SearchDriver<SQ, SR, ER>
 {
   public readonly vendorKey: string;
 
@@ -62,17 +67,19 @@ export abstract class BaseSearchDriver<SQ extends AbstractFields, SR extends Abs
   abstract search(
     searchQuery: SQ,
     integration: VendorIntegration,
-    maxResults: number
-  ): Promise<VendorResult<SR>[]>;
+    maxResults: number,
+    context: VendorContext
+  ): Promise<VendorResult<SR, ER>[]>;
 }
 
 export abstract class BaseDetailsSearchDriver<
   SQ extends AbstractFields,
   SR extends AbstractFields,
-  DR extends AbstractFields
+  DR extends AbstractFields,
+  ER extends AbstractFields = AbstractFields
 >
   extends ProxyClient
-  implements DetailsSearchDriver<SQ, SR, DR>
+  implements DetailsSearchDriver<SQ, SR, DR, ER>
 {
   public readonly vendorKey: string;
 
@@ -84,13 +91,15 @@ export abstract class BaseDetailsSearchDriver<
   abstract search(
     searchQuery: SQ,
     integration: VendorIntegration,
-    maxResults: number
-  ): Promise<VendorResult<SR>[]>;
+    maxResults: number,
+    context: VendorContext
+  ): Promise<VendorResult<SR, ER>[]>;
 
   abstract getDetails(
     integration: VendorIntegration,
-    detailsOptions: DetailsOptions
-  ): Promise<VendorResult<DR>>;
+    detailsOptions: DetailsOptions,
+    context: VendorContext
+  ): Promise<VendorResult<DR, ER>>;
 }
 
 export function flattenJson(json: unknown): Record<string, VendorFieldType> {
