@@ -36,7 +36,6 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     maxResults: number,
     _context: VendorContext
   ): Promise<VendorResult<CompanyHouseUkSearchResponse>[]> {
-    void _context;
     const url = new URL(`https://${COMPANY_HOUSE_DOMAIN}/search/companies`);
     for (const [key, value] of Object.entries(searchQuery)) {
       url.searchParams.append(key, `${value}`);
@@ -66,7 +65,6 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     detailsOptions: DetailsOptions,
     _context: VendorContext
   ): Promise<VendorResult<CompanyHouseUkDetailsResponse>> {
-    void _context;
     const url = new URL(`https://${COMPANY_HOUSE_DOMAIN}/company/${detailsOptions.searchResultId}`);
     const result = await this.get<DetailsResponseBody>(integration, url);
     const properties = fixLinks(flattenJson(result)) as CompanyHouseUkDetailsResponse;

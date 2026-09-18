@@ -25,7 +25,6 @@ export class AnnuaireEntreprisesDriver extends BaseSearchDriver<
     maxResults: number,
     _context: VendorContext
   ): Promise<VendorResult<AnnuaireEntreprisesSearchResponse>[]> {
-    void _context;
     const url = new URL('https://recherche-entreprises.api.gouv.fr/search');
     for (const [key, value] of Object.entries(searchQuery)) {
       url.searchParams.append(key, `${value}`);

@@ -25,7 +25,6 @@ export class DnbPeopleLookupDriver extends BaseSearchDriver<
     maxResults: number,
     _context: VendorContext
   ): Promise<VendorResult<DnbPersonLookupSearchResponse>[]> {
-    void _context;
     const url = new URL('https://direct.dnb.com/V6.4/organizations');
     url.searchParams.set('CandidateMaximumQuantity', `${maxResults}`);
     url.searchParams.set('findcontact', `${true}`);

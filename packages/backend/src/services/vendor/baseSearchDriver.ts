@@ -51,15 +51,15 @@ export class ProxyClient extends WithLogger {
 
 export abstract class BaseSearchDriver<
   SQ extends AbstractFields,
-  SR extends AbstractFields,
-  ER extends AbstractFields = AbstractFields
+  SNR extends AbstractFields,
+  DER extends AbstractFields = AbstractFields
 >
   extends ProxyClient
-  implements SearchDriver<SQ, SR, ER>
+  implements SearchDriver<SQ, SNR, DER>
 {
   public readonly vendorKey: string;
 
-  protected constructor(vendor: Vendor<SQ, SR>) {
+  protected constructor(vendor: Vendor<SQ, SNR>) {
     super();
     this.vendorKey = vendor.key;
   }
@@ -69,21 +69,21 @@ export abstract class BaseSearchDriver<
     integration: VendorIntegration,
     maxResults: number,
     context: VendorContext
-  ): Promise<VendorResult<SR, ER>[]>;
+  ): Promise<VendorResult<SNR, DER>[]>;
 }
 
 export abstract class BaseDetailsSearchDriver<
   SQ extends AbstractFields,
-  SR extends AbstractFields,
-  DR extends AbstractFields,
-  ER extends AbstractFields = AbstractFields
+  SNR extends AbstractFields,
+  DNR extends AbstractFields,
+  DER extends AbstractFields = AbstractFields
 >
   extends ProxyClient
-  implements DetailsSearchDriver<SQ, SR, DR, ER>
+  implements DetailsSearchDriver<SQ, SNR, DNR, DER>
 {
   public readonly vendorKey: string;
 
-  protected constructor(vendor: Vendor<SQ, SR>) {
+  protected constructor(vendor: Vendor<SQ, SNR>) {
     super();
     this.vendorKey = vendor.key;
   }
@@ -93,13 +93,13 @@ export abstract class BaseDetailsSearchDriver<
     integration: VendorIntegration,
     maxResults: number,
     context: VendorContext
-  ): Promise<VendorResult<SR, ER>[]>;
+  ): Promise<VendorResult<SNR, DER>[]>;
 
   abstract getDetails(
     integration: VendorIntegration,
     detailsOptions: DetailsOptions,
     context: VendorContext
-  ): Promise<VendorResult<DR, ER>>;
+  ): Promise<VendorResult<DNR, DER>>;
 }
 
 export function flattenJson(json: unknown): Record<string, VendorFieldType> {

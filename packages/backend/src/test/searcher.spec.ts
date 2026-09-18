@@ -1,7 +1,7 @@
 import {it, describe} from 'node:test';
 import * as assert from 'node:assert';
 
-import {LkNode} from '@linkurious/rest-client';
+import {LkNode, User} from '@linkurious/rest-client';
 
 import {Searcher} from '../services/vendor/searcher';
 import {Logger} from '../services/logger';
@@ -61,7 +61,7 @@ const facebookNode: LkNode = {
 void describe('Searcher', () => {
   const logger = new Logger();
   const config: Configuration = new Configuration(myConfig, undefined as unknown as API, logger);
-  const context: VendorContext = {requestedAt: new Date().toISOString(), username: 'tester'};
+  const context: VendorContext = {requestedAt: new Date(), user: {username: 'tester'} as User};
 
   void it('should search for facebook with company house', async () => {
     const s = new Searcher(logger, config, 'ch');

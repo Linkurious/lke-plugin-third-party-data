@@ -129,10 +129,10 @@ export class ServiceFacade {
   }
 
   private async buildVendorContext(restClient: RestClient): Promise<VendorContext> {
-    const context: VendorContext = {requestedAt: new Date().toISOString()};
+    const context: VendorContext = {requestedAt: new Date()};
     const currentUserR = await restClient.auth.getCurrentUser();
-    if (currentUserR.isSuccess() && typeof currentUserR.body.username === 'string') {
-      context.username = currentUserR.body.username;
+    if (currentUserR.isSuccess()) {
+      context.user = currentUserR.body;
     }
     return context;
   }

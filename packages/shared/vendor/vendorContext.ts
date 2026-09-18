@@ -1,4 +1,6 @@
+import {User} from '@linkurious/rest-client';
+
 export interface VendorContext {
-  requestedAt: string;
-  username?: string;
+  requestedAt: Date;
+  user?: User;
 }

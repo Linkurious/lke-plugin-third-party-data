@@ -30,11 +30,11 @@ export interface NeighborResult {
 }
 
 export interface VendorResult<
-  R extends AbstractFields = AbstractFields,
+  NR extends AbstractFields = AbstractFields,
   ER extends AbstractFields = AbstractFields
 > {
   id: string;
-  properties: R;
+  properties: NR;
   edgeProperties?: ER;
   neighbors?: NeighborResult[];
 }

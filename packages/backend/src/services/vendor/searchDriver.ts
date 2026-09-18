@@ -6,8 +6,8 @@ import {DetailsOptions} from '../../models/detailsOptions';
 
 export interface SearchDriver<
   SQ extends AbstractFields = AbstractFields,
-  SR extends AbstractFields = AbstractFields,
-  ER extends AbstractFields = AbstractFields
+  SNR extends AbstractFields = AbstractFields,
+  DER extends AbstractFields = AbstractFields
 > {
   readonly vendorKey: string;
   search(
@@ -15,18 +15,18 @@ export interface SearchDriver<
     integration: VendorIntegration,
     maxResults: number,
     context: VendorContext
-  ): Promise<VendorResult<SR, ER>[]>;
+  ): Promise<VendorResult<SNR, DER>[]>;
 }
 
 export interface DetailsSearchDriver<
   SQ extends AbstractFields = AbstractFields,
-  SR extends AbstractFields = AbstractFields,
-  DR extends AbstractFields = AbstractFields,
-  ER extends AbstractFields = AbstractFields
-> extends SearchDriver<SQ, SR, ER> {
+  SNR extends AbstractFields = AbstractFields,
+  DNR extends AbstractFields = AbstractFields,
+  DER extends AbstractFields = AbstractFields
+> extends SearchDriver<SQ, SNR, DER> {
   getDetails(
     integration: VendorIntegration,
     detailsOptions: DetailsOptions,
     context: VendorContext
-  ): Promise<VendorResult<DR, ER>>;
+  ): Promise<VendorResult<DNR, DER>>;
 }
