@@ -10,6 +10,7 @@ import {
   VendorDetailsResponse,
   ApiResponse
 } from '../../../shared/api/response';
+import {VendorContext} from '../../../shared/vendor/vendorContext';
 import {SearchOptions} from '../models/searchOptions';
 import {asError} from '../../../shared/utils';
 import {DetailsOptions} from '../models/detailsOptions';
@@ -85,7 +86,8 @@ export class ServiceFacade {
     let apiError: ApiError | undefined = undefined;
     const searcher = new Searcher(this.logger, this.config, searchOptions.integrationId);
     try {
-      results = await searcher.getSearchResults(restClient, searchOptions);
+      const context = await this.buildVendorContext(restClient);
+      results = await searcher.getSearchResults(restClient, searchOptions, context);
     } catch (e) {
       apiError = {
         code: 'search-error',
@@ -101,12 +103,16 @@ export class ServiceFacade {
     };
   }
 
-  async getDetails(detailsOptions: DetailsOptions): Promise<VendorDetailsResponse> {
+  async getDetails(
+    restClient: RestClient,
+    detailsOptions: DetailsOptions
+  ): Promise<VendorDetailsResponse> {
     let result: VendorResult | undefined = undefined;
     let apiError: ApiError | undefined = undefined;
     const searcher = new Searcher(this.logger, this.config, detailsOptions.integrationId);
     try {
-      result = await searcher.getDetails(detailsOptions);
+      const context = await this.buildVendorContext(restClient);
+      result = await searcher.getDetails(detailsOptions, context);
     } catch (e) {
       apiError = {
         code: 'get-details-error',
@@ -120,5 +126,14 @@ export class ServiceFacade {
       vendorKey: searcher.integration.vendor.key,
       result: result
     };
+  }
+
+  private async buildVendorContext(restClient: RestClient): Promise<VendorContext> {
+    const context: VendorContext = {requestedAt: new Date()};
+    const currentUserR = await restClient.auth.getCurrentUser();
+    if (currentUserR.isSuccess()) {
+      context.user = currentUserR.body;
+    }
+    return context;
   }
 }
