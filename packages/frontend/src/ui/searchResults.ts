@@ -24,8 +24,7 @@ export class SearchResults extends BaseUI {
     }
 
     const results = new Set<VendorResult>();
-    const selectionCount = $elem('span');
-    const selectionText = $elem('span');
+    const selectionText = $elem('div', {class: 'mb-3'});
     const importButton = this.ui.button.create(
       STRINGS.ui.searchResults.importSelectionButton,
       {classes: ['mb-2', 'col-5']},
@@ -35,11 +34,10 @@ export class SearchResults extends BaseUI {
     );
 
     function updateSelection(): void {
-      selectionCount.innerText = `${results.size} `;
       selectionText.innerText =
         results.size === 1
-          ? 'matched result selected for import'
-          : 'matched results selected for import';
+          ? STRINGS.ui.searchResults.matchedResultSelected(results.size)
+          : STRINGS.ui.searchResults.matchedResultsSelected(results.size);
       importButton.disabled = results.size === 0;
     }
     updateSelection();
@@ -50,7 +48,7 @@ export class SearchResults extends BaseUI {
       ...response.results.map((result, index) => {
         return $elem('div', {class: 'row mb-3'}, [
           $elem('div', {class: 'col-1'}, [
-            this.ui.checkbox.create(async (checked) => {
+            this.ui.checkbox.create((checked) => {
               if (checked) {
                 results.add(result);
               } else if (results.has(result)) {
@@ -93,7 +91,7 @@ export class SearchResults extends BaseUI {
           ])
         ]);
       }),
-      $elem('div', {class: 'mb-3'}, [selectionCount, selectionText]),
+      selectionText,
       $elem('div', {class: 'row mb-3'}, [
         importButton,
         this.ui.button.create(
