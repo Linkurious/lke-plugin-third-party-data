@@ -12,17 +12,20 @@ import {LongTask} from './longTask';
 import {IntegrationList} from './integrationList';
 import {IntegrationEditor} from './integrationEditor';
 import {Button} from './button';
+import {Checkbox} from './checkbox.ts';
 import {SearchResults} from './searchResults';
 
 export class UiFacade {
   private readonly services: ServiceFacade;
   public readonly button: Button;
+  public readonly checkbox: Checkbox;
   public readonly popIn: PopIn;
   public readonly longTask: LongTask;
   private readonly searchResults: SearchResults;
   constructor(services: ServiceFacade) {
     this.services = services;
     this.button = new Button(this);
+    this.checkbox = new Checkbox(this);
     this.popIn = new PopIn(this);
     this.longTask = new LongTask(this);
     this.searchResults = new SearchResults(this);

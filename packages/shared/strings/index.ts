@@ -200,7 +200,13 @@ export const STRINGS = {
       detailsModalTitle: 'Search result details',
       detailsButton: `View details`,
       noResults: 'No results found.',
-      importButton: `Import result`
+      matchedResultSelected: (count: number): string =>
+        `${count} matched result selected for import`,
+      matchedResultsSelected: (count: number): string =>
+        `${count} matched results selected for import`,
+      importButton: `Import result`,
+      importSelectionButton: `Import`,
+      cancelButton: `Cancel`
     },
     editIntegration: {
       savingNewIntegration: 'Saving new integration...',
