@@ -221,6 +221,7 @@ export const STRINGS = {
       successfullyCreated: `Successfully imported search result in the graph.`,
       confirmModalCloseButton: 'Close window',
       gettingDetails: 'Getting details for the selected result',
+      noResultsToImport: 'No results selected for import.',
       title: 'Success'
     },
     integrationCreated: {
