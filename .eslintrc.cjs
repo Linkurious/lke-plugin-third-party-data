@@ -32,6 +32,7 @@ module.exports = {
     'import/order': ['error', { 'newlines-between': 'always' }], // Orders imports by ['builtin', 'external', 'parent', 'sibling', 'index']
     '@typescript-eslint/explicit-function-return-type': 'error', // Requires explicit return types on functions and class methods
     '@typescript-eslint/no-unnecessary-type-assertion': ['error'],
+    '@typescript-eslint/no-unused-vars': ['error', { args: 'none' }],
 
     // disabled
     'require-atomic-updates': ['off'],

@@ -68,14 +68,14 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
   }
 
   getOutputEdge(
-    _searchResult: VendorResult,
+    searchResult: VendorResult,
     outputNodeId: string,
     inputNodeId: string
   ): ICreateEdgeParams {
     return {
       sourceKey: this.model.sourceKey,
       type: this.model.outputEdgeType,
-      properties: {} as Record<string, unknown>,
+      properties: searchResult.edgeProperties ?? ({} as Record<string, unknown>),
       // edge direction: from output node to input node
       source: outputNodeId,
       target: inputNodeId

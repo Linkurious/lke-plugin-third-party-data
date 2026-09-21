@@ -29,9 +29,13 @@ export interface NeighborResult {
   properties: Record<string, string | number | boolean>;
 }
 
-export interface VendorResult<R extends AbstractFields = AbstractFields> {
+export interface VendorResult<
+  NR extends AbstractFields = AbstractFields,
+  ER extends AbstractFields = AbstractFields
+> {
   id: string;
-  properties: R;
+  properties: NR;
+  edgeProperties?: ER;
   neighbors?: NeighborResult[];
 }
 
