@@ -7,6 +7,7 @@ import {VendorIntegration} from '../../../../shared/integration/vendorIntegratio
 import {STRINGS} from '../../../../shared/strings';
 import {DetailsOptions} from '../../models/detailsOptions';
 import {Logger, WithLogger} from '../logger';
+import {VendorContext} from '../../../../shared/vendor/vendorContext';
 
 import {DetailsSearchDriver, SearchDriver} from './searchDriver';
 import {AnnuaireEntreprisesDriver} from './driver/annuaireEntreprisesDriver';
@@ -27,7 +28,11 @@ export class Searcher extends WithLogger {
     this.integration = config.getIntegrationById(integrationId);
   }
 
-  async getSearchResults(api: RestClient, searchOptions: SearchOptions): Promise<VendorResult[]> {
+  async getSearchResults(
+    api: RestClient,
+    searchOptions: SearchOptions,
+    context: VendorContext
+  ): Promise<VendorResult[]> {
     const inputNodeR = await api.graphNode.getNode({
       sourceKey: searchOptions.sourceKey,
       id: searchOptions.nodeId,
@@ -45,10 +50,10 @@ export class Searcher extends WithLogger {
     const driver = this.getSearchDriver();
     const searchQuery = this.integration.getSearchQuery(inputNode);
     this.logger.info(`${this.integration.vendor.key}.search: ` + JSON.stringify(searchQuery));
-    return driver.search(searchQuery, this.integration, searchOptions.maxResults);
+    return driver.search(searchQuery, this.integration, searchOptions.maxResults, context);
   }
 
-  async getDetails(detailsOptions: DetailsOptions): Promise<VendorResult> {
+  async getDetails(detailsOptions: DetailsOptions, context: VendorContext): Promise<VendorResult> {
     if (this.integration.vendor.strategy === 'search') {
       throw new Error(
         `get-details is not supported for this strategy (vendor: ${this.integration.vendor.key})`
@@ -56,7 +61,7 @@ export class Searcher extends WithLogger {
     }
     const driver = this.getSearchDriver() as DetailsSearchDriver;
     this.logger.info(`${this.integration.vendor.key}.details: ` + JSON.stringify(detailsOptions));
-    return driver.getDetails(this.integration, detailsOptions);
+    return driver.getDetails(this.integration, detailsOptions, context);
   }
 
   private getSearchDriver(): SearchDriver {

@@ -13,6 +13,7 @@ import {
 } from '../../../../../shared/vendor/vendors/companyHouseUk';
 import {DetailsOptions} from '../../../models/detailsOptions';
 import {VendorFieldType} from '../../../../../shared/vendor/vendorModel';
+import {VendorContext} from '../../../../../shared/vendor/vendorContext';
 
 const COMPANY_HOUSE_DOMAIN = 'api.company-information.service.gov.uk';
 
@@ -32,7 +33,8 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
   async search(
     searchQuery: CompanyHouseUkSearchQuery,
     integration: VendorIntegration,
-    maxResults: number
+    maxResults: number,
+    _context: VendorContext
   ): Promise<VendorResult<CompanyHouseUkSearchResponse>[]> {
     const url = new URL(`https://${COMPANY_HOUSE_DOMAIN}/search/companies`);
     for (const [key, value] of Object.entries(searchQuery)) {
@@ -60,7 +62,8 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
    */
   async getDetails(
     integration: VendorIntegration,
-    detailsOptions: DetailsOptions
+    detailsOptions: DetailsOptions,
+    _context: VendorContext
   ): Promise<VendorResult<CompanyHouseUkDetailsResponse>> {
     const url = new URL(`https://${COMPANY_HOUSE_DOMAIN}/company/${detailsOptions.searchResultId}`);
     const result = await this.get<DetailsResponseBody>(integration, url);

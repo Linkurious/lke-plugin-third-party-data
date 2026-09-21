@@ -6,6 +6,7 @@ import {
   AnnuaireEntreprisesSearchResponse,
   AnnuaireEntreprisesVendor
 } from '../../../../../shared/vendor/vendors/annuaireEntreprisesDataGouvFr';
+import {VendorContext} from '../../../../../shared/vendor/vendorContext';
 
 export class AnnuaireEntreprisesDriver extends BaseSearchDriver<
   AnnuaireEntreprisesSearchQuery,
@@ -21,7 +22,8 @@ export class AnnuaireEntreprisesDriver extends BaseSearchDriver<
   async search(
     searchQuery: AnnuaireEntreprisesSearchQuery,
     _integration: VendorIntegration,
-    maxResults: number
+    maxResults: number,
+    _context: VendorContext
   ): Promise<VendorResult<AnnuaireEntreprisesSearchResponse>[]> {
     const url = new URL('https://recherche-entreprises.api.gouv.fr/search');
     for (const [key, value] of Object.entries(searchQuery)) {
