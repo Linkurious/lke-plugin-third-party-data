@@ -200,6 +200,7 @@ export const STRINGS = {
       detailsModalTitle: 'Search result details',
       detailsButton: `View details`,
       noResults: 'No results found.',
+      resultNumber: (index: number): string => `Result #${index}`,
       matchedResultSelected: (count: number): string =>
         `${count} matched result selected for import`,
       matchedResultsSelected: (count: number): string =>

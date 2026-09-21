@@ -48,14 +48,18 @@ export class SearchResults extends BaseUI {
       ...response.results.map((result, index) => {
         return $elem('div', {class: 'row mb-3'}, [
           $elem('div', {class: 'col-1'}, [
-            this.ui.checkbox.create((checked) => {
-              if (checked) {
-                results.add(result);
-              } else if (results.has(result)) {
-                results.delete(result);
+            this.ui.checkbox.create(
+              STRINGS.ui.searchResults.resultNumber(index),
+              {hideLabel: true},
+              (checked) => {
+                if (checked) {
+                  results.add(result);
+                } else if (results.has(result)) {
+                  results.delete(result);
+                }
+                updateSelection();
               }
-              updateSelection();
-            })
+            )
           ]),
           $elem('div', {class: 'col-1'}, [$elem('em', {}, `#${index}`)]),
           $elem('div', {class: 'col-7'}, [
