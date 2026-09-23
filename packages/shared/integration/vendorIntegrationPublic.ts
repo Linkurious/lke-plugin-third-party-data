@@ -3,10 +3,10 @@ import {
   DuplicateStrategy,
   ICreateNodeParams,
   ICreateEdgeParams,
-  LkNode
+  LkNode,
+  PluginAction
 } from '@linkurious/rest-client';
 
-import {PluginAction} from '../../backend/src/server/api';
 import {NeighborResult, VendorResult} from '../api/response';
 import {VendorFieldType} from '../vendor/vendorModel';
 import {Vendor} from '../vendor/vendor';
