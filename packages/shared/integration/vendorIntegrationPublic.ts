@@ -208,12 +208,18 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
     mainNodeId: string,
     neighborNodeId: string
   ): ICreateEdgeParams {
+    const properties: Record<string, unknown> = {};
+
+    if (neighbor.edgeKeyProperty && neighbor.properties[neighbor.edgeKeyProperty] !== undefined) {
+      properties[neighbor.edgeKeyProperty] = neighbor.properties[neighbor.edgeKeyProperty];
+    }
+
     return {
       sourceKey: this.model.sourceKey,
       type: neighbor.edgeType,
       source: mainNodeId,
       target: neighborNodeId,
-      properties: {}
+      properties: properties
     };
   }
 
