@@ -1,9 +1,11 @@
 import {
   BulkCreateEdgesParams,
   BulkCreateNodesParams,
+  DuplicateStrategy,
   LkEdge,
   LkError,
   LkNode,
+  NodeParams,
   Response,
   User
 } from '@linkurious/rest-client';
@@ -168,50 +170,98 @@ export class ServiceFacade {
         }
       }
 
-      // Create the output nodes and their neighbors
-      const bulkNodeImports = new Map<string, BulkCreateNodesParams>();
-      const resultNodeIdMap = new Map<VendorResult | NeighborResult, string>(); // result > nodeId
-      const keyResultMap = new Map<string, VendorResult | NeighborResult>(); // key > result
+      type NodeOrigin = VendorResult | NeighborResult;
+      type NodeEntry = {
+        origin: NodeOrigin;
+        node: NodeParams;
+      };
+      /**
+       * A bucket of nodes to be created in bulk
+       * Stores a map matching nodes origin with their key to later match origin to the created node id
+       * That way we can match node ids to create edges
+       */
+      type NodeBucket = {
+        params: BulkCreateNodesParams;
+        entries: NodeEntry[];
+        originsByDedupValue: Map<string, NodeOrigin[]>;
+      };
 
+      const bulkNodeImports = new Map<string, NodeBucket>();
+      const resultNodeIdMap = new Map<NodeOrigin, string>(); // result > nodeId
+
+      const addNodeToBucket = (
+        category: string,
+        origin: NodeOrigin,
+        node: NodeParams,
+        keyProperty?: string
+      ): void => {
+        const duplicateConfig = int.getDuplicateConfig(keyProperty);
+        let bucket = bulkNodeImports.get(category);
+        if (!bucket) {
+          bucket = {
+            params: {
+              sourceKey: integration.sourceKey,
+              nodes: [],
+              duplicateConfig: duplicateConfig
+            },
+            entries: [],
+            originsByDedupValue: new Map<string, NodeOrigin[]>()
+          };
+          bulkNodeImports.set(category, bucket);
+        }
+
+        bucket.params.nodes.push(node);
+        bucket.entries.push({origin: origin, node: node});
+
+        if (duplicateConfig.duplicateStrategy === DuplicateStrategy.MERGE) {
+          const property = duplicateConfig.duplicateDetection.property;
+          const value = String(node.properties?.[property] ?? '');
+          const list = bucket.originsByDedupValue.get(value);
+          if (list) {
+            list.push(origin);
+          } else {
+            bucket.originsByDedupValue.set(value, [origin]);
+          }
+        }
+      };
+
+      // Create the output nodes and their neighbors
       resolvedResults
         // Unify result for output nodes and neighbor nodes
         .flatMap((result) => [
-          {result: result, node: int.getOutputNode(result)},
-          ...(result.neighbors ?? []).map((neighbor) => {
-            return {result: neighbor, node: int.getNeighborNode(neighbor)};
-          })
+          {
+            origin: result,
+            node: int.getOutputNode(result),
+            keyProperty: result.keyProperty
+          },
+          ...(result.neighbors ?? []).map((neighbor) => ({
+            origin: neighbor,
+            node: int.getNeighborNode(neighbor),
+            keyProperty: neighbor.keyProperty
+          }))
         ])
         // Create bulk import params for each category
-        .forEach(({result, node}) => {
+        .forEach(({origin, node, keyProperty}) => {
           const category = node.categories[0];
-          const nodeKey = ServiceFacade.getNodeKey(
+          addNodeToBucket(
             category,
-            (node.properties?.[result.keyProperty ?? ''] ?? '') as string
+            origin,
+            {categories: node.categories, properties: node.properties},
+            keyProperty
           );
-
-          if (!bulkNodeImports.has(category)) {
-            bulkNodeImports.set(category, {
-              sourceKey: integration.sourceKey,
-              nodes: [],
-              duplicateConfig: int.getDuplicateConfig(result.keyProperty)
-            });
-          }
-
-          bulkNodeImports.get(category)!.nodes.push(node);
-          keyResultMap.set(nodeKey, result);
         });
 
       // Process the bulk node imports
       let total = Array.from(bulkNodeImports.values()).reduce(
-        (sum, params) => sum + params.nodes.length,
+        (sum, bucket) => sum + bucket.params.nodes.length,
         0
       );
       let processed = 0;
       p.update(STRINGS.ui.importSearchResult.creatingNode + ` (${processed}/${total})`);
 
-      for (const [category, params] of bulkNodeImports) {
-        processed += params.nodes.length;
-        const bulkR = await this.api.server.graphNode.bulkCreateNodes(params);
+      for (const [category, bucket] of bulkNodeImports) {
+        processed += bucket.params.nodes.length;
+        const bulkR = await this.api.server.graphNode.bulkCreateNodes(bucket.params);
         p.update(STRINGS.ui.importSearchResult.creatingNode + ` (${processed}/${total})`);
 
         if (!bulkR.isSuccess()) {
@@ -220,20 +270,22 @@ export class ServiceFacade {
         }
 
         itemsToAdd.nodes.push(...bulkR.body.items);
-        const max = Math.min(params.nodes.length, bulkR.body.items.length);
-        for (let i = 0; i < max; i++) {
-          const nodeKey = bulkR.body.items[i].data.properties?.[
-            params.duplicateConfig?.duplicateDetection?.property ?? ''
-          ] as string;
-          const result = keyResultMap.get(nodeKey);
-          const nodeId = bulkR.body.items[i].id;
 
-          if (!result) {
-            continue;
+        // Map the created node ids to their origin for later edge creation, with fallback if no deduplication is used (1:1 mapping)
+        if (bucket.params.duplicateConfig?.duplicateStrategy === DuplicateStrategy.MERGE) {
+          const property = bucket.params.duplicateConfig.duplicateDetection.property;
+          for (const created of bulkR.body.items) {
+            const value = String(created.data.properties?.[property] ?? '');
+            const origins = bucket.originsByDedupValue.get(value) ?? [];
+            for (const origin of origins) {
+              resultNodeIdMap.set(origin, created.id);
+            }
           }
-
-          // Map the result to the created node ID for later edge creation
-          resultNodeIdMap.set(result, nodeId);
+        } else {
+          const max = Math.min(bucket.entries.length, bulkR.body.items.length);
+          for (let i = 0; i < max; i++) {
+            resultNodeIdMap.set(bucket.entries[i].origin, bulkR.body.items[i].id);
+          }
         }
       }
 
@@ -275,7 +327,13 @@ export class ServiceFacade {
             });
           }
 
-          bulkEdgeImports.get(edge.type)!.edges.push(edge);
+          // Strip sourceKey from edge to match EdgeParams type
+          bulkEdgeImports.get(edge.type)!.edges.push({
+            source: edge.source,
+            target: edge.target,
+            type: edge.type,
+            properties: edge.properties
+          });
         });
 
       // Process the bulk edge imports
@@ -380,10 +438,6 @@ export class ServiceFacade {
     });
 
     await this.showImportConfirmation(addedInLKE);
-  }
-
-  private static getNodeKey(category: string, key: string): string {
-    return `node|${category}|${key}`;
   }
 
   private async addItemsToOgma(itemsToAdd: {nodes: LkNode[]; edges: LkEdge[]}): Promise<boolean> {
