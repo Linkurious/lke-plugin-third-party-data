@@ -27,6 +27,8 @@ export interface NeighborResult {
   edgeType: string;
   nodeCategory: string;
   properties: Record<string, string | number | boolean>;
+  keyProperty?: string;
+  edgeKeyProperty?: string;
 }
 
 export interface VendorResult<
@@ -35,6 +37,8 @@ export interface VendorResult<
 > {
   id: string;
   properties: NR;
+  keyProperty?: string;
+  edgeKeyProperty?: string;
   edgeProperties?: ER;
   neighbors?: NeighborResult[];
 }

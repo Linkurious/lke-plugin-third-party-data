@@ -1,6 +1,16 @@
-import {LkEdge, LkNode, LkError, Response, User} from '@linkurious/rest-client';
+import {
+  BulkCreateEdgesParams,
+  BulkCreateNodesParams,
+  DuplicateStrategy,
+  LkEdge,
+  LkError,
+  LkNode,
+  NodeParams,
+  Response,
+  User
+} from '@linkurious/rest-client';
 
-import {VendorResult} from '../../shared/api/response';
+import {NeighborResult, VendorResult} from '../../shared/api/response';
 import {IntegrationModelPublic} from '../../shared/integration/IntegrationModel';
 import {VendorIntegrationPublic} from '../../shared/integration/vendorIntegrationPublic';
 import {asError, clone, randomString} from '../../shared/utils';
@@ -121,10 +131,258 @@ export class ServiceFacade {
     searchResults: VendorResult[],
     inputNodeId: string
   ): Promise<void> {
-    for (let i = 0; i < searchResults.length; i++) {
-      const searchResult = searchResults[i];
-      await this.importSearchResult(integration, searchResult, inputNodeId);
+    const int = new VendorIntegrationPublic(integration);
+    const itemsToAdd: {nodes: LkNode[]; edges: LkEdge[]} = {nodes: [], edges: []};
+    const apiErrors: string[] = [];
+    let addedInLKE = false;
+
+    // Fail early if there are no search results to import - shouldn't happen
+    if (searchResults.length === 0) {
+      await this.ui.popIn.showElement(
+        'Warning',
+        $elem('p', {class: 'my-2'}, STRINGS.ui.importSearchResult.noResultsToImport),
+        [
+          this.ui.button.create(STRINGS.ui.importSearchResult.confirmModalCloseButton, {}, () => {
+            this.ui.popIn.close();
+            this.closePlugin();
+          })
+        ]
+      );
+      return;
     }
+
+    await this.ui.longTask.run(async (p) => {
+      const resolvedResults: VendorResult[] = [];
+      // Resolve details for each search result if needed
+      for (let i = 0; i < searchResults.length; i++) {
+        p.update(
+          `${STRINGS.ui.importSearchResult.gettingDetails} (${i + 1}/${searchResults.length})`
+        );
+        const searchResult = searchResults[i];
+        if (int.vendor.strategy === 'searchAndDetails') {
+          const detailsR = await this.api.getDetails(integration, searchResult.id);
+          if (!detailsR.result) {
+            throw new Error(STRINGS.errors.importResult.detailsNotFound);
+          }
+          resolvedResults.push(detailsR.result);
+        } else {
+          resolvedResults.push(searchResult);
+        }
+      }
+
+      type NodeOrigin = VendorResult | NeighborResult;
+      type NodeEntry = {
+        origin: NodeOrigin;
+        node: NodeParams;
+      };
+      /**
+       * A bucket of nodes to be created in bulk
+       * Stores a map matching nodes origin with their key to later match origin to the created node id
+       * That way we can match node ids to create edges
+       */
+      type NodeBucket = {
+        params: BulkCreateNodesParams;
+        entries: NodeEntry[];
+        originsByDedupValue: Map<string, NodeOrigin[]>;
+      };
+
+      const bulkNodeImports = new Map<string, NodeBucket>();
+      const resultNodeIdMap = new Map<NodeOrigin, string>(); // result > nodeId
+
+      const addNodeToBucket = (
+        category: string,
+        origin: NodeOrigin,
+        node: NodeParams,
+        keyProperty?: string
+      ): void => {
+        const duplicateConfig = int.getDuplicateConfig(keyProperty);
+        let bucket = bulkNodeImports.get(category);
+        if (!bucket) {
+          bucket = {
+            params: {
+              sourceKey: integration.sourceKey,
+              nodes: [],
+              duplicateConfig: duplicateConfig
+            },
+            entries: [],
+            originsByDedupValue: new Map<string, NodeOrigin[]>()
+          };
+          bulkNodeImports.set(category, bucket);
+        }
+
+        bucket.params.nodes.push(node);
+        bucket.entries.push({origin: origin, node: node});
+
+        if (duplicateConfig.duplicateStrategy === DuplicateStrategy.MERGE) {
+          const property = duplicateConfig.duplicateDetection.property;
+          const value = String(node.properties?.[property] ?? '');
+          const list = bucket.originsByDedupValue.get(value);
+          if (list) {
+            list.push(origin);
+          } else {
+            bucket.originsByDedupValue.set(value, [origin]);
+          }
+        }
+      };
+
+      // Create the output nodes and their neighbors
+      resolvedResults
+        // Unify result for output nodes and neighbor nodes
+        .flatMap((result) => [
+          {
+            origin: result,
+            node: int.getOutputNode(result),
+            keyProperty: result.keyProperty
+          },
+          ...(result.neighbors ?? []).map((neighbor) => ({
+            origin: neighbor,
+            node: int.getNeighborNode(neighbor),
+            keyProperty: neighbor.keyProperty
+          }))
+        ])
+        // Create bulk import params for each category
+        .forEach(({origin, node, keyProperty}) => {
+          const category = node.categories[0];
+          addNodeToBucket(
+            category,
+            origin,
+            {categories: node.categories, properties: node.properties},
+            keyProperty
+          );
+        });
+
+      // Process the bulk node imports
+      let total = Array.from(bulkNodeImports.values()).reduce(
+        (sum, bucket) => sum + bucket.params.nodes.length,
+        0
+      );
+      let processed = 0;
+      p.update(STRINGS.ui.importSearchResult.creatingNode + ` (${processed}/${total})`);
+
+      for (const [category, bucket] of bulkNodeImports) {
+        processed += bucket.params.nodes.length;
+        const bulkR = await this.api.server.graphNode.bulkCreateNodes(bucket.params);
+        p.update(STRINGS.ui.importSearchResult.creatingNode + ` (${processed}/${total})`);
+
+        if (!bulkR.isSuccess()) {
+          apiErrors.push(STRINGS.ui.importSearchResult.failBulkNodes(category));
+          continue;
+        }
+
+        itemsToAdd.nodes.push(...bulkR.body.items);
+
+        // Map the created node ids to their origin for later edge creation, with fallback if no deduplication is used (1:1 mapping)
+        if (bucket.params.duplicateConfig?.duplicateStrategy === DuplicateStrategy.MERGE) {
+          const property = bucket.params.duplicateConfig.duplicateDetection.property;
+          for (const created of bulkR.body.items) {
+            const value = String(created.data.properties?.[property] ?? '');
+            const origins = bucket.originsByDedupValue.get(value) ?? [];
+            for (const origin of origins) {
+              resultNodeIdMap.set(origin, created.id);
+            }
+          }
+        } else {
+          const max = Math.min(bucket.entries.length, bulkR.body.items.length);
+          for (let i = 0; i < max; i++) {
+            resultNodeIdMap.set(bucket.entries[i].origin, bulkR.body.items[i].id);
+          }
+        }
+      }
+
+      // Create edges from output nodes to input node and to neighbor nodes
+      const bulkEdgeImports = new Map<string, BulkCreateEdgesParams>();
+      resolvedResults
+        // Unify result for all edges
+        .flatMap((result) => {
+          const outputNodeId = resultNodeIdMap.get(result);
+          if (!outputNodeId) {
+            return;
+          }
+          return [
+            {result: result, edge: int.getOutputEdge(result, outputNodeId, inputNodeId)},
+            ...(result.neighbors ?? []).map((neighbor) => {
+              const neighborNodeId = resultNodeIdMap.get(neighbor);
+              if (!neighborNodeId) {
+                return;
+              }
+              return {
+                result: neighbor,
+                edge: int.getNeighborEdge(neighbor, outputNodeId, neighborNodeId)
+              };
+            })
+          ];
+        })
+        // Create bulk import params for each type
+        .forEach((item) => {
+          if (!item) {
+            return;
+          }
+          const {result, edge} = item;
+
+          if (!bulkEdgeImports.has(edge.type)) {
+            bulkEdgeImports.set(edge.type, {
+              sourceKey: integration.sourceKey,
+              edges: [],
+              duplicateConfig: int.getDuplicateConfig(result.edgeKeyProperty)
+            });
+          }
+
+          // Strip sourceKey from edge to match EdgeParams type
+          bulkEdgeImports.get(edge.type)!.edges.push({
+            source: edge.source,
+            target: edge.target,
+            type: edge.type,
+            properties: edge.properties
+          });
+        });
+
+      // Process the bulk edge imports
+      total = Array.from(bulkEdgeImports.values()).reduce(
+        (sum, params) => sum + params.edges.length,
+        0
+      );
+      processed = 0;
+      p.update(STRINGS.ui.importSearchResult.creatingEdge + ` (${processed}/${total})`);
+
+      for (const [type, params] of bulkEdgeImports) {
+        processed += params.edges.length;
+        const bulkR = await this.api.server.graphEdge.bulkCreateEdges(params);
+        p.update(STRINGS.ui.importSearchResult.creatingEdge + ` (${processed}/${total})`);
+
+        if (!bulkR.isSuccess()) {
+          apiErrors.push(STRINGS.ui.importSearchResult.failBulkEdges(type));
+          continue;
+        }
+
+        itemsToAdd.edges.push(...bulkR.body.items);
+      }
+
+      p.update(STRINGS.ui.global.done);
+
+      // Add items to the viz
+      addedInLKE = await this.addItemsToOgma(itemsToAdd);
+    });
+
+    // List errors as a warning popin if any encountered
+    if (apiErrors.length > 0) {
+      await this.ui.popIn.showElement(
+        'Warning',
+        $elem(
+          'div',
+          {class: 'my-2'},
+          apiErrors.map((message) => $elem('p', {}, message))
+        ),
+        [
+          this.ui.button.create(STRINGS.ui.importSearchResult.confirmModalCloseButton, {}, () => {
+            this.ui.popIn.close();
+            this.closePlugin();
+          })
+        ]
+      );
+      return;
+    }
+
+    await this.showImportConfirmation(addedInLKE);
   }
 
   async importSearchResult(
@@ -176,32 +434,52 @@ export class ServiceFacade {
       await this.importNeighbors(int, resultToImport, newNodeId, p, itemsToAdd);
 
       p.update(STRINGS.ui.global.done);
-      const ogma = this.getOgma();
-      if (ogma) {
-        try {
-          const addedGraph = await ogma.addGraph(itemsToAdd, {ignoreInvalid: true});
-          addedInLKE = true;
-
-          // select added nodes
-          ogma.clearSelection();
-          addedGraph.nodes.setSelected(true);
-
-          // layout only newly added nodes
-          const previousNodes = addedGraph.nodes.inverse();
-          await previousNodes.setAttribute('layoutable', false);
-          try {
-            await ogma.layouts.force({locate: true});
-          } finally {
-            await previousNodes.setAttribute('layoutable', true);
-          }
-        } catch (e) {
-          console.warn('Could not add node/edge in LKE', e);
-        }
-      } else {
-        console.log('Ogma not available, cannot add graph to viz');
-      }
+      addedInLKE = await this.addItemsToOgma(itemsToAdd);
     });
 
+    await this.showImportConfirmation(addedInLKE);
+  }
+
+  private async addItemsToOgma(itemsToAdd: {nodes: LkNode[]; edges: LkEdge[]}): Promise<boolean> {
+    const ogma = this.getOgma();
+    if (!ogma) {
+      console.log('Ogma not available, cannot add graph to viz');
+      return false;
+    }
+    try {
+      const addedGraph = await ogma.addGraph(itemsToAdd, {ignoreInvalid: true});
+
+      // select added nodes
+      ogma.clearSelection();
+      addedGraph.nodes.setSelected(true);
+
+      // layout only newly added nodes
+      const previousNodes = addedGraph.nodes.inverse();
+      await previousNodes.setAttribute('layoutable', false);
+      try {
+        await ogma.layouts.force({locate: true});
+      } finally {
+        await previousNodes.setAttribute('layoutable', true);
+      }
+      return true;
+    } catch (e) {
+      console.warn('Could not add node/edge in LKE', e);
+      return false;
+    }
+  }
+
+  private getOgma(): OgmaInterface | undefined {
+    try {
+      // @ts-ignore
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      return (window.parent?.ogma ?? window.opener?.ogma ?? undefined) as OgmaInterface | undefined;
+    } catch (e) {
+      console.log('Could not reach Ogma: ' + asError(e).message);
+      return undefined;
+    }
+  }
+
+  private async showImportConfirmation(addedInLKE: boolean): Promise<void> {
     const confirmText = addedInLKE
       ? STRINGS.ui.importSearchResult.successfullyCreatedAndAdded
       : STRINGS.ui.importSearchResult.successfullyCreated;
@@ -217,24 +495,10 @@ export class ServiceFacade {
     );
   }
 
-  private getOgma(): OgmaInterface | undefined {
-    try {
-      // @ts-ignore
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      return (window.parent?.ogma ?? window.opener?.ogma ?? undefined) as OgmaInterface | undefined;
-    } catch (e) {
-      console.log('Could not reach Ogma: ' + asError(e).message);
-      return undefined;
-    }
-  }
-
   public closePlugin(): void {
     const inIframe = window.parent !== window;
     if (inIframe) {
-      const button = window.parent.document.querySelector('s-popin .close button');
-      if (button && 'click' in button && typeof button.click === 'function') {
-        button.click();
-      }
+      this.api.server.frontend.closeModal();
     } else {
       window.close();
     }

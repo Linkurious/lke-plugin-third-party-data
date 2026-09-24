@@ -1,6 +1,12 @@
-import {ICreateNodeParams, ICreateEdgeParams, LkNode} from '@linkurious/rest-client';
+import {
+  DuplicateConfig,
+  DuplicateStrategy,
+  ICreateNodeParams,
+  ICreateEdgeParams,
+  LkNode,
+  PluginAction
+} from '@linkurious/rest-client';
 
-import {PluginAction} from '../../backend/src/server/api';
 import {NeighborResult, VendorResult} from '../api/response';
 import {VendorFieldType} from '../vendor/vendorModel';
 import {Vendor} from '../vendor/vendor';
@@ -202,12 +208,30 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
     mainNodeId: string,
     neighborNodeId: string
   ): ICreateEdgeParams {
+    const properties: Record<string, unknown> = {};
+
+    if (neighbor.edgeKeyProperty && neighbor.properties[neighbor.edgeKeyProperty] !== undefined) {
+      properties[neighbor.edgeKeyProperty] = neighbor.properties[neighbor.edgeKeyProperty];
+    }
+
     return {
       sourceKey: this.model.sourceKey,
       type: neighbor.edgeType,
       source: mainNodeId,
       target: neighborNodeId,
-      properties: {}
+      properties: properties
+    };
+  }
+
+  public getDuplicateConfig(keyProperty?: string): DuplicateConfig {
+    if (keyProperty) {
+      return {
+        duplicateStrategy: DuplicateStrategy.MERGE,
+        duplicateDetection: {property: keyProperty}
+      };
+    }
+    return {
+      duplicateStrategy: DuplicateStrategy.IMPORT_EVERYTHING
     };
   }
 }
