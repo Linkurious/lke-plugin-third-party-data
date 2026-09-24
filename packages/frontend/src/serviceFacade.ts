@@ -265,7 +265,7 @@ export class ServiceFacade {
         p.update(STRINGS.ui.importSearchResult.creatingNode + ` (${processed}/${total})`);
 
         if (!bulkR.isSuccess()) {
-          apiErrors.push(`Failed to bulk create nodes (${category})`);
+          apiErrors.push(STRINGS.ui.importSearchResult.failBulkNodes(category));
           continue;
         }
 
@@ -350,7 +350,7 @@ export class ServiceFacade {
         p.update(STRINGS.ui.importSearchResult.creatingEdge + ` (${processed}/${total})`);
 
         if (!bulkR.isSuccess()) {
-          apiErrors.push(`Failed to bulk create edges (${type})`);
+          apiErrors.push(STRINGS.ui.importSearchResult.failBulkEdges(type));
           continue;
         }
 
