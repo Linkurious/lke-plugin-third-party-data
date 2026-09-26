@@ -49,7 +49,7 @@
     "@linkurious/rest-client": "4.3.5",
     "body-parser": "2.3.0",
     "qs": "6.16.0",
-    "superagent": "10.3.0",
+    "superagent": "10.4.1",
     "https-proxy-agent": "7.0.6"
   },
   "devDependencies": {
