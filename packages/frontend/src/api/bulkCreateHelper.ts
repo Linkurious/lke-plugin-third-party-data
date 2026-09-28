@@ -1,13 +1,8 @@
-import {
-  DuplicateConfig,
-  DuplicateStrategy
-} from '@linkurious/rest-client/dist/src/api/import/types';
-import {NodeParams} from '@linkurious/rest-client/dist/src/api/graphNode/types';
-import {EdgeParams, LkEdge, LkNode} from '@linkurious/rest-client';
+import {NodeParams, EdgeParams, LkEdge, LkNode} from '@linkurious/rest-client';
+import {GenericObject} from '@linkurious/rest-client/dist/src/api/commonTypes';
 
 import {VendorResult} from '../../../shared/api/response.ts';
-import {IntegrationModelPublic} from '../../../shared/integration/IntegrationModel.ts';
-import {AbstractFields} from '../../../shared/vendor/vendorModel.ts';
+import {VendorIntegrationPublic} from '../../../shared/integration/vendorIntegrationPublic.ts';
 
 import {API} from './api.ts';
 
@@ -21,8 +16,8 @@ interface PathToCreate {
   index: number;
   nodeCategory: string;
   edgeType: string;
-  nodeProperties: AbstractFields;
-  edgeProperties: AbstractFields;
+  nodeProperties: GenericObject;
+  edgeProperties: GenericObject;
   nodeKeyProperty?: string;
   edgeKeyProperty?: string;
 }
@@ -43,8 +38,6 @@ type ProgressCallback = (
     | {type: 'nodeError' | 'edgeError'; categoryOrType: string; error: Error}
 ) => void;
 
-type TypeConfig = Pick<IntegrationModelPublic, 'outputEdgeType' | 'outputNodeCategory'>;
-
 /**
  * Help to bulk-create nodes and edges from a set of vendor results.
  * General logic:
@@ -60,15 +53,15 @@ type TypeConfig = Pick<IntegrationModelPublic, 'outputEdgeType' | 'outputNodeCat
 export class BulkCreateHelper {
   private readonly api: API;
   private readonly pathsToCreate: PathToCreate[];
-  private readonly integrationModel: IntegrationModelPublic;
+  private readonly int: VendorIntegrationPublic;
 
-  constructor(api: API, results: VendorResult[], integrationModel: IntegrationModelPublic) {
+  constructor(api: API, results: VendorResult[], int: VendorIntegrationPublic) {
     this.api = api;
-    this.pathsToCreate = BulkCreateHelper.parsePathsToCreate(results, integrationModel);
-    this.integrationModel = integrationModel;
+    this.pathsToCreate = BulkCreateHelper.parsePathsToCreate(results, int);
+    this.int = int;
   }
 
-  static parsePathsToCreate(results: VendorResult[], types: TypeConfig): PathToCreate[] {
+  static parsePathsToCreate(results: VendorResult[], int: VendorIntegrationPublic): PathToCreate[] {
     const paths: PathToCreate[] = [];
     let index = 0;
     for (const result of results) {
@@ -76,9 +69,10 @@ export class BulkCreateHelper {
       paths.push({
         index: parentIndex,
         sourceNodeIndex: null,
-        nodeCategory: types.outputNodeCategory,
-        nodeProperties: result.properties,
-        edgeType: types.outputEdgeType,
+        nodeCategory: int.getOutputTypes().outputNodeCategory,
+        // for the main node, we use the property-mapping to transform the raw output properties into the final node properties
+        nodeProperties: int.mapMainNodeProperties(result.properties),
+        edgeType: int.getOutputTypes().outputEdgeType,
         edgeProperties: result.edgeProperties ?? {},
         nodeKeyProperty: result.keyProperty,
         edgeKeyProperty: result.edgeKeyProperty
@@ -89,9 +83,10 @@ export class BulkCreateHelper {
             index: index++,
             sourceNodeIndex: parentIndex,
             nodeCategory: neighbor.nodeCategory,
+            // there is no property-mapping for neighbor nodes, we use the raw output properties
             nodeProperties: neighbor.properties,
             edgeType: neighbor.edgeType,
-            edgeProperties: {}
+            edgeProperties: int.getNeighborEdgeProperties(neighbor)
           });
         }
       }
@@ -134,13 +129,10 @@ export class BulkCreateHelper {
     // bulk-create nodes for each category
     for (const [nodeCategory, paths] of Object.entries(pathsByNodeCategory)) {
       console.log(`Creating ${paths.length} nodes of category "${nodeCategory}"...`);
-      const nodeKey = paths[0].nodeKeyProperty;
-      const dupConfig: DuplicateConfig = nodeKey
-        ? {duplicateStrategy: DuplicateStrategy.MERGE, duplicateDetection: {property: nodeKey}}
-        : {duplicateStrategy: DuplicateStrategy.IMPORT_EVERYTHING};
+      const dupConfig = this.int.getDuplicateConfig(paths[0].nodeKeyProperty);
       const response = await this.api.server.graphNode.bulkCreateNodes({
         nodes: paths.map((p) => BulkCreateHelper.toNodeParams(p)),
-        sourceKey: this.integrationModel.sourceKey,
+        sourceKey: this.int.getSourceKey(),
         duplicateConfig: dupConfig
       });
       if (!response.isSuccess()) {
@@ -230,15 +222,12 @@ export class BulkCreateHelper {
     // bulk-create edges for each edge type
     for (const [edgeType, paths] of Object.entries(edgesToCreateByEdgeType)) {
       console.log(`Creating ${paths.length} edges of type "${edgeType}"...`);
-      const keyProperty = paths[0].edgeKeyProperty;
-      const dupConfig: DuplicateConfig = keyProperty
-        ? {duplicateStrategy: DuplicateStrategy.MERGE, duplicateDetection: {property: keyProperty}}
-        : {duplicateStrategy: DuplicateStrategy.IMPORT_EVERYTHING};
+      const dupConfig = this.int.getDuplicateConfig(paths[0].edgeKeyProperty);
       const response = await this.api.server.graphEdge.bulkCreateEdges({
         edges: paths.map((p) =>
           BulkCreateHelper.toEdgeParams(p, matchedNodePaths, selectedNodeId, progress)
         ),
-        sourceKey: this.integrationModel.sourceKey,
+        sourceKey: this.int.getSourceKey(),
         duplicateConfig: dupConfig
       });
       if (!response.isSuccess()) {
