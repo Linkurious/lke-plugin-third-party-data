@@ -176,7 +176,7 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
     }
   }
 
-  public getNeighborEdgeProperties(neighbor: NeighborResult): EdgeParams['properties'] {
+  public getNeighborEdgeProperties(neighbor: NeighborResult): Required<EdgeParams>['properties'] {
     const properties: Record<string, unknown> = {};
 
     if (neighbor.edgeKeyProperty && neighbor.properties[neighbor.edgeKeyProperty] !== undefined) {
