@@ -159,7 +159,7 @@ export class ServiceFacade {
         }
       }
 
-      const bulkCreate = new BulkCreateHelper(this.api, resolvedResults, integration);
+      const bulkCreate = new BulkCreateHelper(this.api, resolvedResults, int);
       const itemsToAdd = await bulkCreate.createPaths(inputNodeId, (progress) => {
         if (progress.type === 'nodes') {
           p.update(
