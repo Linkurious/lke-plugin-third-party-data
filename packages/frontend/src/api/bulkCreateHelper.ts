@@ -123,7 +123,6 @@ export class BulkCreateHelper {
     const matchedNodePaths = new Array<MatchedNodePath>();
 
     // bulk-create nodes for each category
-    let done = 0;
     for (const [nodeCategory, paths] of Object.entries(pathsByNodeCategory)) {
       console.log(`Creating ${paths.length} nodes of category "${nodeCategory}"...`);
       const nodeKey = paths[0].nodeKeyProperty;
@@ -158,7 +157,7 @@ export class BulkCreateHelper {
       );
 
       // notify progress
-      progress({type: 'nodes', total: pathsToCreate.length, done: (done += paths.length)});
+      progress({type: 'nodes', total: pathsToCreate.length, done: matchedNodePaths.length});
     }
     return matchedNodePaths;
   }
@@ -250,7 +249,7 @@ export class BulkCreateHelper {
       );
 
       // notify progress
-      progress({type: 'edges', total: matchedNodePaths.length, done: matchedNodePaths.length});
+      progress({type: 'edges', total: matchedNodePaths.length, done: matchedEdgePaths.length});
     }
 
     return matchedEdgePaths;
