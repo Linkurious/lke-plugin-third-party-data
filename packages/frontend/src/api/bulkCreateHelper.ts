@@ -42,6 +42,18 @@ type ProgressCallback = (
 
 type TypeConfig = Pick<IntegrationModelPublic, 'outputEdgeType' | 'outputNodeCategory'>;
 
+/**
+ * Help to bulk-create nodes and edges from a set of vendor results.
+ * General logic:
+ * - extract a list of "paths to create" from the vendor results
+ * - bulk-create nodes for each category, storing the created/matched node IDs for each path
+ * - bulk-create edges for each edge type, using the stored node IDs
+ *
+ * A "path to create" represents:
+ * - a target node to create (with its category and properties)
+ * - the reference of the source node (either the "selected node" or the index of another node in the paths results)
+ * - an edge to create between the "source node" and the target node (with its type and properties)
+ */
 export class BulkCreateHelper {
   private readonly api: API;
   private readonly pathsToCreate: PathToCreate[];
