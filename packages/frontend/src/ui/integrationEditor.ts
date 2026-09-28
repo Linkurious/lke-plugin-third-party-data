@@ -57,13 +57,15 @@ export class IntegrationEditor extends BaseUI {
       'read',
       STRINGS.ui.integrationEditor.selectInputNodeTypeTitle,
       STRINGS.ui.integrationEditor.selectInputNodeTypeDescription,
-      false
+      false,
+      model.inputNeighborNodes ?? []
     );
     const inputNodeCategory = await inputNodeTypeSelector.show(model.inputNodeCategory);
     if (!inputNodeCategory) {
       return;
     }
     model.inputNodeCategory = inputNodeCategory;
+    model.inputNeighborNodes = inputNodeTypeSelector.getNeighborNodes();
     console.log('integration: selected node category: ' + JSON.stringify(inputNodeCategory));
 
     // InputNode property mapping

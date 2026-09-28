@@ -36,6 +36,7 @@ plugin({
         adminSettings: {},
         sourceKey: 'abc123',
         inputNodeCategory: 'Person',
+        inputNeighborNodes: [],
         searchQueryFieldMapping: [
           {outputPropertyKey: 'q', type: 'property', inputPropertyKey: 'name'}
         ],

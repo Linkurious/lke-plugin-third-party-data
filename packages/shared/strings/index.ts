@@ -169,6 +169,14 @@ export const STRINGS = {
       description:
         'Select a third-party data vendor API for this new integration, and configure it.'
     },
+    inputNeighborNodesEditor: {
+      description: 'Load data from neighbor nodes',
+      edgeTypeLabel: 'Edge type',
+      anyEdgeLabel: 'Any edge',
+      nodeTypeLabel: 'Node category',
+      actionColumnHead: 'Action',
+      addButton: 'Add'
+    },
     integrationEditor: {
       selectInputNodeTypeTitle: 'Select the input node-category - [3/7]',
       selectInputNodeTypeDescription:
