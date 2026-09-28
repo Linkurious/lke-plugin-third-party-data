@@ -1,4 +1,7 @@
-import {DuplicateConfig, DuplicateStrategy} from '@linkurious/rest-client/dist/src/api/import/types';
+import {
+  DuplicateConfig,
+  DuplicateStrategy
+} from '@linkurious/rest-client/dist/src/api/import/types';
 import {NodeParams} from '@linkurious/rest-client/dist/src/api/graphNode/types';
 import {EdgeParams, LkEdge, LkNode} from '@linkurious/rest-client';
 
@@ -96,7 +99,10 @@ export class BulkCreateHelper {
     return paths;
   }
 
-  async createPaths(selectedNodeId: string, progress: ProgressCallback): Promise<{nodes: LkNode[]; edges: LkEdge[]}> {
+  async createPaths(
+    selectedNodeId: string,
+    progress: ProgressCallback
+  ): Promise<{nodes: LkNode[]; edges: LkEdge[]}> {
     // create or match all nodes, store the created/matched node IDs for each path
     const matchedNodePaths = await this.createNodes(this.pathsToCreate, progress);
 
@@ -109,7 +115,10 @@ export class BulkCreateHelper {
     };
   }
 
-  private async createNodes(pathsToCreate: PathToCreate[], progress: ProgressCallback): Promise<MatchedNodePath[]> {
+  private async createNodes(
+    pathsToCreate: PathToCreate[],
+    progress: ProgressCallback
+  ): Promise<MatchedNodePath[]> {
     // group paths by node category, so we can bulk-create them in batches
     const pathsByNodeCategory: Record<string, PathToCreate[]> = {};
     for (const path of pathsToCreate) {
@@ -135,7 +144,9 @@ export class BulkCreateHelper {
         duplicateConfig: dupConfig
       });
       if (!response.isSuccess()) {
-        const e = new Error(`Failed to create nodes (${response.body.key}): ${response.body.message}`);
+        const e = new Error(
+          `Failed to create nodes (${response.body.key}): ${response.body.message}`
+        );
         progress({type: 'nodeError', categoryOrType: nodeCategory, error: e});
         throw e;
       }
@@ -181,7 +192,9 @@ export class BulkCreateHelper {
     } else {
       const sourcePath = matchedNodePaths.find((p) => edgePath.sourceNodeIndex === p.index);
       if (!sourcePath) {
-        const e = new Error(`Failed to find source node for edge (source node index: ${edgePath.sourceNodeIndex})`);
+        const e = new Error(
+          `Failed to find source node for edge (source node index: ${edgePath.sourceNodeIndex})`
+        );
         progress({type: 'edgeError', categoryOrType: edgePath.edgeType, error: e});
         throw e;
       }
@@ -222,12 +235,16 @@ export class BulkCreateHelper {
         ? {duplicateStrategy: DuplicateStrategy.MERGE, duplicateDetection: {property: keyProperty}}
         : {duplicateStrategy: DuplicateStrategy.IMPORT_EVERYTHING};
       const response = await this.api.server.graphEdge.bulkCreateEdges({
-        edges: paths.map((p) => BulkCreateHelper.toEdgeParams(p, matchedNodePaths, selectedNodeId, progress)),
+        edges: paths.map((p) =>
+          BulkCreateHelper.toEdgeParams(p, matchedNodePaths, selectedNodeId, progress)
+        ),
         sourceKey: this.integrationModel.sourceKey,
         duplicateConfig: dupConfig
       });
       if (!response.isSuccess()) {
-        const e = new Error(`Failed to create edges (${response.body.key}): ${response.body.message}`);
+        const e = new Error(
+          `Failed to create edges (${response.body.key}): ${response.body.message}`
+        );
         progress({type: 'edgeError', categoryOrType: edgeType, error: e});
         throw e;
       }

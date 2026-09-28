@@ -144,7 +144,9 @@ export class ServiceFacade {
       const resolvedResults: VendorResult[] = [];
       // Resolve details for each search result if needed
       for (let i = 0; i < searchResults.length; i++) {
-        p.update(`${STRINGS.ui.importSearchResult.gettingDetails} (${i + 1}/${searchResults.length})`);
+        p.update(
+          `${STRINGS.ui.importSearchResult.gettingDetails} (${i + 1}/${searchResults.length})`
+        );
         const searchResult = searchResults[i];
         if (int.vendor.strategy === 'searchAndDetails') {
           const detailsR = await this.api.getDetails(integration, searchResult.id);
@@ -160,9 +162,13 @@ export class ServiceFacade {
       const bulkCreate = new BulkCreateHelper(this.api, resolvedResults, integration);
       const itemsToAdd = await bulkCreate.createPaths(inputNodeId, (progress) => {
         if (progress.type === 'nodes') {
-          p.update(`${STRINGS.ui.importSearchResult.creatingNode} (${progress.done}/${progress.total})`);
+          p.update(
+            `${STRINGS.ui.importSearchResult.creatingNode} (${progress.done}/${progress.total})`
+          );
         } else if (progress.type === 'edges') {
-          p.update(`${STRINGS.ui.importSearchResult.creatingEdge} (${progress.done}/${progress.total})`);
+          p.update(
+            `${STRINGS.ui.importSearchResult.creatingEdge} (${progress.done}/${progress.total})`
+          );
         } else if (progress.type === 'nodeError') {
           apiErrors.push(STRINGS.ui.importSearchResult.failBulkNodes(progress.categoryOrType));
         } else if (progress.type === 'edgeError') {
