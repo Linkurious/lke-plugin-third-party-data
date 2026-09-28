@@ -118,31 +118,34 @@ export class BulkCreateHelper {
       const dupConfig: DuplicateConfig = nodeKey
         ? {duplicateStrategy: DuplicateStrategy.MERGE, duplicateDetection: {property: nodeKey}}
         : {duplicateStrategy: DuplicateStrategy.IMPORT_EVERYTHING};
-      const matched = await this.api.server.graphNode.bulkCreateNodes({
+      const response = await this.api.server.graphNode.bulkCreateNodes({
         nodes: paths.map((p) => BulkCreateHelper.toNodeParams(p)),
         sourceKey: this.integrationModel.sourceKey,
         duplicateConfig: dupConfig
       });
-      if (!matched.isSuccess()) {
-        const e = new Error(`Failed to create nodes (${matched.body.key}): ${matched.body.message}`);
+      if (!response.isSuccess()) {
+        const e = new Error(`Failed to create nodes (${response.body.key}): ${response.body.message}`);
         progress({type: 'nodeError', categoryOrType: nodeCategory, error: e});
         throw e;
       }
-      if (matched.body.items.length !== paths.length) {
+      if (response.body.items.length !== paths.length) {
         const e = new Error(
-          `Failed to bulk create nodes: expected ${paths.length} results, got ${matched.body.items.length}`
+          `Failed to bulk create nodes: expected ${paths.length} results, got ${response.body.items.length}`
         );
         progress({type: 'nodeError', categoryOrType: nodeCategory, error: e});
         throw e;
       }
 
       // store the matched node IDs for each path index, so we can create edges later
-      for (let i = 0; i < paths.length; i++) {
-        matchedNodePaths[i] = {
-          ...paths[i],
-          node: matched.body.items[i]
-        };
-      }
+      // note: this works because `response.items` is guaranteed to be in the same order as the input `paths`
+      matchedNodePaths.push(
+        ...paths.map((p, i) => ({
+          ...p,
+          node: response.body.items[i]
+        }))
+      );
+
+      // notify progress
       progress({type: 'nodes', total: pathsToCreate.length, done: (done += paths.length)});
     }
     return matchedNodePaths;
@@ -224,12 +227,17 @@ export class BulkCreateHelper {
         progress({type: 'edgeError', categoryOrType: edgeType, error: e});
         throw e;
       }
+
+      // store the matched edge IDs for each path index, so we can return them later
+      // note: this works because `response.items` is guaranteed to be in the same order as the input `paths`
       matchedEdgePaths.push(
         ...paths.map((p, i) => ({
           ...p,
           edge: response.body.items[i]
         }))
       );
+
+      // notify progress
       progress({type: 'edges', total: matchedNodePaths.length, done: matchedNodePaths.length});
     }
 
