@@ -1,16 +1,6 @@
-import {
-  BulkCreateEdgesParams,
-  BulkCreateNodesParams,
-  DuplicateStrategy,
-  LkEdge,
-  LkError,
-  LkNode,
-  NodeParams,
-  Response,
-  User
-} from '@linkurious/rest-client';
+import {LkEdge, LkError, LkNode, Response, User} from '@linkurious/rest-client';
 
-import {NeighborResult, VendorResult} from '../../shared/api/response';
+import {VendorResult} from '../../shared/api/response';
 import {IntegrationModelPublic} from '../../shared/integration/IntegrationModel';
 import {VendorIntegrationPublic} from '../../shared/integration/vendorIntegrationPublic';
 import {asError, clone, randomString} from '../../shared/utils';
@@ -22,7 +12,7 @@ import {Schema} from './api/schema';
 import {SearchSuccessState, UrlParams} from './urlParams';
 import {Configuration} from './configuration';
 import {$elem} from './ui/uiUtils.ts';
-import {IWaitingMessage} from './ui/longTask.ts';
+import {BulkCreateHelper} from './api/bulkCreateHelper.ts';
 
 export class ServiceFacade {
   private readonly urlParams;
@@ -132,7 +122,6 @@ export class ServiceFacade {
     inputNodeId: string
   ): Promise<void> {
     const int = new VendorIntegrationPublic(integration);
-    const itemsToAdd: {nodes: LkNode[]; edges: LkEdge[]} = {nodes: [], edges: []};
     const apiErrors: string[] = [];
     let addedInLKE = false;
 
@@ -155,9 +144,7 @@ export class ServiceFacade {
       const resolvedResults: VendorResult[] = [];
       // Resolve details for each search result if needed
       for (let i = 0; i < searchResults.length; i++) {
-        p.update(
-          `${STRINGS.ui.importSearchResult.gettingDetails} (${i + 1}/${searchResults.length})`
-        );
+        p.update(`${STRINGS.ui.importSearchResult.gettingDetails} (${i + 1}/${searchResults.length})`);
         const searchResult = searchResults[i];
         if (int.vendor.strategy === 'searchAndDetails') {
           const detailsR = await this.api.getDetails(integration, searchResult.id);
@@ -170,192 +157,18 @@ export class ServiceFacade {
         }
       }
 
-      type NodeOrigin = VendorResult | NeighborResult;
-      type NodeEntry = {
-        origin: NodeOrigin;
-        node: NodeParams;
-      };
-      /**
-       * A bucket of nodes to be created in bulk
-       * Stores a map matching nodes origin with their key to later match origin to the created node id
-       * That way we can match node ids to create edges
-       */
-      type NodeBucket = {
-        params: BulkCreateNodesParams;
-        entries: NodeEntry[];
-        originsByDedupValue: Map<string, NodeOrigin[]>;
-      };
-
-      const bulkNodeImports = new Map<string, NodeBucket>();
-      const resultNodeIdMap = new Map<NodeOrigin, string>(); // result > nodeId
-
-      const addNodeToBucket = (
-        category: string,
-        origin: NodeOrigin,
-        node: NodeParams,
-        keyProperty?: string
-      ): void => {
-        const duplicateConfig = int.getDuplicateConfig(keyProperty);
-        let bucket = bulkNodeImports.get(category);
-        if (!bucket) {
-          bucket = {
-            params: {
-              sourceKey: integration.sourceKey,
-              nodes: [],
-              duplicateConfig: duplicateConfig
-            },
-            entries: [],
-            originsByDedupValue: new Map<string, NodeOrigin[]>()
-          };
-          bulkNodeImports.set(category, bucket);
+      const bulkCreate = new BulkCreateHelper(this.api, resolvedResults, integration);
+      const itemsToAdd = await bulkCreate.createPaths(inputNodeId, (progress) => {
+        if (progress.type === 'nodes') {
+          p.update(`${STRINGS.ui.importSearchResult.creatingNode} (${progress.done}/${progress.total})`);
+        } else if (progress.type === 'edges') {
+          p.update(`${STRINGS.ui.importSearchResult.creatingEdge} (${progress.done}/${progress.total})`);
+        } else if (progress.type === 'nodeError') {
+          apiErrors.push(STRINGS.ui.importSearchResult.failBulkNodes(progress.categoryOrType));
+        } else if (progress.type === 'edgeError') {
+          apiErrors.push(STRINGS.ui.importSearchResult.failBulkEdges(progress.categoryOrType));
         }
-
-        bucket.params.nodes.push(node);
-        bucket.entries.push({origin: origin, node: node});
-
-        if (duplicateConfig.duplicateStrategy === DuplicateStrategy.MERGE) {
-          const property = duplicateConfig.duplicateDetection.property;
-          const value = String(node.properties?.[property] ?? '');
-          const list = bucket.originsByDedupValue.get(value);
-          if (list) {
-            list.push(origin);
-          } else {
-            bucket.originsByDedupValue.set(value, [origin]);
-          }
-        }
-      };
-
-      // Create the output nodes and their neighbors
-      resolvedResults
-        // Unify result for output nodes and neighbor nodes
-        .flatMap((result) => [
-          {
-            origin: result,
-            node: int.getOutputNode(result),
-            keyProperty: result.keyProperty
-          },
-          ...(result.neighbors ?? []).map((neighbor) => ({
-            origin: neighbor,
-            node: int.getNeighborNode(neighbor),
-            keyProperty: neighbor.keyProperty
-          }))
-        ])
-        // Create bulk import params for each category
-        .forEach(({origin, node, keyProperty}) => {
-          const category = node.categories[0];
-          addNodeToBucket(
-            category,
-            origin,
-            {categories: node.categories, properties: node.properties},
-            keyProperty
-          );
-        });
-
-      // Process the bulk node imports
-      let total = Array.from(bulkNodeImports.values()).reduce(
-        (sum, bucket) => sum + bucket.params.nodes.length,
-        0
-      );
-      let processed = 0;
-      p.update(STRINGS.ui.importSearchResult.creatingNode + ` (${processed}/${total})`);
-
-      for (const [category, bucket] of bulkNodeImports) {
-        processed += bucket.params.nodes.length;
-        const bulkR = await this.api.server.graphNode.bulkCreateNodes(bucket.params);
-        p.update(STRINGS.ui.importSearchResult.creatingNode + ` (${processed}/${total})`);
-
-        if (!bulkR.isSuccess()) {
-          apiErrors.push(STRINGS.ui.importSearchResult.failBulkNodes(category));
-          continue;
-        }
-
-        itemsToAdd.nodes.push(...bulkR.body.items);
-
-        // Map the created node ids to their origin for later edge creation, with fallback if no deduplication is used (1:1 mapping)
-        if (bucket.params.duplicateConfig?.duplicateStrategy === DuplicateStrategy.MERGE) {
-          const property = bucket.params.duplicateConfig.duplicateDetection.property;
-          for (const created of bulkR.body.items) {
-            const value = String(created.data.properties?.[property] ?? '');
-            const origins = bucket.originsByDedupValue.get(value) ?? [];
-            for (const origin of origins) {
-              resultNodeIdMap.set(origin, created.id);
-            }
-          }
-        } else {
-          const max = Math.min(bucket.entries.length, bulkR.body.items.length);
-          for (let i = 0; i < max; i++) {
-            resultNodeIdMap.set(bucket.entries[i].origin, bulkR.body.items[i].id);
-          }
-        }
-      }
-
-      // Create edges from output nodes to input node and to neighbor nodes
-      const bulkEdgeImports = new Map<string, BulkCreateEdgesParams>();
-      resolvedResults
-        // Unify result for all edges
-        .flatMap((result) => {
-          const outputNodeId = resultNodeIdMap.get(result);
-          if (!outputNodeId) {
-            return;
-          }
-          return [
-            {result: result, edge: int.getOutputEdge(result, outputNodeId, inputNodeId)},
-            ...(result.neighbors ?? []).map((neighbor) => {
-              const neighborNodeId = resultNodeIdMap.get(neighbor);
-              if (!neighborNodeId) {
-                return;
-              }
-              return {
-                result: neighbor,
-                edge: int.getNeighborEdge(neighbor, outputNodeId, neighborNodeId)
-              };
-            })
-          ];
-        })
-        // Create bulk import params for each type
-        .forEach((item) => {
-          if (!item) {
-            return;
-          }
-          const {result, edge} = item;
-
-          if (!bulkEdgeImports.has(edge.type)) {
-            bulkEdgeImports.set(edge.type, {
-              sourceKey: integration.sourceKey,
-              edges: [],
-              duplicateConfig: int.getDuplicateConfig(result.edgeKeyProperty)
-            });
-          }
-
-          // Strip sourceKey from edge to match EdgeParams type
-          bulkEdgeImports.get(edge.type)!.edges.push({
-            source: edge.source,
-            target: edge.target,
-            type: edge.type,
-            properties: edge.properties
-          });
-        });
-
-      // Process the bulk edge imports
-      total = Array.from(bulkEdgeImports.values()).reduce(
-        (sum, params) => sum + params.edges.length,
-        0
-      );
-      processed = 0;
-      p.update(STRINGS.ui.importSearchResult.creatingEdge + ` (${processed}/${total})`);
-
-      for (const [type, params] of bulkEdgeImports) {
-        processed += params.edges.length;
-        const bulkR = await this.api.server.graphEdge.bulkCreateEdges(params);
-        p.update(STRINGS.ui.importSearchResult.creatingEdge + ` (${processed}/${total})`);
-
-        if (!bulkR.isSuccess()) {
-          apiErrors.push(STRINGS.ui.importSearchResult.failBulkEdges(type));
-          continue;
-        }
-
-        itemsToAdd.edges.push(...bulkR.body.items);
-      }
+      });
 
       p.update(STRINGS.ui.global.done);
 
@@ -381,61 +194,6 @@ export class ServiceFacade {
       );
       return;
     }
-
-    await this.showImportConfirmation(addedInLKE);
-  }
-
-  async importSearchResult(
-    integration: IntegrationModelPublic,
-    searchResult: VendorResult,
-    inputNodeId: string
-  ): Promise<void> {
-    console.log('IMPORT_RESULT: ' + JSON.stringify(searchResult));
-    let addedInLKE = false;
-    await this.ui.longTask.run(async (p) => {
-      const int = new VendorIntegrationPublic(integration);
-      let resultToImport = searchResult;
-
-      // if needed, resolve the details for the selected search result
-      if (int.vendor.strategy === 'searchAndDetails') {
-        p.update(STRINGS.ui.importSearchResult.gettingDetails);
-        const detailsR = await this.api.getDetails(integration, searchResult.id);
-        if (detailsR.result) {
-          resultToImport = detailsR.result;
-        } else {
-          throw new Error(STRINGS.errors.importResult.detailsNotFound);
-        }
-      }
-
-      // create + save the target node from the search result
-      const totalNodes = (resultToImport.neighbors?.length ?? 0) + 1;
-      const itemsToAdd: {nodes: LkNode[]; edges: LkEdge[]} = {nodes: [], edges: []};
-
-      p.update(STRINGS.ui.importSearchResult.creatingNode + ` (1/${totalNodes})`);
-      const newNodeR = await this.api.server.graphNode.createNode(
-        int.getOutputNode(resultToImport)
-      );
-      if (!newNodeR.isSuccess()) {
-        throw new Error(STRINGS.errors.importResult.failedToCreateNode(newNodeR.body));
-      }
-      const newNodeId = newNodeR.body.id;
-      itemsToAdd.nodes.push(newNodeR.body);
-
-      // create the connecting edge
-      p.update(STRINGS.ui.importSearchResult.creatingEdge + ` (1/${totalNodes})`);
-      const newEdgeR = await this.api.server.graphEdge.createEdge(
-        int.getOutputEdge(resultToImport, newNodeR.body.id, inputNodeId)
-      );
-      if (!newEdgeR.isSuccess()) {
-        throw new Error(STRINGS.errors.importResult.failedToCreateEdge(newEdgeR.body));
-      }
-      itemsToAdd.edges.push(newEdgeR.body);
-
-      await this.importNeighbors(int, resultToImport, newNodeId, p, itemsToAdd);
-
-      p.update(STRINGS.ui.global.done);
-      addedInLKE = await this.addItemsToOgma(itemsToAdd);
-    });
 
     await this.showImportConfirmation(addedInLKE);
   }
@@ -510,45 +268,6 @@ export class ServiceFacade {
       await this.config.deleteIntegration(integrationId);
       p.update(STRINGS.ui.global.done);
     });
-  }
-
-  private async importNeighbors(
-    int: VendorIntegrationPublic,
-    resultToImport: VendorResult,
-    newNodeId: string,
-    p: IWaitingMessage<unknown>,
-    itemsToAdd: {nodes: LkNode[]; edges: LkEdge[]}
-  ): Promise<void> {
-    let failedNodes = 0;
-    let failedEdges = 0;
-    const neighbors = resultToImport.neighbors ?? [];
-    const totalNodes = neighbors.length + 1;
-
-    for (let i = 0; i < neighbors.length; i++) {
-      const neighbor = neighbors[i];
-      // create the neighbor node
-      p.update(STRINGS.ui.importSearchResult.creatingNode + ` (${i + 2}/${totalNodes})`);
-      const nodeData = int.getNeighborNode(neighbor);
-      const newNeighborNodeR = await this.api.server.graphNode.createNode(nodeData);
-      if (!newNeighborNodeR.isSuccess()) {
-        failedNodes++;
-        continue;
-      }
-      itemsToAdd.nodes.push(newNeighborNodeR.body);
-      // create the neighbor edge
-      p.update(STRINGS.ui.importSearchResult.creatingNode + ` (${i + 2}/${totalNodes})`);
-      const edgeData = int.getNeighborEdge(neighbor, newNodeId, newNeighborNodeR.body.id);
-      const newNeighborEdgeR = await this.api.server.graphEdge.createEdge(edgeData);
-      if (!newNeighborEdgeR.isSuccess()) {
-        failedEdges++;
-        continue;
-      }
-      itemsToAdd.edges.push(newNeighborEdgeR.body);
-    }
-
-    if (failedEdges + failedNodes > 0) {
-      console.log(`Failed to created ${failedNodes} nodes and ${failedEdges} edges`);
-    }
   }
 }
 

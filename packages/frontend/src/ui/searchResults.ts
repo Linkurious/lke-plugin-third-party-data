@@ -89,7 +89,7 @@ export class SearchResults extends BaseUI {
               STRINGS.ui.searchResults.importButton,
               {classes: ['float-end', 'mb-2']},
               async () => {
-                await services.importSearchResult(integration, result, response.inputNodeId);
+                await services.importSearchResults(integration, [result], response.inputNodeId);
               }
             )
           ])
