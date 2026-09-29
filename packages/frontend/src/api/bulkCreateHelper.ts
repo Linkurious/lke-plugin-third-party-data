@@ -10,7 +10,7 @@ import {API} from './api.ts';
 interface PathToCreate {
   /**
    * - null means "the source node of the search"
-   * - a numerical index is to be resolved in the `pathsToCreate` array
+   * - a numerical value is to be resolved as the ìndex` property of an entry in the `pathsToCreate` array
    */
   sourceNodeIndex: number | null;
   index: number;
