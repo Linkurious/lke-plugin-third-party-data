@@ -77,20 +77,18 @@ export class BulkCreateHelper {
         nodeKeyProperty: result.keyProperty,
         edgeKeyProperty: result.edgeKeyProperty
       });
-      if (result.neighbors) {
-        for (const neighbor of result.neighbors) {
-          paths.push({
-            index: index++,
-            sourceNodeIndex: parentIndex,
-            nodeCategory: neighbor.nodeCategory,
-            // there is no property-mapping for neighbor nodes, we use the raw output properties
-            nodeProperties: neighbor.properties,
-            edgeType: neighbor.edgeType,
-            edgeProperties: int.getNeighborEdgeProperties(neighbor),
-            nodeKeyProperty: neighbor.keyProperty,
-            edgeKeyProperty: neighbor.edgeKeyProperty
-          });
-        }
+      for (const neighbor of result.neighbors ?? []) {
+        paths.push({
+          index: index++,
+          sourceNodeIndex: parentIndex,
+          nodeCategory: neighbor.nodeCategory,
+          // there is no property-mapping for neighbor nodes, we use the raw output properties
+          nodeProperties: neighbor.properties,
+          edgeType: neighbor.edgeType,
+          edgeProperties: int.getNeighborEdgeProperties(neighbor),
+          nodeKeyProperty: neighbor.keyProperty,
+          edgeKeyProperty: neighbor.edgeKeyProperty
+        });
       }
     }
     return paths;
