@@ -23,7 +23,8 @@ const mockUser: User = {
   accessRights: {},
   createdAt: '2021-01-01T00:00:00.000Z',
   updatedAt: '2021-01-01T00:00:00.000Z',
-  preferences: {pinOnDrag: false, locale: 'en', incrementalLayout: false}
+  preferences: {pinOnDrag: false, locale: 'en', incrementalLayout: false, nodeSnapping: false},
+  locked: false
 };
 
 const publicIntegrationModel: IntegrationModelPublic = {

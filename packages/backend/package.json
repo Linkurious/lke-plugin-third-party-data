@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "start": "node ../../dist/backend/src/dev/server.js",
-    "build": "tsc -b tsconfig.json",
+    "build": "tsc -b",
+    "tsc:no-emit": "tsc --noEmit",
     "test": "node --test ../../dist/backend/src/test/*.js",
     "lint": "eslint ./src ../shared --ext .ts",
     "lint:fix": "eslint ./src ../shared --ext .ts --fix",
