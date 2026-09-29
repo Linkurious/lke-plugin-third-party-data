@@ -86,7 +86,9 @@ export class BulkCreateHelper {
             // there is no property-mapping for neighbor nodes, we use the raw output properties
             nodeProperties: neighbor.properties,
             edgeType: neighbor.edgeType,
-            edgeProperties: int.getNeighborEdgeProperties(neighbor)
+            edgeProperties: int.getNeighborEdgeProperties(neighbor),
+            nodeKeyProperty: neighbor.keyProperty,
+            edgeKeyProperty: neighbor.edgeKeyProperty
           });
         }
       }

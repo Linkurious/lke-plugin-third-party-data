@@ -159,27 +159,31 @@ export class ServiceFacade {
         }
       }
 
-      const bulkCreate = new BulkCreateHelper(this.api, resolvedResults, int);
-      const itemsToAdd = await bulkCreate.createPaths(inputNodeId, (progress) => {
-        if (progress.type === 'nodes') {
-          p.update(
-            `${STRINGS.ui.importSearchResult.creatingNode} (${progress.done}/${progress.total})`
-          );
-        } else if (progress.type === 'edges') {
-          p.update(
-            `${STRINGS.ui.importSearchResult.creatingEdge} (${progress.done}/${progress.total})`
-          );
-        } else if (progress.type === 'nodeError') {
-          apiErrors.push(STRINGS.ui.importSearchResult.failBulkNodes(progress.categoryOrType));
-        } else if (progress.type === 'edgeError') {
-          apiErrors.push(STRINGS.ui.importSearchResult.failBulkEdges(progress.categoryOrType));
-        }
-      });
+      try {
+        const bulkCreate = new BulkCreateHelper(this.api, resolvedResults, int);
+        const itemsToAdd = await bulkCreate.createPaths(inputNodeId, (progress) => {
+          if (progress.type === 'nodes') {
+            p.update(
+              `${STRINGS.ui.importSearchResult.creatingNode} (${progress.done}/${progress.total})`
+            );
+          } else if (progress.type === 'edges') {
+            p.update(
+              `${STRINGS.ui.importSearchResult.creatingEdge} (${progress.done}/${progress.total})`
+            );
+          } else if (progress.type === 'nodeError') {
+            apiErrors.push(STRINGS.ui.importSearchResult.failBulkNodes(progress.categoryOrType));
+          } else if (progress.type === 'edgeError') {
+            apiErrors.push(STRINGS.ui.importSearchResult.failBulkEdges(progress.categoryOrType));
+          }
+        });
 
-      p.update(STRINGS.ui.global.done);
+        p.update(STRINGS.ui.global.done);
 
-      // Add items to the viz
-      addedInLKE = await this.addItemsToOgma(itemsToAdd);
+        // Add items to the viz
+        addedInLKE = await this.addItemsToOgma(itemsToAdd);
+      } catch (e) {
+        console.error('Bulk creation failed', e);
+      }
     });
 
     // List errors as a warning popin if any encountered
