@@ -221,7 +221,10 @@ export const STRINGS = {
       successfullyCreated: `Successfully imported search result in the graph.`,
       confirmModalCloseButton: 'Close window',
       gettingDetails: 'Getting details for the selected result',
-      title: 'Success'
+      noResultsToImport: 'No results selected for import.',
+      title: 'Success',
+      failBulkNodes: (category: string): string => `Failed to bulk create nodes (${category})`,
+      failBulkEdges: (type: string): string => `Failed to bulk create edges (${type})`
     },
     integrationCreated: {
       title: 'Integration created successfully',

@@ -1,8 +1,14 @@
-import {ICreateNodeParams, ICreateEdgeParams, LkNode} from '@linkurious/rest-client';
+import {
+  DuplicateConfig,
+  DuplicateStrategy,
+  LkNode,
+  PluginAction,
+  NodeParams,
+  EdgeParams
+} from '@linkurious/rest-client';
 
-import {PluginAction} from '../../backend/src/server/api';
-import {NeighborResult, VendorResult} from '../api/response';
-import {VendorFieldType} from '../vendor/vendorModel';
+import {NeighborResult} from '../api/response';
+import {AbstractFields, VendorFieldType} from '../vendor/vendorModel';
 import {Vendor} from '../vendor/vendor';
 import {Vendors} from '../vendor/vendors';
 import {STRINGS} from '../strings';
@@ -22,37 +28,33 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
     return this.model.id;
   }
 
-  getOutputNode(vendorResult: VendorResult): ICreateNodeParams {
-    const node = {
-      sourceKey: this.model.sourceKey,
-      categories: [this.model.outputNodeCategory],
-      properties: {} as Record<string, unknown>
-    };
+  mapMainNodeProperties(rawProperties: AbstractFields): Required<NodeParams>['properties'] {
+    const nodeProperties: Required<NodeParams>['properties'] = {};
     for (const mapping of this.model.outputNodeFieldMapping) {
-      const inputValue = this.getVendorInputValue(mapping, vendorResult);
+      const inputValue = this.getVendorInputValue(mapping, rawProperties);
       if (inputValue === undefined) {
         continue;
       }
       // if the input value is a string...
       if (typeof inputValue === 'string') {
         // ...and the output property is already a string...
-        if (typeof node.properties[mapping.outputPropertyKey] === 'string') {
+        if (typeof nodeProperties[mapping.outputPropertyKey] === 'string') {
           // ...append the input value to the output value
-          node.properties[mapping.outputPropertyKey] += ` ${inputValue}`;
+          nodeProperties[mapping.outputPropertyKey] += ` ${inputValue}`;
         } else {
           // else, if the output property is not a string, set it to the input value
-          node.properties[mapping.outputPropertyKey] = inputValue;
+          nodeProperties[mapping.outputPropertyKey] = inputValue;
         }
       } else {
-        node.properties[mapping.outputPropertyKey] = inputValue;
+        nodeProperties[mapping.outputPropertyKey] = inputValue;
       }
     }
-    return node;
+    return nodeProperties;
   }
 
   private getVendorInputValue(
     mapping: FieldMapping,
-    searchResult: VendorResult
+    rawProperties: AbstractFields
   ): VendorFieldType | undefined {
     if (mapping.type === 'constant') {
       let value = mapping.value;
@@ -62,24 +64,9 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
       return value;
     }
     if (mapping.type === 'property') {
-      return searchResult.properties[mapping.inputPropertyKey];
+      return rawProperties[mapping.inputPropertyKey];
     }
     return undefined;
-  }
-
-  getOutputEdge(
-    searchResult: VendorResult,
-    outputNodeId: string,
-    inputNodeId: string
-  ): ICreateEdgeParams {
-    return {
-      sourceKey: this.model.sourceKey,
-      type: this.model.outputEdgeType,
-      properties: searchResult.edgeProperties ?? ({} as Record<string, unknown>),
-      // edge direction: from output node to input node
-      source: outputNodeId,
-      target: inputNodeId
-    };
   }
 
   getSearchQuery(inputNode: LkNode): Record<string, VendorFieldType> {
@@ -189,25 +176,33 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
     }
   }
 
-  public getNeighborNode(neighbor: NeighborResult): ICreateNodeParams {
+  public getNeighborEdgeProperties(neighbor: NeighborResult): Required<EdgeParams>['properties'] {
+    const properties: Record<string, unknown> = {};
+
+    if (neighbor.edgeKeyProperty && neighbor.properties[neighbor.edgeKeyProperty] !== undefined) {
+      properties[neighbor.edgeKeyProperty] = neighbor.properties[neighbor.edgeKeyProperty];
+    }
+
+    return properties;
+  }
+
+  public getDuplicateConfig(keyProperty?: string): DuplicateConfig {
+    if (keyProperty) {
+      return {
+        duplicateStrategy: DuplicateStrategy.MERGE,
+        duplicateDetection: {property: keyProperty}
+      };
+    }
     return {
-      sourceKey: this.model.sourceKey,
-      categories: [neighbor.nodeCategory],
-      properties: neighbor.properties
+      duplicateStrategy: DuplicateStrategy.IMPORT_EVERYTHING
     };
   }
 
-  public getNeighborEdge(
-    neighbor: NeighborResult,
-    mainNodeId: string,
-    neighborNodeId: string
-  ): ICreateEdgeParams {
-    return {
-      sourceKey: this.model.sourceKey,
-      type: neighbor.edgeType,
-      source: mainNodeId,
-      target: neighborNodeId,
-      properties: {}
-    };
+  getOutputTypes(): Pick<VI, 'outputEdgeType' | 'outputNodeCategory'> {
+    return this.model;
+  }
+
+  getSourceKey(): string {
+    return this.model.sourceKey;
   }
 }

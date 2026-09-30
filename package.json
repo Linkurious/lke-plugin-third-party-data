@@ -11,7 +11,7 @@
     "url": "https://github.com/Linkurious/lke-plugin-third-party-data"
   },
   "engines": {
-    "node": "24.14.1"
+    "node": "24.21.0"
   },
   "author": {
     "name": "David Rapin",
@@ -28,8 +28,8 @@
     "lint": "npm run lint --workspaces",
     "lint:fix": "npm run lint:fix --workspaces",
     "lint:ci": "npm run lint:ci --workspaces",
-    "tsc": "npm run build -ws",
-    "build": "npm run build -ws",
+    "tsc": "npm run tsc:no-emit --workspaces",
+    "build": "npm run build --workspaces",
     "test": "npm test -w=packages/backend",
     "postbuild": "mkdir -p tmp/github_release && npm pack && mv $(npm run --silent npm-package-name) $(npm run --silent artifact-name) && ln -sf $(pwd)/$(npm run --silent artifact-name) $(pwd)/tmp/github_release/lke-plugin-$(npm run --silent plugin-name)-v$(cat .version).lke",
     "build-deploy": "npm run build && npm run deploy",
@@ -46,7 +46,7 @@
   ],
   "bundledDependencies": true,
   "dependencies": {
-    "@linkurious/rest-client": "4.3.5",
+    "@linkurious/rest-client": "4.3.13",
     "body-parser": "2.3.0",
     "qs": "6.16.0",
     "superagent": "10.3.0",
