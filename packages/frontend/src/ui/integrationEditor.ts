@@ -72,7 +72,8 @@ export class IntegrationEditor extends BaseUI {
     const inputNodeMappingEditor = new InputNodeMappingEditor(this.services, {
       sourceKey: model.sourceKey,
       inputNodeType: model.inputNodeCategory,
-      vendor: vendorInfo.vendor
+      vendor: vendorInfo.vendor,
+      neighborNodes: model.inputNeighborNodes
     });
     const inputMapping = await inputNodeMappingEditor.show(model.searchQueryFieldMapping);
     if (!inputMapping) {

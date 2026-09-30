@@ -55,7 +55,8 @@ export class IntegrationModelChecker {
   static checkInputNodeMappings(
     mappings: FieldMapping[] | undefined,
     inputNodeTypeSchema: GraphItemSchema,
-    vendor: Vendor
+    vendor: Vendor,
+    getNeighborNodeTypeSchema?: (nodeCategory: string) => GraphItemSchema | undefined
   ): void {
     if (!mappings || mappings.length === 0) {
       throw new Error(STRINGS.errors.checkInputNodeMapping.noMappingsDefined);
@@ -66,14 +67,24 @@ export class IntegrationModelChecker {
       }
     }
     for (const mapping of mappings) {
-      IntegrationModelChecker.checkInputNodeMapping(mapping, vendor, inputNodeTypeSchema);
+      const neighborNodeTypeSchema =
+        mapping.type === 'neighborProperty' && mapping.inputNodeCategory
+          ? getNeighborNodeTypeSchema?.(mapping.inputNodeCategory)
+          : undefined;
+      IntegrationModelChecker.checkInputNodeMapping(
+        mapping,
+        vendor,
+        inputNodeTypeSchema,
+        neighborNodeTypeSchema
+      );
     }
   }
 
   public static checkInputNodeMapping(
     mapping: Partial<FieldMapping>,
     vendor: Vendor,
-    inputNodeTypeSchema: GraphItemSchema
+    inputNodeTypeSchema: GraphItemSchema,
+    neighborNodeTypeSchema?: GraphItemSchema
   ): asserts mapping is FieldMapping {
     const vendorField = vendor.searchQueryFields.find((f) => f.key === mapping.outputPropertyKey);
     if (!vendorField) {
@@ -98,6 +109,21 @@ export class IntegrationModelChecker {
       this.checkGraphPropertyToVendorFieldMapping(
         mapping.inputPropertyKey,
         inputNodeTypeSchema,
+        vendorField.type
+      );
+    } else if (mapping.type === 'neighborProperty') {
+      if (!mapping.inputNodeCategory) {
+        throw new Error(STRINGS.errors.checkInputNodeMapping.missingNeighborNodeCategory);
+      }
+      if (!mapping.inputPropertyKey) {
+        throw new Error(STRINGS.errors.checkInputNodeMapping.missingNeighborInputProperty);
+      }
+      if (!neighborNodeTypeSchema) {
+        throw new Error(STRINGS.errors.checkInputNodeMapping.missingNeighborNodeCategory);
+      }
+      this.checkGraphPropertyToVendorFieldMapping(
+        mapping.inputPropertyKey,
+        neighborNodeTypeSchema,
         vendorField.type
       );
     } else {
