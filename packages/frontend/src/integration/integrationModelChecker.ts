@@ -56,7 +56,7 @@ export class IntegrationModelChecker {
     mappings: FieldMapping[] | undefined,
     inputNodeTypeSchema: GraphItemSchema,
     vendor: Vendor,
-    getNeighborNodeTypeSchema?: (nodeCategory: string) => GraphItemSchema | undefined
+    getNeighborNodeSchema: (mapping: FieldMapping) => GraphItemSchema | undefined
   ): void {
     if (!mappings || mappings.length === 0) {
       throw new Error(STRINGS.errors.checkInputNodeMapping.noMappingsDefined);
@@ -67,15 +67,11 @@ export class IntegrationModelChecker {
       }
     }
     for (const mapping of mappings) {
-      const neighborNodeTypeSchema =
-        mapping.type === 'neighborProperty' && mapping.inputNodeCategory
-          ? getNeighborNodeTypeSchema?.(mapping.inputNodeCategory)
-          : undefined;
       IntegrationModelChecker.checkInputNodeMapping(
         mapping,
         vendor,
         inputNodeTypeSchema,
-        neighborNodeTypeSchema
+        getNeighborNodeSchema(mapping)
       );
     }
   }
