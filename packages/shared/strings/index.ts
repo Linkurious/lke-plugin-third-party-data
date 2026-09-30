@@ -18,6 +18,7 @@ export const STRINGS = {
     checkInputNodeMapping: {
       noMappingsDefined: 'At least one search query mapping must be defined',
       missingInputProperty: `Search query mapping: source node property must be defined`,
+      missingInputNeighborType: `Search query mapping: neighbor node-category must be defined`,
       requiredFieldMissing: (vf: VendorField): string =>
         `Search query mapping: required field "${vf.key}" is missing`,
       unknownField: (m: Partial<FieldMapping>): string =>

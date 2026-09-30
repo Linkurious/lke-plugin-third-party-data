@@ -1,5 +1,7 @@
 import process from 'node:process';
+import fs from 'node:fs';
 
+import {Agent, RequestInit, fetch} from 'undici';
 import superagent, {SuperAgentRequest} from 'superagent';
 import {HttpsProxyAgent} from 'https-proxy-agent';
 
@@ -12,6 +14,63 @@ import {DetailsOptions} from '../../models/detailsOptions';
 import {Logger, WithLogger} from '../logger';
 
 import {DetailsSearchDriver, SearchDriver} from './searchDriver';
+
+type CifasRef = {referenceCode: string; description: string};
+export interface CifasCaseMatch {
+  case: {
+    caseId: number;
+    owningMember: CifasRef;
+    managingMember: CifasRef;
+    caseType: CifasRef;
+    product: CifasRef;
+    supplyDate: string; // iso
+    applicationDate: string; // iso
+    claimDate: string; // iso
+    dmrOutcome: Array<CifasRef>;
+    priority: boolean;
+  };
+}
+export interface CifasSearchResult {
+  caseSearchResult: {
+    casesMatched: number;
+    unexecutedDmr: Array<CifasRef>;
+    cases: Array<CifasCaseMatch>;
+  };
+}
+// https://portal.cifas.org.uk/en-GB/Support/SearchDocumentation
+const agent = new Agent({
+  connect: {
+    pfx: fs.readFileSync('/Users/david.rapin/Downloads/cifas-2026-test.pfx'),
+    passphrase: '???'
+  }
+});
+export function fetchWithClientCertificate(
+  path: string,
+  params: Record<string, string>,
+  body: unknown,
+  method: 'POST' | 'GET' = 'GET'
+): Promise<Response> {
+  const init: RequestInit = {
+    method: method,
+    dispatcher: agent,
+    headers: {
+      // Cifas-specific
+      'X-RequestingInstitution': '555',
+      'X-OwningMemberNumber': '555',
+      'X-ManagingMemberNumber': '555',
+      'X-CurrentUser': 'Linkurious_API',
+      // other
+      'Content-Type': 'application/json'
+    },
+    body: body ? JSON.stringify(body) : undefined
+  };
+  const url = new URL(path, 'https://trainingapi.cifas.org.uk');
+  Object.entries(params).forEach(([key, value]) => {
+    url.searchParams.append(key, value);
+  });
+  console.log(`Querying ${method} ${url.toString()}`);
+  return fetch(url, init);
+}
 
 export class ProxyClient extends WithLogger {
   private readonly client: typeof superagent;

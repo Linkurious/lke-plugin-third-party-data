@@ -55,6 +55,7 @@ export class IntegrationModelChecker {
   static checkInputNodeMappings(
     mappings: FieldMapping[] | undefined,
     inputNodeTypeSchema: GraphItemSchema,
+    neighborSchemaByNodeType: Map<string, GraphItemSchema>,
     vendor: Vendor
   ): void {
     if (!mappings || mappings.length === 0) {
@@ -66,14 +67,20 @@ export class IntegrationModelChecker {
       }
     }
     for (const mapping of mappings) {
-      IntegrationModelChecker.checkInputNodeMapping(mapping, vendor, inputNodeTypeSchema);
+      IntegrationModelChecker.checkInputNodeMapping(
+        mapping,
+        vendor,
+        inputNodeTypeSchema,
+        neighborSchemaByNodeType
+      );
     }
   }
 
   public static checkInputNodeMapping(
     mapping: Partial<FieldMapping>,
     vendor: Vendor,
-    inputNodeTypeSchema: GraphItemSchema
+    inputNodeTypeSchema: GraphItemSchema,
+    neighborSchemaByNodeType: Map<string, GraphItemSchema>
   ): asserts mapping is FieldMapping {
     const vendorField = vendor.searchQueryFields.find((f) => f.key === mapping.outputPropertyKey);
     if (!vendorField) {
@@ -98,6 +105,18 @@ export class IntegrationModelChecker {
       this.checkGraphPropertyToVendorFieldMapping(
         mapping.inputPropertyKey,
         inputNodeTypeSchema,
+        vendorField.type
+      );
+    } else if (mapping.type === 'neighborProperty') {
+      if (!mapping.inputPropertyKey) {
+        throw new Error(STRINGS.errors.checkInputNodeMapping.missingInputProperty);
+      }
+      if (!mapping.inputNodeCategory) {
+        throw new Error(STRINGS.errors.checkInputNodeMapping.missingInputNeighborType);
+      }
+      this.checkGraphPropertyToVendorFieldMapping(
+        mapping.inputPropertyKey,
+        neighborSchemaByNodeType.get(mapping.inputNodeCategory)!, // we know it is defined because we preloaded it
         vendorField.type
       );
     } else {

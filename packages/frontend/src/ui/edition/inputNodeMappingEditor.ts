@@ -14,25 +14,27 @@ interface InputNodeMappingEditorParams {
   vendor: Vendor;
   sourceKey: string;
   inputNodeType: string;
+  neighborNodeTypes: string[];
 }
 
 export class InputNodeMappingEditor extends AbstractMappingEditor {
   private readonly params: InputNodeMappingEditorParams;
-  private inputNodeSchema?: GraphItemSchema;
+  private schemaCache: Map<string, GraphItemSchema>;
 
   constructor(services: ServiceFacade, params: InputNodeMappingEditorParams) {
     super(services, STRINGS.ui.inputMappingEditor.title, STRINGS.ui.inputMappingEditor.description);
     this.params = params;
+    this.schemaCache = new Map<string, GraphItemSchema>();
   }
 
-  private async getInputNodeSchema(): Promise<GraphItemSchema> {
-    if (!this.inputNodeSchema) {
-      this.inputNodeSchema = await this.services.schema.getNodeTypeSchema(
-        this.params.sourceKey,
-        this.params.inputNodeType
-      );
+  private async getNodeSchema(nodeType: string): Promise<GraphItemSchema> {
+    const cachedSchema = this.schemaCache.get(nodeType);
+    if (cachedSchema) {
+      return cachedSchema;
     }
-    return this.inputNodeSchema;
+    const schema = await this.services.schema.getNodeTypeSchema(this.params.sourceKey, nodeType);
+    this.schemaCache.set(nodeType, schema);
+    return schema;
   }
 
   private getTargetField(): VendorField | undefined {
@@ -82,7 +84,11 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
           key: 'property',
           value: STRINGS.ui.inputMappingEditor.propertyInputType(this.params.inputNodeType)
         },
-        {key: 'constant', value: STRINGS.ui.mappingEditor.constant}
+        {key: 'constant', value: STRINGS.ui.mappingEditor.constant},
+        {
+          key: 'neighborProperty',
+          value: STRINGS.ui.inputMappingEditor.propertyInputType(this.params.inputNodeType)
+        }
       ],
       (fieldMappingType) => {
         console.log('NEW searchMapping.type: ' + fieldMappingType);
@@ -109,6 +115,8 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
       this.newModel.valueType = targetFieldType;
       this.addConstantValueInput(parent, targetFieldType);
     } else if (this.newModel.type === 'property') {
+      this.addNodePropertySelect(parent, sourceNodeSchema);
+    } else if (this.newModel.type === 'neighborProperty') {
       this.addNodePropertySelect(parent, sourceNodeSchema);
     }
   }
@@ -160,11 +168,20 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
 
   protected override async getValidationError(): Promise<string | undefined> {
     const mappings = this.getModel();
-    const sourceNodeSchema = await this.getInputNodeSchema();
+
+    // make sure the cache has the schema for the input node + all neighbors
+    const inputNodeSchema = await this.getNodeSchema(this.params.inputNodeType);
+    for (const mapping of mappings ?? []) {
+      if (mapping.type === 'neighborProperty') {
+        await this.getNodeSchema(mapping.inputNodeCategory);
+      }
+    }
+
     try {
       IntegrationModelChecker.checkInputNodeMappings(
         mappings,
-        sourceNodeSchema,
+        inputNodeSchema,
+        this.schemaCache,
         this.params.vendor
       );
     } catch (e) {

@@ -18,7 +18,6 @@ type ValidConfig = RequiredFields<MyPluginConfig, 'integrations'>;
 export class Configuration {
   private static MY_CONFIG_KEY = 'third-party-data';
   private config: ValidConfig;
-  // @ts-ignore
   private readonly logger: Logger;
   private readonly api: API;
 

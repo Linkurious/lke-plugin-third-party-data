@@ -12,11 +12,11 @@
   },
   "dependencies": {
     "bootstrap": "5.3.8",
-    "@linkurious/rest-client": "4.3.4",
-    "superagent": "10.2.3"
+    "@linkurious/rest-client": "4.3.13",
+    "superagent": "10.4.1"
   },
   "devDependencies": {
-    "@types/bootstrap": "5.2.10",
+    "@types/bootstrap": "5.2.11",
     "vite": "8.0.16"
   }
 }

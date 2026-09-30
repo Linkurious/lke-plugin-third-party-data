@@ -155,7 +155,7 @@ export class ServiceFacade {
 
       p.update(STRINGS.ui.importSearchResult.creatingNode + ` (1/${totalNodes})`);
       const newNodeR = await this.api.server.graphNode.createNode(
-        int.getOutputNode(resultToImport)
+        int.getOutputNode(resultToImport),
       );
       if (!newNodeR.isSuccess()) {
         throw new Error(STRINGS.errors.importResult.failedToCreateNode(newNodeR.body));
