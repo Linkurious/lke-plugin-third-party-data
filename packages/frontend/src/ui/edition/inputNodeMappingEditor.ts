@@ -175,6 +175,15 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
     neighborNodeCategory: string
   ): Promise<void> {
     const neighborNodeSchema = await this.getNeighborNodeSchema(neighborNodeCategory);
+
+    // check changes while waiting for the schema to load, in case the user changed the category
+    if (
+      this.newModel.type !== 'neighborProperty' ||
+      this.newModel.inputNodeCategory !== neighborNodeCategory
+    ) {
+      return;
+    }
+
     this.addPropertySelect(
       parent,
       neighborNodeSchema,
