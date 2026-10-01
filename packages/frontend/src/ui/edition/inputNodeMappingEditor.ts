@@ -1,6 +1,10 @@
 import {Vendor} from '../../../../shared/vendor/vendor';
 import {ServiceFacade} from '../../serviceFacade';
-import {FieldMapping, FieldMappingType} from '../../../../shared/integration/IntegrationModel';
+import {
+  FieldMapping,
+  FieldMappingType,
+  NeighborNode
+} from '../../../../shared/integration/IntegrationModel';
 import {addSelect} from '../uiUtils';
 import {IntegrationModelChecker} from '../../integration/integrationModelChecker';
 import {VendorField} from '../../../../shared/vendor/vendorModel';
@@ -14,6 +18,7 @@ interface InputNodeMappingEditorParams {
   vendor: Vendor;
   sourceKey: string;
   inputNodeType: string;
+  neighborNodes: NeighborNode[];
 }
 
 export class InputNodeMappingEditor extends AbstractMappingEditor {
@@ -73,17 +78,24 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
     sourceNodeSchema: GraphItemSchema,
     getCol3: () => HTMLElement
   ): Promise<void> {
+    const inputTypeChoices: {key: FieldMappingType; value: string}[] = [
+      {
+        key: 'property',
+        value: STRINGS.ui.inputMappingEditor.propertyInputType(this.params.inputNodeType)
+      },
+      {key: 'constant', value: STRINGS.ui.mappingEditor.constant}
+    ];
+    if (this.params.neighborNodes.length > 0) {
+      inputTypeChoices.push({
+        key: 'neighborProperty',
+        value: STRINGS.ui.inputMappingEditor.neighborProperty
+      });
+    }
     addSelect<FieldMappingType>(
       col2,
       {label: STRINGS.ui.inputMappingEditor.inputTypeLabel},
       'search-mapping-input-type-select',
-      [
-        {
-          key: 'property',
-          value: STRINGS.ui.inputMappingEditor.propertyInputType(this.params.inputNodeType)
-        },
-        {key: 'constant', value: STRINGS.ui.mappingEditor.constant}
-      ],
+      inputTypeChoices,
       (fieldMappingType) => {
         console.log('NEW searchMapping.type: ' + fieldMappingType);
         if (this.newModel.type === 'constant') {
@@ -92,6 +104,10 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
         }
         if (this.newModel.type === 'property') {
           delete this.newModel.inputPropertyKey;
+        }
+        if (this.newModel.type === 'neighborProperty') {
+          delete this.newModel.inputPropertyKey;
+          delete this.newModel.inputNodeCategory;
         }
         this.newModel.type = fieldMappingType;
         getCol3().replaceChildren();
@@ -110,25 +126,17 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
       this.addConstantValueInput(parent, targetFieldType);
     } else if (this.newModel.type === 'property') {
       this.addNodePropertySelect(parent, sourceNodeSchema);
+    } else if (this.newModel.type === 'neighborProperty') {
+      this.addNeighborNodeCategorySelect(parent);
     }
   }
 
   private addNodePropertySelect(parent: HTMLElement, sourceNodeSchema: GraphItemSchema): void {
-    const targetFieldType = this.getTargetField()?.type;
-    if (!targetFieldType) {
-      return;
-    }
-    const properties = sourceNodeSchema.properties
-      .filter((p) => IntegrationModelChecker.isLegalPropertyToVendorField(p.type, targetFieldType))
-      .map((p) => ({
-        key: p.propertyKey,
-        value: `${sourceNodeSchema.itemType}.${p.propertyKey} (${p.type})`
-      }));
-    addSelect(
+    this.addPropertySelect(
       parent,
-      {label: STRINGS.ui.inputMappingEditor.inputPropertyLabel},
+      sourceNodeSchema,
       'search-mapping-source-property-select',
-      properties,
+      STRINGS.ui.inputMappingEditor.inputPropertyLabel,
       (sourceNodePropertyKey) => {
         console.log('newMapping.sourceProperty: ' + sourceNodePropertyKey);
         if (this.newModel.type === 'property') {
@@ -136,6 +144,78 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
         }
       }
     );
+  }
+
+  private addNeighborNodeCategorySelect(parent: HTMLElement): void {
+    const categories = Array.from(new Set(this.params.neighborNodes.map((n) => n.nodeCategory)));
+
+    const propertyContainer = document.createElement('div');
+    propertyContainer.classList.add('mt-2');
+
+    addSelect(
+      parent,
+      {label: STRINGS.ui.inputMappingEditor.neighborNodeCategoryLabel},
+      'search-mapping-neighbor-category-select',
+      categories.map((category) => ({key: category, value: category})),
+      (neighborNodeCategory) => {
+        propertyContainer.replaceChildren();
+        if (this.newModel.type === 'neighborProperty') {
+          this.newModel.inputNodeCategory = neighborNodeCategory;
+          delete this.newModel.inputPropertyKey;
+        }
+        void this.addNeighborNodePropertySelect(propertyContainer, neighborNodeCategory);
+      }
+    );
+
+    parent.appendChild(propertyContainer);
+  }
+
+  private async addNeighborNodePropertySelect(
+    parent: HTMLElement,
+    neighborNodeCategory: string
+  ): Promise<void> {
+    const neighborNodeSchema = await this.getNeighborNodeSchema(neighborNodeCategory);
+
+    // check changes while waiting for the schema to load, in case the user changed the category
+    if (
+      this.newModel.type !== 'neighborProperty' ||
+      this.newModel.inputNodeCategory !== neighborNodeCategory
+    ) {
+      return;
+    }
+
+    this.addPropertySelect(
+      parent,
+      neighborNodeSchema,
+      'search-mapping-neighbor-property-select',
+      STRINGS.ui.inputMappingEditor.neighborPropertyLabel,
+      (neighborPropertyKey) => {
+        console.log('newMapping.neighborProperty: ' + neighborPropertyKey);
+        if (this.newModel.type === 'neighborProperty') {
+          this.newModel.inputPropertyKey = neighborPropertyKey;
+        }
+      }
+    );
+  }
+
+  private addPropertySelect(
+    parent: HTMLElement,
+    nodeSchema: GraphItemSchema,
+    selectId: string,
+    label: string,
+    onSelect: (propertyKey: string) => void
+  ): void {
+    const targetFieldType = this.getTargetField()?.type;
+    if (!targetFieldType) {
+      return;
+    }
+    const properties = nodeSchema.properties
+      .filter((p) => IntegrationModelChecker.isLegalPropertyToVendorField(p.type, targetFieldType))
+      .map((p) => ({
+        key: p.propertyKey,
+        value: `${nodeSchema.itemType}.${p.propertyKey} (${p.type})`
+      }));
+    addSelect(parent, {label: label}, selectId, properties, onSelect);
   }
 
   protected renderMappingEntry(
@@ -154,18 +234,25 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
         ? JSON.stringify(mapping.value)
         : mapping.type === 'property'
           ? this.renderNodeProperty(mapping.inputPropertyKey, nodeTypeSchema)
-          : '(n/a)';
+          : mapping.type === 'neighborProperty'
+            ? this.renderNeighborProperty(mapping.inputNodeCategory, mapping.inputPropertyKey)
+            : '(n/a)';
     return [col1Text, col2Text, col3Text];
   }
 
   protected override async getValidationError(): Promise<string | undefined> {
     const mappings = this.getModel();
     const sourceNodeSchema = await this.getInputNodeSchema();
+
+    // load every node schema for neighbor nodes into the cache before validation
+    await this.getAllNeighborNodeSchemas(mappings);
+
     try {
       IntegrationModelChecker.checkInputNodeMappings(
         mappings,
         sourceNodeSchema,
-        this.params.vendor
+        this.params.vendor,
+        this.getNeighborNodeSchemaFromMapping.bind(this)
       );
     } catch (e) {
       return asError(e).message;
@@ -179,14 +266,45 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
       : '';
   }
 
-  protected $getNodeTypeSchemaInternal(): Promise<GraphItemSchema> {
-    return this.services.schema.getNodeTypeSchema(this.params.sourceKey, this.params.inputNodeType);
+  private async getAllNeighborNodeSchemas(
+    mappings: FieldMapping[] | undefined
+  ): Promise<GraphItemSchema[]> {
+    const neighborNodeCategories = new Set(
+      (mappings ?? [])
+        .filter(
+          (m): m is FieldMapping & {type: 'neighborProperty'} => m.type === 'neighborProperty'
+        )
+        .map((m) => m.inputNodeCategory)
+    );
+    return Promise.all(
+      Array.from(neighborNodeCategories).map((category) => this.getNeighborNodeSchema(category))
+    );
+  }
+
+  private getNeighborNodeSchemaFromMapping(
+    mapping: Partial<FieldMapping>
+  ): GraphItemSchema | undefined {
+    return mapping.type === 'neighborProperty' && mapping.inputNodeCategory
+      ? this.neighborNodeSchemasByCategory.get(mapping.inputNodeCategory)
+      : undefined;
+  }
+
+  protected $getNodeTypeSchemaInternal(nodeType?: string): Promise<GraphItemSchema> {
+    return this.services.schema.getNodeTypeSchema(
+      this.params.sourceKey,
+      nodeType ?? this.params.inputNodeType
+    );
   }
 
   protected assertNewModelIsValid(
     model: Partial<FieldMapping>,
     nodeTypeSchema: GraphItemSchema
   ): asserts model is FieldMapping {
-    IntegrationModelChecker.checkInputNodeMapping(model, this.params.vendor, nodeTypeSchema);
+    IntegrationModelChecker.checkInputNodeMapping(
+      model,
+      this.params.vendor,
+      nodeTypeSchema,
+      this.getNeighborNodeSchemaFromMapping(model)
+    );
   }
 }

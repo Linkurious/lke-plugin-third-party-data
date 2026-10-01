@@ -18,6 +18,8 @@ export const STRINGS = {
     checkInputNodeMapping: {
       noMappingsDefined: 'At least one search query mapping must be defined',
       missingInputProperty: `Search query mapping: source node property must be defined`,
+      missingNeighborNodeCategory: `Search query mapping: neighbor node category must be defined`,
+      missingNeighborInputProperty: `Search query mapping: neighbor node property must be defined`,
       requiredFieldMissing: (vf: VendorField): string =>
         `Search query mapping: required field "${vf.key}" is missing`,
       unknownField: (m: Partial<FieldMapping>): string =>
@@ -146,6 +148,9 @@ export const STRINGS = {
       inputTypeLabel: 'Input type',
       searchQueryFieldLabel: 'Search query field (* = required)',
       inputPropertyLabel: 'Input property',
+      neighborProperty: 'Neighbor property',
+      neighborNodeCategoryLabel: 'Neighbor node category',
+      neighborPropertyLabel: 'Neighbor property',
 
       propertyInputType: (inputNodeType: string): string => `"${inputNodeType}" property`
     },
@@ -168,6 +173,14 @@ export const STRINGS = {
       title: 'Select third-party vendor API - [1/7]',
       description:
         'Select a third-party data vendor API for this new integration, and configure it.'
+    },
+    inputNeighborNodesEditor: {
+      description: 'Load data from neighbor nodes',
+      edgeTypeLabel: 'Edge type',
+      anyEdgeLabel: 'Any edge',
+      nodeTypeLabel: 'Node category',
+      actionColumnHead: 'Action',
+      addButton: 'Add'
     },
     integrationEditor: {
       selectInputNodeTypeTitle: 'Select the input node-category - [3/7]',

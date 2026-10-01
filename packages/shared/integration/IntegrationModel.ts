@@ -3,6 +3,7 @@ export interface IntegrationModelPublic {
   vendorKey: string;
   sourceKey: string;
   inputNodeCategory: string;
+  inputNeighborNodes: NeighborNode[];
   searchQueryFieldMapping: FieldMapping[];
   searchResponseFieldSelection: string[];
   outputNodeCategory: string;
@@ -14,7 +15,7 @@ export interface IntegrationModel extends IntegrationModelPublic {
   adminSettings: Record<string, string | boolean | undefined>;
 }
 
-export type FieldMappingType = 'constant' | 'property';
+export type FieldMappingType = 'constant' | 'property' | 'neighborProperty';
 export type ConstantFieldTypeName = 'number' | 'string' | 'boolean';
 
 interface BaseQueryFieldMapping<T extends FieldMappingType> {
@@ -50,4 +51,17 @@ export interface PropertyFieldMapping extends BaseQueryFieldMapping<'property'> 
   inputPropertyKey: string;
 }
 
-export type FieldMapping = ConstantFieldMapping | PropertyFieldMapping;
+export type NeighborNode = {
+  edgeType?: string; // undefined means "any edge"
+  nodeCategory: string;
+};
+
+export interface NeighborPropertyFieldMapping extends BaseQueryFieldMapping<'neighborProperty'> {
+  inputNodeCategory: string;
+  inputPropertyKey: string;
+}
+
+export type FieldMapping =
+  | ConstantFieldMapping
+  | PropertyFieldMapping
+  | NeighborPropertyFieldMapping;
