@@ -16,13 +16,13 @@ import {STRINGS} from '../strings';
 import {
   FieldMapping,
   IntegrationModelPublic,
-  NeighborNode,
+  NeighborNodeFilter,
   NeighborPropertyFieldMapping
 } from './IntegrationModel';
 
 // Nodes matching a NeighborNode definition
 export interface NeighborGroup {
-  neighborNode: NeighborNode;
+  neighborNodeFilter: NeighborNodeFilter;
   nodes: LkNode[];
 }
 
@@ -80,8 +80,8 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
     return undefined;
   }
 
-  getInputNeighborNodes(): NeighborNode[] {
-    return this.model.inputNeighborNodes ?? [];
+  getInputNeighborNodeFilters(): NeighborNodeFilter[] {
+    return this.model.inputNeighborNodeFilters ?? [];
   }
 
   hasNeighborPropertyMapping(): boolean {
@@ -156,7 +156,7 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
   ): LkNode | undefined {
     // take the first neighbor node that matches the mapping
     return neighborGroups.find(
-      (g) => g.neighborNode.nodeCategory === mapping.inputNodeCategory && g.nodes.length > 0
+      (g) => g.neighborNodeFilter.nodeCategory === mapping.inputNodeCategory && g.nodes.length > 0
     )?.nodes[0];
   }
 

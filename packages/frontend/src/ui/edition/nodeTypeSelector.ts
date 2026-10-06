@@ -2,7 +2,7 @@ import {EntityType} from '@linkurious/rest-client';
 
 import {ServiceFacade} from '../../serviceFacade';
 import {ItemAccess} from '../../api/schema';
-import {NeighborNode} from '../../../../shared/integration/IntegrationModel';
+import {NeighborNodeFilter} from '../../../../shared/integration/IntegrationModel';
 import {STRINGS} from '../../../../shared/strings';
 import {addSelect, $elem} from '../uiUtils';
 
@@ -14,7 +14,7 @@ export class NodeTypeSelector extends AbstractSelector<string> {
   private readonly access: ItemAccess;
 
   // undefined = neighbor-nodes section disabled; array (possibly empty) = enabled
-  private neighborNodes: NeighborNode[] | undefined;
+  private neighborNodeFilters: NeighborNodeFilter[] | undefined;
   private edgeTypeChoices?: string[];
   private nodeTypeChoices?: string[];
 
@@ -25,13 +25,15 @@ export class NodeTypeSelector extends AbstractSelector<string> {
     title: string,
     description: string,
     autocomplete: boolean,
-    initialNeighborNodes?: NeighborNode[]
+    initialNeighborNodeFilters?: NeighborNodeFilter[]
   ) {
     super(services.ui, title, description, autocomplete);
     this.services = services;
     this.sourceKey = sourceKey;
     this.access = access;
-    this.neighborNodes = initialNeighborNodes ? [...initialNeighborNodes] : undefined;
+    this.neighborNodeFilters = initialNeighborNodeFilters
+      ? [...initialNeighborNodeFilters]
+      : undefined;
   }
 
   protected getChoices(): Promise<string[]> {
@@ -46,8 +48,8 @@ export class NodeTypeSelector extends AbstractSelector<string> {
     return optionValue;
   }
 
-  public getNeighborNodes(): NeighborNode[] {
-    return this.neighborNodes ?? [];
+  public getNeighborNodeFilters(): NeighborNodeFilter[] {
+    return this.neighborNodeFilters ?? [];
   }
 
   protected override async addContent(content: HTMLElement): Promise<void> {
@@ -60,15 +62,13 @@ export class NodeTypeSelector extends AbstractSelector<string> {
   }
 
   private async addNeighborNodesSection(): Promise<HTMLElement | undefined> {
-    if (this.neighborNodes === undefined) {
+    if (this.neighborNodeFilters === undefined) {
       return;
     }
 
-    const neighborNodes = this.neighborNodes;
-    const [edgeTypeChoices, nodeTypeChoices] = await Promise.all([
-      this.getEdgeTypeChoices(),
-      this.getNodeTypeChoices()
-    ]);
+    const neighborNodes = this.neighborNodeFilters;
+    const edgeTypeChoices = await this.getEdgeTypeChoices();
+    const nodeTypeChoices = await this.getNodeTypeChoices();
     let currentEdgeType: string | undefined;
     let currentNodeCategory: string | undefined;
 
@@ -140,24 +140,24 @@ export class NodeTypeSelector extends AbstractSelector<string> {
   }
 
   private createNeighborNodeRow(
-    neighborNodes: NeighborNode[],
-    neighborNode: NeighborNode
+    neighborNodeFilters: NeighborNodeFilter[],
+    neighborNodeFilter: NeighborNodeFilter
   ): HTMLElement {
     const row = $elem('div', {class: 'mb-2 row font-monospace text-break'}, [
       // column 1 (5)
       $elem(
         'div',
         {class: 'col-5'},
-        neighborNode.edgeType ?? STRINGS.ui.inputNeighborNodesEditor.anyEdgeLabel
+        neighborNodeFilter.edgeType ?? STRINGS.ui.inputNeighborNodesEditor.anyEdgeLabel
       ),
       // column 2 (6)
-      $elem('div', {class: 'col-6'}, neighborNode.nodeCategory),
+      $elem('div', {class: 'col-6'}, neighborNodeFilter.nodeCategory),
       // remove button (1)
       $elem('div', {class: 'col-1'}, [
         this.ui.button.create('❌', {small: true, type: 'danger', outline: true}, async () => {
-          const index = neighborNodes.indexOf(neighborNode);
+          const index = neighborNodeFilters.indexOf(neighborNodeFilter);
           if (index >= 0) {
-            neighborNodes.splice(index, 1);
+            neighborNodeFilters.splice(index, 1);
           }
           row.remove();
         })

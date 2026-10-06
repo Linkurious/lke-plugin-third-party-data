@@ -58,14 +58,14 @@ export class IntegrationEditor extends BaseUI {
       STRINGS.ui.integrationEditor.selectInputNodeTypeTitle,
       STRINGS.ui.integrationEditor.selectInputNodeTypeDescription,
       false,
-      model.inputNeighborNodes ?? []
+      model.inputNeighborNodeFilters ?? []
     );
     const inputNodeCategory = await inputNodeTypeSelector.show(model.inputNodeCategory);
     if (!inputNodeCategory) {
       return;
     }
     model.inputNodeCategory = inputNodeCategory;
-    model.inputNeighborNodes = inputNodeTypeSelector.getNeighborNodes();
+    model.inputNeighborNodeFilters = inputNodeTypeSelector.getNeighborNodeFilters();
     console.log('integration: selected node category: ' + JSON.stringify(inputNodeCategory));
 
     // InputNode property mapping
@@ -73,7 +73,7 @@ export class IntegrationEditor extends BaseUI {
       sourceKey: model.sourceKey,
       inputNodeType: model.inputNodeCategory,
       vendor: vendorInfo.vendor,
-      neighborNodes: model.inputNeighborNodes
+      neighborNodeFilters: model.inputNeighborNodeFilters
     });
     const inputMapping = await inputNodeMappingEditor.show(model.searchQueryFieldMapping);
     if (!inputMapping) {

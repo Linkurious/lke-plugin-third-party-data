@@ -57,22 +57,25 @@ export class Searcher extends WithLogger {
 
   private async getInputNeighbors(
     api: RestClient,
-    searchOptions: SearchOptions
+    searchOptions: Pick<SearchOptions, 'nodeId' | 'sourceKey'>
   ): Promise<NeighborGroup[]> {
-    const neighborNodes = this.integration.getInputNeighborNodes();
-    if (neighborNodes.length === 0 || !this.integration.hasNeighborPropertyMapping()) {
+    if (!this.integration.hasNeighborPropertyMapping()) {
       return [];
     }
 
-    const anyEdge = neighborNodes.some((n) => n.edgeType === undefined);
+    const neighborNodeFilters = this.integration.getInputNeighborNodeFilters();
+
+    // Overfetching neighbor nodes with a single query to ensure we get all edges and nodes we need for simplicity
+    // If any neighbor node has an undefined edge type, we fetch all edges regardless of type
+    // Otherwise we fetch nodes with the combination of all given edge types and node categories
+    const anyEdge = neighborNodeFilters.some((n) => n.edgeType === undefined);
     const neighborNodesR = await api.graphNode.getAdjacentNodes({
       sourceKey: searchOptions.sourceKey,
       ids: [searchOptions.nodeId],
-      nodeCategories: Array.from(new Set(neighborNodes.map((n) => n.nodeCategory))),
-      // request adjacent nodes with the best edge type adjusting
+      nodeCategories: Array.from(new Set(neighborNodeFilters.map((n) => n.nodeCategory))),
       edgeTypes: anyEdge
         ? undefined
-        : Array.from(new Set(neighborNodes.map((n) => n.edgeType as string))),
+        : Array.from(new Set(neighborNodeFilters.map((n) => n.edgeType as string))),
       withDigest: false,
       withDegree: false
     });
@@ -83,8 +86,8 @@ export class Searcher extends WithLogger {
     }
 
     const nodesById = new Map<string, LkNode>(neighborNodesR.body.nodes.map((n) => [n.id, n]));
-    const groups: NeighborGroup[] = neighborNodes.map((neighborNode) => ({
-      neighborNode: neighborNode,
+    const groups: NeighborGroup[] = neighborNodeFilters.map((neighborNodeFilter) => ({
+      neighborNodeFilter: neighborNodeFilter,
       nodes: []
     }));
     for (const edge of neighborNodesR.body.edges) {
@@ -103,12 +106,12 @@ export class Searcher extends WithLogger {
         continue;
       }
 
-      // group neighbor nodes by category and edge type
+      // filtering out nodes that were overfetched
       for (const group of groups) {
         if (
-          neighbor.data.categories.includes(group.neighborNode.nodeCategory) &&
-          (group.neighborNode.edgeType === undefined ||
-            group.neighborNode.edgeType === edge.data.type) &&
+          neighbor.data.categories.includes(group.neighborNodeFilter.nodeCategory) &&
+          (group.neighborNodeFilter.edgeType === undefined ||
+            group.neighborNodeFilter.edgeType === edge.data.type) &&
           !group.nodes.includes(neighbor)
         ) {
           group.nodes.push(neighbor);

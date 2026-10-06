@@ -3,7 +3,8 @@ import {ServiceFacade} from '../../serviceFacade';
 import {
   FieldMapping,
   FieldMappingType,
-  NeighborNode
+  NeighborNodeFilter,
+  NeighborPropertyFieldMapping
 } from '../../../../shared/integration/IntegrationModel';
 import {addSelect} from '../uiUtils';
 import {IntegrationModelChecker} from '../../integration/integrationModelChecker';
@@ -18,7 +19,7 @@ interface InputNodeMappingEditorParams {
   vendor: Vendor;
   sourceKey: string;
   inputNodeType: string;
-  neighborNodes: NeighborNode[];
+  neighborNodeFilters: NeighborNodeFilter[];
 }
 
 export class InputNodeMappingEditor extends AbstractMappingEditor {
@@ -85,7 +86,7 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
       },
       {key: 'constant', value: STRINGS.ui.mappingEditor.constant}
     ];
-    if (this.params.neighborNodes.length > 0) {
+    if (this.params.neighborNodeFilters.length > 0) {
       inputTypeChoices.push({
         key: 'neighborProperty',
         value: STRINGS.ui.inputMappingEditor.neighborProperty
@@ -147,7 +148,9 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
   }
 
   private addNeighborNodeCategorySelect(parent: HTMLElement): void {
-    const categories = Array.from(new Set(this.params.neighborNodes.map((n) => n.nodeCategory)));
+    const categories = Array.from(
+      new Set(this.params.neighborNodeFilters.map((n) => n.nodeCategory))
+    );
 
     const propertyContainer = document.createElement('div');
     propertyContainer.classList.add('mt-2');
@@ -252,7 +255,7 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
         mappings,
         sourceNodeSchema,
         this.params.vendor,
-        this.getNeighborNodeSchemaFromMapping.bind(this)
+        (mapping) => this.getNeighborNodeSchemaFromMapping(mapping)
       );
     } catch (e) {
       return asError(e).message;
@@ -271,14 +274,10 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
   ): Promise<GraphItemSchema[]> {
     const neighborNodeCategories = new Set(
       (mappings ?? [])
-        .filter(
-          (m): m is FieldMapping & {type: 'neighborProperty'} => m.type === 'neighborProperty'
-        )
+        .filter((m): m is NeighborPropertyFieldMapping => m.type === 'neighborProperty')
         .map((m) => m.inputNodeCategory)
     );
-    return Promise.all(
-      Array.from(neighborNodeCategories).map((category) => this.getNeighborNodeSchema(category))
-    );
+    return this.getNeighborNodesSchemas(Array.from(neighborNodeCategories));
   }
 
   private getNeighborNodeSchemaFromMapping(
@@ -287,6 +286,22 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
     return mapping.type === 'neighborProperty' && mapping.inputNodeCategory
       ? this.neighborNodeSchemasByCategory.get(mapping.inputNodeCategory)
       : undefined;
+  }
+
+  private async getNeighborNodesSchemas(nodeCategories: string[]): Promise<GraphItemSchema[]> {
+    const nodeTypesSchemasToGet = nodeCategories.filter(
+      (category) => !this.neighborNodeSchemasByCategory.has(category)
+    );
+
+    (
+      await this.services.schema.getNodeTypesSchemas(this.params.sourceKey, nodeTypesSchemasToGet)
+    ).forEach((schema) => {
+      this.neighborNodeSchemasByCategory.set(schema.itemType, schema);
+    });
+
+    return nodeCategories
+      .map((category) => this.neighborNodeSchemasByCategory.get(category))
+      .filter((schema): schema is GraphItemSchema => schema !== undefined);
   }
 
   protected $getNodeTypeSchemaInternal(nodeType?: string): Promise<GraphItemSchema> {

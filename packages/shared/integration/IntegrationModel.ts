@@ -3,7 +3,7 @@ export interface IntegrationModelPublic {
   vendorKey: string;
   sourceKey: string;
   inputNodeCategory: string;
-  inputNeighborNodes: NeighborNode[];
+  inputNeighborNodeFilters: NeighborNodeFilter[];
   searchQueryFieldMapping: FieldMapping[];
   searchResponseFieldSelection: string[];
   outputNodeCategory: string;
@@ -51,7 +51,7 @@ export interface PropertyFieldMapping extends BaseQueryFieldMapping<'property'> 
   inputPropertyKey: string;
 }
 
-export type NeighborNode = {
+export type NeighborNodeFilter = {
   edgeType?: string; // undefined means "any edge"
   nodeCategory: string;
 };
