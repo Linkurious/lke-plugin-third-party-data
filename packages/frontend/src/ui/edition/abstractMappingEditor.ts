@@ -82,7 +82,11 @@ export abstract class AbstractMappingEditor extends AbstractFormPopin<FieldMappi
     col4.appendChild(
       this.ui.button.create('Add', {outline: true, small: true}, async () => {
         try {
-          this.assertNewModelIsValid(this.newModel, nodeTypeSchema);
+          const neighborNodeSchema =
+            this.newModel.type === 'neighborProperty' && this.newModel.inputNodeCategory
+              ? await this.getNeighborNodeSchema(this.newModel.inputNodeCategory)
+              : undefined;
+          this.assertNewModelIsValid(this.newModel, nodeTypeSchema, neighborNodeSchema);
           console.log('NEW Mapping: ' + JSON.stringify(this.newModel));
           this.getModel()!.push(this.newModel);
           this.newModel = {};
@@ -182,7 +186,8 @@ export abstract class AbstractMappingEditor extends AbstractFormPopin<FieldMappi
 
   protected abstract assertNewModelIsValid(
     model: Partial<FieldMapping>,
-    nodeTypeSchema: GraphItemSchema
+    nodeTypeSchema: GraphItemSchema,
+    neighborNodeSchema?: GraphItemSchema
   ): asserts model is FieldMapping;
 
   protected abstract $getNodeTypeSchemaInternal(nodeType?: string): Promise<GraphItemSchema>;

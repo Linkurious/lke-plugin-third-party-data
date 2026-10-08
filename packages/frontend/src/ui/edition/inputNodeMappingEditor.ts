@@ -248,14 +248,14 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
     const sourceNodeSchema = await this.getInputNodeSchema();
 
     // load every node schema for neighbor nodes into the cache before validation
-    await this.getAllNeighborNodeSchemas(mappings);
+    const neighborNodeSchemas = await this.getAllNeighborNodeSchemas(mappings);
 
     try {
       IntegrationModelChecker.checkInputNodeMappings(
         mappings,
         sourceNodeSchema,
         this.params.vendor,
-        (mapping) => this.getNeighborNodeSchemaFromMapping(mapping)
+        neighborNodeSchemas
       );
     } catch (e) {
       return asError(e).message;
@@ -278,14 +278,6 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
         .map((m) => m.inputNodeCategory)
     );
     return this.getNeighborNodesSchemas(Array.from(neighborNodeCategories));
-  }
-
-  private getNeighborNodeSchemaFromMapping(
-    mapping: Partial<FieldMapping>
-  ): GraphItemSchema | undefined {
-    return mapping.type === 'neighborProperty' && mapping.inputNodeCategory
-      ? this.neighborNodeSchemasByCategory.get(mapping.inputNodeCategory)
-      : undefined;
   }
 
   private async getNeighborNodesSchemas(nodeCategories: string[]): Promise<GraphItemSchema[]> {
@@ -313,13 +305,14 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
 
   protected assertNewModelIsValid(
     model: Partial<FieldMapping>,
-    nodeTypeSchema: GraphItemSchema
+    nodeTypeSchema: GraphItemSchema,
+    neighborNodeSchema?: GraphItemSchema
   ): asserts model is FieldMapping {
     IntegrationModelChecker.checkInputNodeMapping(
       model,
       this.params.vendor,
       nodeTypeSchema,
-      this.getNeighborNodeSchemaFromMapping(model)
+      neighborNodeSchema
     );
   }
 }

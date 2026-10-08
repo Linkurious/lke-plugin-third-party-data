@@ -66,9 +66,12 @@ export class NodeTypeSelector extends AbstractSelector<string> {
       return;
     }
 
-    const neighborNodes = this.neighborNodeFilters;
+    const neighborNodeFilters = this.neighborNodeFilters;
     const edgeTypeChoices = await this.getEdgeTypeChoices();
-    const nodeTypeChoices = await this.getNodeTypeChoices();
+    const nodeTypeChoices = (await this.getNodeTypeChoices()).filter((nodeCategory) => {
+      // filter out node types already setup for neighbor nodes
+      return neighborNodeFilters.find((n) => n.nodeCategory === nodeCategory) === undefined;
+    });
     let currentEdgeType: string | undefined;
     let currentNodeCategory: string | undefined;
 
@@ -76,63 +79,68 @@ export class NodeTypeSelector extends AbstractSelector<string> {
       $elem('p', {class: 'mt-3'}, STRINGS.ui.inputNeighborNodesEditor.description)
     ]);
 
-    const addRow = $elem('div', {class: 'mb-3 row'});
+    if (nodeTypeChoices.length > 0) {
+      const addRow = $elem('div', {class: 'mb-3 row'});
 
-    // column 1 (5)
-    const col1 = $elem('div', {class: 'col-5'});
-    addSelect(
-      col1,
-      {label: STRINGS.ui.inputNeighborNodesEditor.edgeTypeLabel},
-      'input-neighbor-node-edge-type-select',
-      [
-        {key: '', value: STRINGS.ui.inputNeighborNodesEditor.anyEdgeLabel},
-        ...edgeTypeChoices.map((edgeType) => ({key: edgeType, value: edgeType}))
-      ],
-      (edgeType) => {
-        currentEdgeType = edgeType || undefined;
-      }
-    );
-    addRow.appendChild(col1);
-
-    // column 2 (6)
-    const col2 = $elem('div', {class: 'col-6'});
-    addSelect(
-      col2,
-      {label: STRINGS.ui.inputNeighborNodesEditor.nodeTypeLabel},
-      'input-neighbor-node-node-type-select',
-      nodeTypeChoices.map((nodeCategory) => ({key: nodeCategory, value: nodeCategory})),
-      (nodeCategory) => {
-        currentNodeCategory = nodeCategory;
-      }
-    );
-    addRow.appendChild(col2);
-
-    // add button (1)
-    const col3 = $elem('div', {class: 'col-1'}, [
-      $elem(
-        'label',
-        {class: 'form-label d-block'},
-        STRINGS.ui.inputNeighborNodesEditor.actionColumnHead
-      ),
-      this.ui.button.create(
-        STRINGS.ui.inputNeighborNodesEditor.addButton,
-        {outline: true, small: true},
-        async () => {
-          if (!currentNodeCategory) {
-            return;
-          }
-          neighborNodes.push({edgeType: currentEdgeType, nodeCategory: currentNodeCategory});
-          await this.redrawContent();
+      // column 1 (5)
+      const col1 = $elem('div', {class: 'col-5'});
+      addSelect(
+        col1,
+        {label: STRINGS.ui.inputNeighborNodesEditor.edgeTypeLabel},
+        'input-neighbor-node-edge-type-select',
+        [
+          {key: '', value: STRINGS.ui.inputNeighborNodesEditor.anyEdgeLabel},
+          ...edgeTypeChoices.map((edgeType) => ({key: edgeType, value: edgeType}))
+        ],
+        (edgeType) => {
+          currentEdgeType = edgeType || undefined;
         }
-      )
-    ]);
-    addRow.appendChild(col3);
+      );
+      addRow.appendChild(col1);
 
-    container.appendChild(addRow);
+      // column 2 (6)
+      const col2 = $elem('div', {class: 'col-6'});
+      addSelect(
+        col2,
+        {label: STRINGS.ui.inputNeighborNodesEditor.nodeTypeLabel},
+        'input-neighbor-node-node-type-select',
+        nodeTypeChoices.map((nodeCategory) => ({key: nodeCategory, value: nodeCategory})),
+        (nodeCategory) => {
+          currentNodeCategory = nodeCategory;
+        }
+      );
+      addRow.appendChild(col2);
+
+      // add button (1)
+      const col3 = $elem('div', {class: 'col-1'}, [
+        $elem(
+          'label',
+          {class: 'form-label d-block'},
+          STRINGS.ui.inputNeighborNodesEditor.actionColumnHead
+        ),
+        this.ui.button.create(
+          STRINGS.ui.inputNeighborNodesEditor.addButton,
+          {outline: true, small: true},
+          async () => {
+            if (!currentNodeCategory) {
+              return;
+            }
+            neighborNodeFilters.push({
+              edgeType: currentEdgeType,
+              nodeCategory: currentNodeCategory
+            });
+            await this.redrawContent();
+          }
+        )
+      ]);
+      addRow.appendChild(col3);
+
+      container.appendChild(addRow);
+    }
 
     const list = document.createElement('div');
-    for (const neighborNode of neighborNodes) {
-      list.appendChild(this.createNeighborNodeRow(neighborNodes, neighborNode));
+    for (const neighborNode of neighborNodeFilters) {
+      list.appendChild(this.createNeighborNodeRow(neighborNodeFilters, neighborNode));
     }
     container.appendChild(list);
 
@@ -159,7 +167,7 @@ export class NodeTypeSelector extends AbstractSelector<string> {
           if (index >= 0) {
             neighborNodeFilters.splice(index, 1);
           }
-          row.remove();
+          await this.redrawContent();
         })
       ])
     ]);
@@ -187,5 +195,17 @@ export class NodeTypeSelector extends AbstractSelector<string> {
       );
     }
     return this.nodeTypeChoices;
+  }
+
+  protected override async getValidationError(): Promise<string | undefined> {
+    if (this.neighborNodeFilters) {
+      const uniqueNeighborNodeFilters = new Set(
+        this.neighborNodeFilters.map((n) => n.nodeCategory)
+      );
+      if (uniqueNeighborNodeFilters.size !== this.neighborNodeFilters.length) {
+        return STRINGS.ui.inputNeighborNodesEditor.duplicateNeighborNodeError;
+      }
+    }
+    return undefined;
   }
 }

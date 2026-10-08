@@ -180,7 +180,9 @@ export const STRINGS = {
       anyEdgeLabel: 'Any edge',
       nodeTypeLabel: 'Node category',
       actionColumnHead: 'Action',
-      addButton: 'Add'
+      addButton: 'Add',
+      duplicateNeighborNodeError:
+        'At least one neighbor node is used twice. Please select a different node category.'
     },
     integrationEditor: {
       selectInputNodeTypeTitle: 'Select the input node-category - [3/7]',
