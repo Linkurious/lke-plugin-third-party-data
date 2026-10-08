@@ -13,7 +13,18 @@ import {Vendor} from '../vendor/vendor';
 import {Vendors} from '../vendor/vendors';
 import {STRINGS} from '../strings';
 
-import {FieldMapping, IntegrationModelPublic, PropertyFieldMapping} from './IntegrationModel';
+import {
+  FieldMapping,
+  IntegrationModelPublic,
+  NeighborNodeFilter,
+  NeighborPropertyFieldMapping
+} from './IntegrationModel';
+
+// Nodes matching a NeighborNode definition
+export interface NeighborGroup {
+  neighborNodeFilter: NeighborNodeFilter;
+  nodes: LkNode[];
+}
 
 export class VendorIntegrationPublic<VI extends IntegrationModelPublic = IntegrationModelPublic> {
   protected readonly model: VI;
@@ -69,10 +80,21 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
     return undefined;
   }
 
-  getSearchQuery(inputNode: LkNode): Record<string, VendorFieldType> {
+  getInputNeighborNodeFilters(): NeighborNodeFilter[] {
+    return this.model.inputNeighborNodeFilters ?? [];
+  }
+
+  hasNeighborPropertyMapping(): boolean {
+    return this.model.searchQueryFieldMapping.some((m) => m.type === 'neighborProperty');
+  }
+
+  getSearchQuery(
+    inputNode: LkNode,
+    neighborGroups: NeighborGroup[] = []
+  ): Record<string, VendorFieldType> {
     const query: Record<string, VendorFieldType> = {};
     for (const mapping of this.model.searchQueryFieldMapping) {
-      const inputValue = this.getNodeInputValue(mapping, inputNode);
+      const inputValue = this.getNodeInputValue(mapping, inputNode, neighborGroups);
       if (inputValue === undefined) {
         continue;
       }
@@ -110,14 +132,32 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
     return query;
   }
 
-  private getNodeInputValue(mapping: FieldMapping, inputNode: LkNode): VendorFieldType | undefined {
+  private getNodeInputValue(
+    mapping: FieldMapping,
+    inputNode: LkNode,
+    neighborGroups: NeighborGroup[]
+  ): VendorFieldType | undefined {
     if (mapping.type === 'constant') {
       return mapping.value;
     }
     if (mapping.type === 'property') {
       return this.getNodePropertyValue(inputNode, mapping.inputPropertyKey);
     }
+    if (mapping.type === 'neighborProperty') {
+      const neighbor = this.getMappingNeighbor(mapping, neighborGroups);
+      return neighbor ? this.getNodePropertyValue(neighbor, mapping.inputPropertyKey) : undefined;
+    }
     return undefined;
+  }
+
+  private getMappingNeighbor(
+    mapping: NeighborPropertyFieldMapping,
+    neighborGroups: NeighborGroup[]
+  ): LkNode | undefined {
+    // take the first neighbor node that matches the mapping
+    return neighborGroups.find(
+      (g) => g.neighborNodeFilter.nodeCategory === mapping.inputNodeCategory && g.nodes.length > 0
+    )?.nodes[0];
   }
 
   private getNodePropertyValue(node: LkNode, propertyKey: string): VendorFieldType | undefined {
@@ -162,9 +202,13 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
   private checkSearchQuery(searchQuery: Record<string, VendorFieldType>): void {
     for (const field of this.vendor.searchQueryFields) {
       if (field.required && searchQuery[field.key] === undefined) {
-        const missingProperties = this.model.searchQueryFieldMapping
-          .filter((m) => m.type === 'property')
-          .map((mapping) => (mapping as PropertyFieldMapping).inputPropertyKey);
+        const missingProperties = this.model.searchQueryFieldMapping.flatMap((mapping) =>
+          mapping.type === 'property'
+            ? [mapping.inputPropertyKey]
+            : mapping.type === 'neighborProperty'
+              ? [`${mapping.inputNodeCategory}.${mapping.inputPropertyKey}`]
+              : []
+        );
         throw new Error(
           STRINGS.errors.checkSearchQuery.requiredFieldMissing(
             this.vendor,

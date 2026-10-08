@@ -32,6 +32,7 @@ const publicIntegrationModel: IntegrationModelPublic = {
   vendorKey: 'annuaire-entreprises-data-gouv-fr',
   sourceKey: validSourceKey,
   inputNodeCategory: 'Person',
+  inputNeighborNodeFilters: [],
   searchQueryFieldMapping: [
     {outputPropertyKey: 'q', type: 'property', inputPropertyKey: 'full_name'}
   ],

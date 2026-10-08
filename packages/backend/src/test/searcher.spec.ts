@@ -24,6 +24,7 @@ const myConfig: MyPluginConfig = {
         apiKey: '05efd800-e2e7-4f46-919c-d831365a42fc'
       },
       inputNodeCategory: 'Company',
+      inputNeighborNodeFilters: [],
       outputNodeCategory: 'Company_details',
       outputEdgeType: 'has_details',
       searchQueryFieldMapping: [
