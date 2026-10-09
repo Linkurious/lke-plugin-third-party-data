@@ -14,11 +14,13 @@ import {DetailsSearchDriver, SearchDriver} from './searchDriver';
 import {AnnuaireEntreprisesDriver} from './driver/annuaireEntreprisesDriver';
 import {DnbPeopleLookupDriver} from './driver/dnbPeopleLookupDriver';
 import {CompanyHouseUkDriver} from './driver/companyHouseUkDriver';
+import {CifasDriver} from './driver/cifasDriver';
 
 const SEARCH_DRIVERS: SearchDriver[] = [
   new AnnuaireEntreprisesDriver(),
   new DnbPeopleLookupDriver(),
-  new CompanyHouseUkDriver()
+  new CompanyHouseUkDriver(),
+  new CifasDriver()
 ];
 
 export class Searcher extends WithLogger {

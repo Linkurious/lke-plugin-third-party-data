@@ -1,10 +1,12 @@
 import {Vendor} from './vendor';
 import {AnnuaireEntreprisesVendor} from './vendors/annuaireEntreprisesDataGouvFr';
 import {CompanyHouseUk} from './vendors/companyHouseUk';
+import {Cifas} from './vendors/cifas';
 
 const VENDORS: Vendor[] = [
   new AnnuaireEntreprisesVendor(),
-  new CompanyHouseUk()
+  new CompanyHouseUk(),
+  new Cifas()
   /*, new DnbPersonLookupVendor()*/ // add it back when it's tested
 ];
 
