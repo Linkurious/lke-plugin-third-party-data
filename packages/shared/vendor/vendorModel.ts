@@ -37,11 +37,12 @@ export interface VendorModelSearchAndDetails<
 
 export type VendorStrategy = 'search' | 'searchAndDetails';
 export type VendorFieldTypeName = 'string' | 'number' | 'boolean';
-export type VendorFieldType = string | number | boolean;
+export type VendorFieldType = string | number | boolean | VendorFieldType[];
 
 interface BaseVendorField<T extends VendorFieldTypeName> {
   key: string;
   type: T;
+  array?: boolean;
   required?: boolean;
 }
 
@@ -64,25 +65,32 @@ interface BaseAdminField<TYPE, OPTIONS> {
 
 export type AbstractFields = {[key: string]: VendorFieldType | undefined};
 
+type Flatten<T> = T extends (infer U)[] ? U : T;
+type FieldDescriptionType<T> =
+  Flatten<T> extends string | undefined
+    ? 'string'
+    : Flatten<T> extends number | undefined
+      ? 'number'
+      : Flatten<T> extends boolean | undefined
+        ? 'boolean'
+        : never;
+
+type FieldDescription<T> = {
+  type: FieldDescriptionType<T>;
+  required: T extends NonNullable<unknown> ? true : false;
+} & (T extends unknown[] | undefined ? {array: true} : {});
+
 type FieldsDescription<ObjectFormat extends AbstractFields> = {
-  [K in keyof ObjectFormat]: {
-    type: ObjectFormat[K] extends string | undefined
-      ? 'string'
-      : ObjectFormat[K] extends number | undefined
-        ? 'number'
-        : ObjectFormat[K] extends boolean | undefined
-          ? 'boolean'
-          : never;
-    required: ObjectFormat[K] extends NonNullable<unknown> ? true : false;
-  };
+  [K in keyof ObjectFormat]: FieldDescription<ObjectFormat[K]>;
 };
 
 export function toVendorFields<T extends AbstractFields, K extends keyof FieldsDescription<T>>(
   fs: FieldsDescription<T>
 ): VendorField[] {
-  return Object.entries(fs).map(([key, field]) => ({
+  return Object.entries(fs).map(([key, field]: [string, FieldsDescription<T>[K]]) => ({
     key: key,
-    type: (field as FieldsDescription<T>[K]).type as VendorFieldTypeName,
-    required: (field as FieldsDescription<T>[K]).required
+    type: field.type as VendorFieldTypeName,
+    array: 'array' in field ? field.array : false,
+    required: field.required
   }));
 }

@@ -1,6 +1,6 @@
 import {ItemTypeAccessRightType, PropertyTypeName} from '@linkurious/rest-client';
 
-import {AbstractFields} from '../vendor/vendorModel';
+import {AbstractFields, VendorFieldType} from '../vendor/vendorModel';
 
 export interface GraphItemSchema {
   itemType: string;
@@ -26,7 +26,7 @@ export interface ApiResponse {
 export interface NeighborResult {
   edgeType: string;
   nodeCategory: string;
-  properties: Record<string, string | number | boolean>;
+  properties: Record<string, VendorFieldType>;
   keyProperty?: string;
   edgeKeyProperty?: string;
 }

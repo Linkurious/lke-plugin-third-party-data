@@ -9,9 +9,17 @@ import {BaseDetailsSearchDriver, flattenJson} from '../baseSearchDriver';
 import {VendorIntegration} from '../../../../../shared/integration/vendorIntegration';
 import {
   Cifas,
+  CifasBankOrBuildingSocietyAccount,
   CifasDetailsResponse,
+  CifasDocument,
+  CifasPaymentCard,
   CifasSearchQuery,
-  CifasSearchResponse
+  CifasSearchResponse,
+  CifasStructuredAddress,
+  isBankAccountKey,
+  isDocumentKey,
+  isPaymentCardKey,
+  isStructuredAddressKey
 } from '../../../../../shared/vendor/vendors/cifas';
 import {DetailsOptions} from '../../../models/detailsOptions';
 import {AbstractFields} from '../../../../../shared/vendor/vendorModel';
@@ -75,6 +83,7 @@ export class CifasDriver extends BaseDetailsSearchDriver<
     const url = new URL(`/v1/NFD/Cases/${caseId}`, CIFAS_BASE_URL);
     const cifasCase = await this.call<CifasCaseBody>(integration, url, 'get');
 
+    // create edge with properties
     const edgeProperties: CifasEdgeProperties = {
       caseId: cifasCase.caseId,
       requestedAt: context.requestedAt.toISOString()
@@ -153,22 +162,75 @@ export function buildCifasSearchBody(
   integration: VendorIntegration
 ): CifasSearchRequestBody {
   const search: Record<string, string | object> = {};
+  const addresses: Array<CifasStructuredAddress> = [];
+  const bankAccounts: Array<CifasBankOrBuildingSocietyAccount> = [];
+  const paymentCards: Array<CifasPaymentCard> = [];
+  const documents: Array<CifasDocument> = [];
   for (const [key, value] of Object.entries(searchQuery)) {
-    if (value !== undefined && value !== null && `${value}`.trim() !== '') {
-      // TODO process each property to build objects from flatten properties
-      if (key === 'city') {
-        search['addresses'] = [
-          {
-            format: 'structuredAddress',
-            city: `${value}`.trim(),
-            locationAlerts: false
+    if (Array.isArray(value)) {
+      if (isStructuredAddressKey(key)) {
+        for (let i = 0; i < value.length; i++) {
+          if (addresses[i] === undefined) {
+            addresses[i] = {
+              format: 'structuredAddress',
+              locationAlerts: false
+            };
           }
-        ];
-      } else {
-        search[key] = `${value}`.trim();
+
+          addresses[i][key] = `${value[i]}`.trim();
+        }
       }
+      if (isBankAccountKey(key)) {
+        for (let i = 0; i < value.length; i++) {
+          if (bankAccounts[i] === undefined) {
+            bankAccounts[i] = {
+              type: 'bankOrBuildingSocietyAccount',
+              sortCode: '',
+              accountNumber: ''
+            };
+          }
+
+          bankAccounts[i][key] = `${value[i]}`.trim();
+        }
+      }
+      if (isPaymentCardKey(key)) {
+        for (let i = 0; i < value.length; i++) {
+          if (bankAccounts[i] === undefined) {
+            paymentCards[i] = {
+              type: 'paymentCard',
+              cardNumber: ''
+            };
+          }
+
+          paymentCards[i][key] = `${value[i]}`.trim();
+        }
+      }
+      if (isDocumentKey(key)) {
+        for (let i = 0; i < value.length; i++) {
+          if (documents[i] === undefined) {
+            documents[i] = {
+              reference: ''
+            };
+          }
+
+          documents[i][key] = `${value[i]}`.trim();
+        }
+      }
+    } else if (value !== undefined && value !== null && `${value}`.trim() !== '') {
+      search[key] = `${value}`.trim();
     }
   }
+
+  if (addresses.length > 0) {
+    search.addresses = addresses.slice(0, 10); // CIFAS limit
+  }
+  if (bankAccounts.length > 0 || paymentCards.length > 0) {
+    search.financeDetails = [...bankAccounts, ...paymentCards].slice(0, 10); // CIFAS limit
+  }
+  if (documents.length > 0) {
+    search.documents = documents.slice(0, 10); // CIFAS limit
+  }
+
   if (Object.keys(search).length === 0) {
     throw new Error('CIFAS: at least one search criterion is required');
   }

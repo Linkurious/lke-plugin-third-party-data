@@ -1,6 +1,7 @@
 import {describe, it} from 'node:test';
 import * as assert from 'node:assert';
 
+import {VendorIntegration} from '../../../shared/integration/vendorIntegration';
 import {
   buildCifasSearchBody,
   buildCifasSubjectId,
@@ -8,6 +9,11 @@ import {
   extractCifasSubjectNeighbors,
   toCaseProperties
 } from '../services/vendor/driver/cifasDriver';
+
+const INTEGRATION = {
+  getAdminSettings: (key: string) =>
+    key === 'managingMemberNumber' ? 'LinkuriousSearch' : undefined
+} as unknown as VendorIntegration;
 
 const REF = (referenceCode: string, description: string): Record<string, string> => ({
   referenceCode: referenceCode,
@@ -63,12 +69,15 @@ void describe('CifasDriver', () => {
 
   void describe('buildCifasSearchBody', () => {
     void it('should build the search body and drop empty values', () => {
-      const body = buildCifasSearchBody({
-        firstName: ' Laura ',
-        surname: 'Smith',
-        birthDate: '1985-04-01',
-        emailAddress: ''
-      });
+      const body = buildCifasSearchBody(
+        {
+          firstName: ' Laura ',
+          surname: 'Smith',
+          birthDate: '1985-04-01',
+          emailAddress: ''
+        },
+        INTEGRATION
+      );
       assert.deepStrictEqual(body, {
         memberReferenceNumber: 'LinkuriousSearch',
         search: {firstName: 'Laura', surname: 'Smith', birthDate: '1985-04-01'}
@@ -76,8 +85,11 @@ void describe('CifasDriver', () => {
     });
 
     void it('should reject an empty search', () => {
-      assert.throws(() => buildCifasSearchBody({}), /at least one search criterion/);
-      assert.throws(() => buildCifasSearchBody({firstName: '  '}), /at least one search criterion/);
+      assert.throws(() => buildCifasSearchBody({}, INTEGRATION), /at least one search criterion/);
+      assert.throws(
+        () => buildCifasSearchBody({firstName: '  '}, INTEGRATION),
+        /at least one search criterion/
+      );
     });
   });
 

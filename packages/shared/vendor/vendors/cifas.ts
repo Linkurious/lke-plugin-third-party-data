@@ -56,8 +56,15 @@ export class Cifas extends Vendor<CifasSearchQuery, CifasSearchResponse, CifasDe
         companyName: {type: 'string', required: false},
         companyNumber: {type: 'string', required: false},
         companyTelephone: {type: 'string', required: false},
-        vatNumber: {type: 'string', required: false}
-        // TODO add support for multiple addresses, financeDetails and documents
+        vatNumber: {type: 'string', required: false},
+        town: {type: 'string', array: true, required: false},
+        postcode: {type: 'string', array: true, required: false},
+        streetName: {type: 'string', array: true, required: false},
+        houseNumber: {type: 'string', array: true, required: false},
+        sortCode: {type: 'string', array: true, required: false},
+        accountNumber: {type: 'string', array: true, required: false},
+        cardNumber: {type: 'string', array: true, required: false},
+        documentReference: {type: 'string', array: true, required: false}
       },
       searchResponseFields: {
         caseId: {type: 'number', required: true},
@@ -98,9 +105,72 @@ export class Cifas extends Vendor<CifasSearchQuery, CifasSearchResponse, CifasDe
   }
 }
 
+export type CifasStructuredAddress = {
+  format: 'structuredAddress';
+  town?: string;
+  postcode?: string;
+  streetName?: string;
+  houseNumber?: string;
+  locationAlerts: boolean;
+};
+
+export type CifasBankOrBuildingSocietyAccount = {
+  type: 'bankOrBuildingSocietyAccount';
+  sortCode: string;
+  accountNumber: string;
+};
+
+export type CifasPaymentCard = {
+  type: 'paymentCard';
+  cardNumber: string;
+};
+
+export type CifasDocument = {
+  reference: string;
+};
+
+type KeyGuard<K extends string> = {
+  keys: readonly K[];
+  isKey: (key: string) => key is K;
+};
+
+/** Build a key list + type guard for T, ignoring the keys listed in Excluded. */
+function defineKeys<T, Excluded extends keyof T = never>(): <
+  const K extends readonly Extract<Exclude<keyof T, Excluded>, string>[]
+>(
+  keys: K &
+    // compile-time check: every non-excluded key of T must be listed
+    (Extract<Exclude<keyof T, Excluded>, string> extends K[number] ? unknown : never)
+) => KeyGuard<K[number]> {
+  return (keys) => ({
+    keys: keys,
+    isKey: (key: string): key is (typeof keys)[number] => (keys as readonly string[]).includes(key)
+  });
+}
+
+export const structuredAddress = defineKeys<CifasStructuredAddress, 'format' | 'locationAlerts'>()([
+  'town',
+  'postcode',
+  'streetName',
+  'houseNumber'
+]);
+
+export const bankAccount = defineKeys<CifasBankOrBuildingSocietyAccount, 'type'>()([
+  'sortCode',
+  'accountNumber'
+]);
+
+export const paymentCard = defineKeys<CifasPaymentCard, 'type'>()(['cardNumber']);
+
+export const document = defineKeys<CifasDocument>()(['reference']);
+
+export const isStructuredAddressKey = structuredAddress.isKey;
+export const isBankAccountKey = bankAccount.isKey;
+export const isPaymentCardKey = paymentCard.isKey;
+export const isDocumentKey = document.isKey;
+
 /**
  * Search inputs, see "SearchInputModel" in the NFD Search API v1 (POST /v1/NFD/Search).
- * Not supported yet: addresses, financeDetails, documents, productCode.
  */
 export type CifasSearchQuery = {
   firstName?: string;
@@ -120,6 +190,14 @@ export type CifasSearchQuery = {
   companyNumber?: string;
   companyTelephone?: string;
   vatNumber?: string;
+  town?: string[];
+  postcode?: string[];
+  streetName?: string[];
+  houseNumber?: string[];
+  sortCode?: string[];
+  accountNumber?: string[];
+  cardNumber?: string[];
+  documentReference?: string[];
 };
 
 /** "BasicCaseOutputModel", flattened */

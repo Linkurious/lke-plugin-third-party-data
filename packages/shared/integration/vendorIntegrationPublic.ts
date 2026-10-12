@@ -98,31 +98,39 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
       if (inputValue === undefined) {
         continue;
       }
-      const expectedType = this.vendor.searchQueryFields.find(
+      const vendorField = this.vendor.searchQueryFields.find(
         (f) => f.key === mapping.outputPropertyKey
-      )?.type;
+      );
+      const expectedType = vendorField?.type;
       if (expectedType === undefined) {
         console.warn(
           `Search query builder: unknown vendor field ${mapping.outputPropertyKey} (integration: ${this.model.id})`
         );
         continue;
       }
-      if (expectedType === 'string') {
-        if (query[mapping.outputPropertyKey] === undefined) {
-          // first value
-          query[mapping.outputPropertyKey] = `${inputValue}`;
-        } else {
-          // append to existing value
-          query[mapping.outputPropertyKey] += ` ${inputValue}`;
-        }
-      } else if (expectedType === 'number' && typeof inputValue === 'number') {
-        query[mapping.outputPropertyKey] = inputValue;
-      } else if (expectedType === 'boolean' && typeof inputValue === 'boolean') {
-        query[mapping.outputPropertyKey] = inputValue;
+      if (vendorField?.array) {
+        query[mapping.outputPropertyKey] = [
+          ...((query[mapping.outputPropertyKey] ?? []) as VendorFieldType[]),
+          ...(Array.isArray(inputValue) ? inputValue : [inputValue])
+        ];
       } else {
-        console.warn(
-          `Search query builder: invalid input value type for ${mapping.outputPropertyKey} (node: #${inputNode.id}, integration: ${this.model.id})`
-        );
+        if (expectedType === 'string') {
+          if (query[mapping.outputPropertyKey] === undefined) {
+            // first value
+            query[mapping.outputPropertyKey] = `${inputValue}`;
+          } else {
+            // append to existing value
+            query[mapping.outputPropertyKey] += ` ${inputValue}`;
+          }
+        } else if (expectedType === 'number' && typeof inputValue === 'number') {
+          query[mapping.outputPropertyKey] = inputValue;
+        } else if (expectedType === 'boolean' && typeof inputValue === 'boolean') {
+          query[mapping.outputPropertyKey] = inputValue;
+        } else {
+          console.warn(
+            `Search query builder: invalid input value type for ${mapping.outputPropertyKey} (node: #${inputNode.id}, integration: ${this.model.id})`
+          );
+        }
       }
     }
 
@@ -144,8 +152,13 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
       return this.getNodePropertyValue(inputNode, mapping.inputPropertyKey);
     }
     if (mapping.type === 'neighborProperty') {
-      const neighbor = this.getMappingNeighbor(mapping, neighborGroups);
-      return neighbor ? this.getNodePropertyValue(neighbor, mapping.inputPropertyKey) : undefined;
+      const neighbors = this.getMappingNeighbor(mapping, neighborGroups);
+      const neighborValues = neighbors
+        ? neighbors
+            .map((neighbor) => this.getNodePropertyValue(neighbor, mapping.inputPropertyKey))
+            .filter((v) => v !== undefined)
+        : undefined;
+      return neighborValues && neighborValues.length > 0 ? neighborValues : undefined;
     }
     return undefined;
   }
@@ -153,11 +166,11 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
   private getMappingNeighbor(
     mapping: NeighborPropertyFieldMapping,
     neighborGroups: NeighborGroup[]
-  ): LkNode | undefined {
+  ): LkNode[] | undefined {
     // take the first neighbor node that matches the mapping
     return neighborGroups.find(
       (g) => g.neighborNodeFilter.nodeCategory === mapping.inputNodeCategory && g.nodes.length > 0
-    )?.nodes[0];
+    )?.nodes;
   }
 
   private getNodePropertyValue(node: LkNode, propertyKey: string): VendorFieldType | undefined {
