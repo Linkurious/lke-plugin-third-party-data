@@ -119,7 +119,7 @@ export class API {
       } else {
         return `Unexpected HTTP status ${r.status}`;
       }
-    } catch (e) {
+    } catch (_e) {
       return `Unexpected HTTP status ${r.status}`;
     }
   }

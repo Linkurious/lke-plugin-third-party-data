@@ -35,7 +35,7 @@ function edge(id: string, source: string, target: string, type: string): LkEdge 
     source: source,
     target: target,
     data: {type: type, properties: {}, readAt: 0, isVirtual: false}
-  } as LkEdge;
+  };
 }
 
 function integrationModel(

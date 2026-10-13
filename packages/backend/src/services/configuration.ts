@@ -1,8 +1,7 @@
-import express = require('express');
+import * as express from 'express';
 
 import {MyPluginConfig, MyPluginConfigPublic} from '../../../shared/myPluginConfig';
 import {clone} from '../../../shared/utils';
-import {IntegrationModelPublic} from '../../../shared/integration/IntegrationModel';
 import {VendorIntegration} from '../../../shared/integration/vendorIntegration';
 import {STRINGS} from '../../../shared/strings';
 import {API} from '../server/api';
@@ -35,7 +34,7 @@ export class Configuration {
       integrations: (configClone.integrations ?? []).map((integration) => ({
         ...integration,
         adminSettings: undefined
-      })) as IntegrationModelPublic[]
+      }))
     };
   }
 

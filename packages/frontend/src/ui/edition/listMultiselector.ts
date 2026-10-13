@@ -55,7 +55,7 @@ export class ListMultiselector<T extends string = string> extends AbstractFormPo
     }
     const selected = Array.from(this.list.querySelectorAll('input'))
       .map((input, i) => (input.checked ? this.input[i] : undefined))
-      .filter((item) => item !== undefined) as T[];
+      .filter((item) => item !== undefined);
     this.setModel(selected);
     return this.validator(selected);
   }

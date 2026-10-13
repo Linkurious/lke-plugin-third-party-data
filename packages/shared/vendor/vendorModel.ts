@@ -39,17 +39,12 @@ export type VendorStrategy = 'search' | 'searchAndDetails';
 export type VendorFieldTypeName = 'string' | 'number' | 'boolean';
 export type VendorFieldType = string | number | boolean | VendorFieldType[];
 
-interface BaseVendorField<T extends VendorFieldTypeName> {
+export interface VendorField {
   key: string;
-  type: T;
+  type: VendorFieldTypeName;
   array?: boolean;
   required?: boolean;
 }
-
-export type VendorField =
-  | BaseVendorField<'string'>
-  | BaseVendorField<'number'>
-  | BaseVendorField<'boolean'>;
 
 export type VendorAdminField =
   | BaseAdminField<'string', {enum?: string[]}>
@@ -78,7 +73,7 @@ type FieldDescriptionType<T> =
 type FieldDescription<T> = {
   type: FieldDescriptionType<T>;
   required: T extends NonNullable<unknown> ? true : false;
-} & (T extends unknown[] | undefined ? {array: true} : {});
+} & (T extends unknown[] | undefined ? {array: true} : unknown);
 
 type FieldsDescription<ObjectFormat extends AbstractFields> = {
   [K in keyof ObjectFormat]: FieldDescription<ObjectFormat[K]>;
@@ -89,8 +84,8 @@ export function toVendorFields<T extends AbstractFields, K extends keyof FieldsD
 ): VendorField[] {
   return Object.entries(fs).map(([key, field]: [string, FieldsDescription<T>[K]]) => ({
     key: key,
-    type: field.type as VendorFieldTypeName,
-    array: 'array' in field ? field.array : false,
+    type: field.type,
+    array: 'array' in field,
     required: field.required
   }));
 }
