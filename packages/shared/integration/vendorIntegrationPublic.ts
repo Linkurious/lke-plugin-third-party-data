@@ -94,8 +94,8 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
   ): Record<string, VendorFieldType> {
     const query: Record<string, VendorFieldType> = {};
     for (const mapping of this.model.searchQueryFieldMapping) {
-      const inputValue = this.getNodeInputValue(mapping, inputNode, neighborGroups);
-      if (inputValue === undefined) {
+      const rawValue = this.getNodeInputValue(mapping, inputNode, neighborGroups);
+      if (rawValue === undefined) {
         continue;
       }
       const vendorField = this.vendor.searchQueryFields.find(
@@ -111,9 +111,14 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
       if (vendorField?.array) {
         query[mapping.outputPropertyKey] = [
           ...((query[mapping.outputPropertyKey] ?? []) as VendorFieldType[]),
-          ...(Array.isArray(inputValue) ? inputValue : [inputValue])
+          ...(Array.isArray(rawValue) ? rawValue : [rawValue])
         ];
       } else {
+        // scalar field: only the first value is used (e.g. the first neighbor)
+        const inputValue = Array.isArray(rawValue) ? rawValue[0] : rawValue;
+        if (inputValue === undefined) {
+          continue;
+        }
         if (expectedType === 'string') {
           if (query[mapping.outputPropertyKey] === undefined) {
             // first value
@@ -153,12 +158,12 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
     }
     if (mapping.type === 'neighborProperty') {
       const neighbors = this.getMappingNeighbor(mapping, neighborGroups);
-      const neighborValues = neighbors
-        ? neighbors
-            .map((neighbor) => this.getNodePropertyValue(neighbor, mapping.inputPropertyKey))
-            .filter((v) => v !== undefined)
-        : undefined;
-      return neighborValues && neighborValues.length > 0 ? neighborValues : undefined;
+      // keep one entry per neighbor ('' when the value is missing) so that values mapped from
+      // different properties of the same neighbor stay aligned by index
+      const neighborValues = neighbors?.map(
+        (neighbor) => this.getNodePropertyValue(neighbor, mapping.inputPropertyKey) ?? ''
+      );
+      return neighborValues?.some((v) => v !== '') ? neighborValues : undefined;
     }
     return undefined;
   }

@@ -90,6 +90,42 @@ void describe('VendorIntegrationPublic.getSearchQuery with neighbors', () => {
     });
   });
 
+  void it('should keep one entry per neighbor for array fields, aligned by index', () => {
+    const cifas = new VendorIntegrationPublic({
+      ...integrationModel(
+        [{nodeCategory: 'Address'}],
+        [
+          {
+            type: 'neighborProperty',
+            inputNodeCategory: 'Address',
+            inputPropertyKey: 'city',
+            outputPropertyKey: 'town'
+          },
+          {
+            type: 'neighborProperty',
+            inputNodeCategory: 'Address',
+            inputPropertyKey: 'zip',
+            outputPropertyKey: 'postcode'
+          }
+        ]
+      ),
+      vendorKey: 'cifas'
+    });
+    const groups: NeighborGroup[] = [
+      {
+        neighborNodeFilter: cifas.getInputNeighborNodeFilters()[0],
+        nodes: [
+          node('2', 'Address', {city: 'London'}),
+          node('3', 'Address', {city: 'Paris', zip: '75000'})
+        ]
+      }
+    ];
+    assert.deepStrictEqual(cifas.getSearchQuery(companyNode, groups), {
+      town: ['London', 'Paris'],
+      postcode: ['', '75000']
+    });
+  });
+
   void it('should prefer groups in neighbor nodes definition order', () => {
     const groups: NeighborGroup[] = [
       {neighborNodeFilter: locatedAt, nodes: [node('2', 'Address', {city: 'London'})]},

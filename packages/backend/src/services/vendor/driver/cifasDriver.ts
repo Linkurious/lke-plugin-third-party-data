@@ -47,14 +47,11 @@ export class CifasDriver extends BaseDetailsSearchDriver<
   async search(
     searchQuery: CifasSearchQuery,
     integration: VendorIntegration,
-    maxResults: number,
-    _context: VendorContext
+    maxResults: number
   ): Promise<VendorResult<CifasSearchResponse, CifasEdgeProperties>[]> {
-    void _context;
-    const url = new URL('/v1/NFD/Search', this.getBaseUrl(integration));
     const result = await this.call<CifasSearchResponseBody>(
       integration,
-      url,
+      '/v1/NFD/Search',
       'post',
       buildCifasSearchBody(searchQuery, integration)
     );
@@ -80,8 +77,7 @@ export class CifasDriver extends BaseDetailsSearchDriver<
     context: VendorContext
   ): Promise<VendorResult<CifasDetailsResponse, CifasEdgeProperties>> {
     const caseId = encodeURIComponent(detailsOptions.searchResultId);
-    const url = new URL(`/v1/NFD/Cases/${caseId}`, this.getBaseUrl(integration));
-    const cifasCase = await this.call<CifasCaseBody>(integration, url, 'get');
+    const cifasCase = await this.call<CifasCaseBody>(integration, `/v1/NFD/Cases/${caseId}`, 'get');
 
     // create edge with properties
     const edgeProperties: CifasEdgeProperties = {
@@ -104,10 +100,11 @@ export class CifasDriver extends BaseDetailsSearchDriver<
 
   private async call<T>(
     integration: VendorIntegration,
-    url: URL,
+    endpoint: string,
     verb: 'get' | 'post',
     body?: unknown
   ): Promise<T> {
+    const url = this.buildUrl(endpoint, integration);
     // the PFX certificate is stored as a base64 string in the plugin configuration
     const pfx = Buffer.from(
       integration.getAdminSettings('pfxCertificateSecret') as string,
@@ -145,18 +142,16 @@ export class CifasDriver extends BaseDetailsSearchDriver<
     if (response.status === 404) {
       throw new Error(`CIFAS: not found (${url.pathname})`);
     }
-    if (response.status !== 200) {
+    if (!response.ok) {
       throw new Error(`CIFAS request failed (${response.status}): ${describeBody(response)}`);
     }
     return response.body as T;
   }
 
-  private getBaseUrl(integration: VendorIntegration): string {
+  private buildUrl(endpoint: string, integration: VendorIntegration): URL {
     const testApi = integration.getAdminSettings('testApi') as boolean;
-    if (testApi) {
-      return CIFAS_TEST_BASE_URL;
-    }
-    return CIFAS_BASE_URL;
+    const baseUrl = testApi ? CIFAS_TEST_BASE_URL : CIFAS_BASE_URL;
+    return new URL(endpoint, baseUrl);
   }
 
   /** the case properties, without the subjects (they are returned as neighbors) */
@@ -191,6 +186,10 @@ export function buildCifasSearchBody(
     if (Array.isArray(value)) {
       if (isStructuredAddressKey(key)) {
         for (let i = 0; i < value.length; i++) {
+          const text = `${value[i]}`.trim();
+          if (text === '') {
+            continue; // missing value: keep the index to preserve neighbor association
+          }
           if (addresses[i] === undefined) {
             addresses[i] = {
               format: 'structuredAddress',
@@ -198,11 +197,15 @@ export function buildCifasSearchBody(
             };
           }
 
-          addresses[i][key] = `${value[i]}`.trim();
+          addresses[i][key] = text;
         }
       }
       if (isBankAccountKey(key)) {
         for (let i = 0; i < value.length; i++) {
+          const text = `${value[i]}`.trim();
+          if (text === '') {
+            continue; // missing value: keep the index to preserve neighbor association
+          }
           if (bankAccounts[i] === undefined) {
             bankAccounts[i] = {
               type: 'bankOrBuildingSocietyAccount',
@@ -211,30 +214,38 @@ export function buildCifasSearchBody(
             };
           }
 
-          bankAccounts[i][key] = `${value[i]}`.trim();
+          bankAccounts[i][key] = text;
         }
       }
       if (isPaymentCardKey(key)) {
         for (let i = 0; i < value.length; i++) {
-          if (bankAccounts[i] === undefined) {
+          const text = `${value[i]}`.trim();
+          if (text === '') {
+            continue; // missing value: keep the index to preserve neighbor association
+          }
+          if (paymentCards[i] === undefined) {
             paymentCards[i] = {
               type: 'paymentCard',
               cardNumber: ''
             };
           }
 
-          paymentCards[i][key] = `${value[i]}`.trim();
+          paymentCards[i][key] = text;
         }
       }
       if (isDocumentKey(key)) {
         for (let i = 0; i < value.length; i++) {
+          const text = `${value[i]}`.trim();
+          if (text === '') {
+            continue; // missing value: keep the index to preserve neighbor association
+          }
           if (documents[i] === undefined) {
             documents[i] = {
               reference: ''
             };
           }
 
-          documents[i][key] = `${value[i]}`.trim();
+          documents[i][key] = text;
         }
       }
     } else if (value !== undefined && value !== null && `${value}`.trim() !== '') {
@@ -242,14 +253,19 @@ export function buildCifasSearchBody(
     }
   }
 
-  if (addresses.length > 0) {
-    search.addresses = addresses.slice(0, 10); // CIFAS limit
+  // arrays may contain holes where all the values of an index were missing
+  const compact = <T>(items: T[]): T[] => items.filter((item) => item !== undefined);
+  const addressList = compact(addresses);
+  const financeList = [...compact(bankAccounts), ...compact(paymentCards)];
+  const documentList = compact(documents);
+  if (addressList.length > 0) {
+    search.addresses = addressList.slice(0, 10); // CIFAS limit
   }
-  if (bankAccounts.length > 0 || paymentCards.length > 0) {
-    search.financeDetails = [...bankAccounts, ...paymentCards].slice(0, 10); // CIFAS limit
+  if (financeList.length > 0) {
+    search.financeDetails = financeList.slice(0, 10); // CIFAS limit
   }
-  if (documents.length > 0) {
-    search.documents = documents.slice(0, 10); // CIFAS limit
+  if (documentList.length > 0) {
+    search.documents = documentList.slice(0, 10); // CIFAS limit
   }
 
   if (Object.keys(search).length === 0) {

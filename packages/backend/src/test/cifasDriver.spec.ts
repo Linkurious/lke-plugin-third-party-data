@@ -99,6 +99,20 @@ void describe('CifasDriver', () => {
       });
     });
 
+    void it('should keep neighbor association when some values are missing', () => {
+      const body = buildCifasSearchBody(
+        {town: ['London', 'Paris'], postcode: ['', '75000'], cardNumber: ['', '4111']},
+        INTEGRATION
+      );
+      assert.deepStrictEqual(body.search, {
+        addresses: [
+          {format: 'structuredAddress', locationAlerts: false, town: 'London'},
+          {format: 'structuredAddress', locationAlerts: false, town: 'Paris', postcode: '75000'}
+        ],
+        financeDetails: [{type: 'paymentCard', cardNumber: '4111'}]
+      });
+    });
+
     void it('should reject an empty search', () => {
       assert.throws(() => buildCifasSearchBody({}, INTEGRATION), /at least one search criterion/);
       assert.throws(

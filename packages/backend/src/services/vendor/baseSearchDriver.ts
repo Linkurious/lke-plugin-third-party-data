@@ -102,7 +102,12 @@ export abstract class BaseDetailsSearchDriver<
   ): Promise<VendorResult<DNR, DER>>;
 }
 
-export function flattenJson(json: unknown, explodeArray = false): Record<string, VendorFieldType> {
+/**
+ * Flattens a JSON object into a single-level object.
+ * Option to spread array values into separate keys with index suffixes.
+ * Example: {adresses: [{city: 'New York'}, {city: 'Los Angeles'}]} becomes addresses_0_city: 'New York', addresses_1_city: 'Los Angeles' if spreadArray is true.
+ */
+export function flattenJson(json: unknown, spreadArray = false): Record<string, VendorFieldType> {
   const result: Record<string, VendorFieldType> = {};
   if (typeof json !== 'object' || json === null) {
     return result;
@@ -113,7 +118,7 @@ export function flattenJson(json: unknown, explodeArray = false): Record<string,
     }
 
     if (typeof value === 'object') {
-      flattenJsonField(result, key, value as Record<string, unknown>, explodeArray);
+      flattenJsonField(result, key, value as Record<string, unknown>, spreadArray);
     } else {
       result[key] = value as VendorFieldType;
     }
@@ -125,7 +130,7 @@ function flattenJsonField(
   result: Record<string, VendorFieldType>,
   key: string,
   value: Record<string, unknown>,
-  explodeArray = false
+  spreadArray = false
 ): void {
   if (Array.isArray(value)) {
     // empty array
@@ -133,7 +138,7 @@ function flattenJsonField(
       return;
     }
 
-    if (explodeArray) {
+    if (spreadArray) {
       value.forEach((entry, index) => {
         if (entry === null || entry === undefined) {
           return;
