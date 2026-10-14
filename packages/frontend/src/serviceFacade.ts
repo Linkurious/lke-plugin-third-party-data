@@ -300,4 +300,4 @@ interface OgmaNodeList {
   setAttribute(path: 'layoutable', value: boolean): Promise<OgmaNodeList>;
 }
 
-interface OgmaEdgeList {}
+type OgmaEdgeList = object;

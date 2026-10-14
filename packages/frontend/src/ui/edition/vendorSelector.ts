@@ -52,15 +52,17 @@ export class VendorSelector extends AbstractSelector<VendorEditorModel> {
       {class: 'mb-3 form-control'},
       model === undefined
         ? undefined
-        : model.vendor.adminFields.map((f, i) => {
-            const id = 'admin-field-' + i;
-            const left = $elem('div', {class: 'col-5'}, [
-              $elem('label', {for: id, class: 'form-label'}, `${f.name}${f.required ? ' *' : ''}`)
-            ]);
-            const right = $elem('div', {class: 'col-7'});
-            this.addField(right, f, id, model);
-            return $elem('div', {class: 'row my-1'}, [left, right]);
-          })
+        : model.vendor.adminFields
+            .filter((f) => !f.options?.hidden)
+            .map((f, i) => {
+              const id = 'admin-field-' + i;
+              const left = $elem('div', {class: 'col-5'}, [
+                $elem('label', {for: id, class: 'form-label'}, `${f.name}${f.required ? ' *' : ''}`)
+              ]);
+              const right = $elem('div', {class: 'col-7'});
+              this.addField(right, f, id, model);
+              return $elem('div', {class: 'row my-1'}, [left, right]);
+            })
     );
     return $elem('div', {}, [description, settings]);
   }

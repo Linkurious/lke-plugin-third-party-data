@@ -94,35 +94,48 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
   ): Record<string, VendorFieldType> {
     const query: Record<string, VendorFieldType> = {};
     for (const mapping of this.model.searchQueryFieldMapping) {
-      const inputValue = this.getNodeInputValue(mapping, inputNode, neighborGroups);
-      if (inputValue === undefined) {
+      const rawValue = this.getNodeInputValue(mapping, inputNode, neighborGroups);
+      if (rawValue === undefined) {
         continue;
       }
-      const expectedType = this.vendor.searchQueryFields.find(
+      const vendorField = this.vendor.searchQueryFields.find(
         (f) => f.key === mapping.outputPropertyKey
-      )?.type;
+      );
+      const expectedType = vendorField?.type;
       if (expectedType === undefined) {
         console.warn(
           `Search query builder: unknown vendor field ${mapping.outputPropertyKey} (integration: ${this.model.id})`
         );
         continue;
       }
-      if (expectedType === 'string') {
-        if (query[mapping.outputPropertyKey] === undefined) {
-          // first value
-          query[mapping.outputPropertyKey] = `${inputValue}`;
-        } else {
-          // append to existing value
-          query[mapping.outputPropertyKey] += ` ${inputValue}`;
-        }
-      } else if (expectedType === 'number' && typeof inputValue === 'number') {
-        query[mapping.outputPropertyKey] = inputValue;
-      } else if (expectedType === 'boolean' && typeof inputValue === 'boolean') {
-        query[mapping.outputPropertyKey] = inputValue;
+      if (vendorField?.array) {
+        query[mapping.outputPropertyKey] = [
+          ...((query[mapping.outputPropertyKey] ?? []) as VendorFieldType[]),
+          ...(Array.isArray(rawValue) ? rawValue : [rawValue])
+        ];
       } else {
-        console.warn(
-          `Search query builder: invalid input value type for ${mapping.outputPropertyKey} (node: #${inputNode.id}, integration: ${this.model.id})`
-        );
+        // scalar field: join the values
+        const inputValue = Array.isArray(rawValue) ? rawValue.flat().join(', ') : rawValue;
+        if (inputValue === undefined) {
+          continue;
+        }
+        if (expectedType === 'string') {
+          if (query[mapping.outputPropertyKey] === undefined) {
+            // first value
+            query[mapping.outputPropertyKey] = `${inputValue}`;
+          } else {
+            // append to existing value
+            query[mapping.outputPropertyKey] += ` ${inputValue}`;
+          }
+        } else if (expectedType === 'number' && typeof inputValue === 'number') {
+          query[mapping.outputPropertyKey] = inputValue;
+        } else if (expectedType === 'boolean' && typeof inputValue === 'boolean') {
+          query[mapping.outputPropertyKey] = inputValue;
+        } else {
+          console.warn(
+            `Search query builder: invalid input value type for ${mapping.outputPropertyKey} (node: #${inputNode.id}, integration: ${this.model.id})`
+          );
+        }
       }
     }
 
@@ -144,8 +157,13 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
       return this.getNodePropertyValue(inputNode, mapping.inputPropertyKey);
     }
     if (mapping.type === 'neighborProperty') {
-      const neighbor = this.getMappingNeighbor(mapping, neighborGroups);
-      return neighbor ? this.getNodePropertyValue(neighbor, mapping.inputPropertyKey) : undefined;
+      const neighbors = this.getMappingNeighbor(mapping, neighborGroups);
+      // keep one entry per neighbor ('' when the value is missing) so that values mapped from
+      // different properties of the same neighbor stay aligned by index
+      const neighborValues = neighbors?.map(
+        (neighbor) => this.getNodePropertyValue(neighbor, mapping.inputPropertyKey) ?? ''
+      );
+      return neighborValues?.some((v) => v !== '') ? neighborValues : undefined;
     }
     return undefined;
   }
@@ -153,11 +171,11 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
   private getMappingNeighbor(
     mapping: NeighborPropertyFieldMapping,
     neighborGroups: NeighborGroup[]
-  ): LkNode | undefined {
+  ): LkNode[] | undefined {
     // take the first neighbor node that matches the mapping
     return neighborGroups.find(
       (g) => g.neighborNodeFilter.nodeCategory === mapping.inputNodeCategory && g.nodes.length > 0
-    )?.nodes[0];
+    )?.nodes;
   }
 
   private getNodePropertyValue(node: LkNode, propertyKey: string): VendorFieldType | undefined {

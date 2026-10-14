@@ -1,14 +1,14 @@
 import {PluginRouteOptions, RestClient} from '@linkurious/rest-client';
-import express = require('express');
+import * as express from 'express';
 
 import {MyPluginConfig, MyPluginConfigPublic} from '../../../shared/myPluginConfig';
 import {API} from '../server/api';
 import {
   ApiError,
-  VendorSearchResponse,
-  VendorResult,
+  ApiResponse,
   VendorDetailsResponse,
-  ApiResponse
+  VendorResult,
+  VendorSearchResponse
 } from '../../../shared/api/response';
 import {VendorContext} from '../../../shared/vendor/vendorContext';
 import {SearchOptions} from '../models/searchOptions';

@@ -32,13 +32,20 @@ module.exports = {
     'import/order': ['error', { 'newlines-between': 'always' }], // Orders imports by ['builtin', 'external', 'parent', 'sibling', 'index']
     '@typescript-eslint/explicit-function-return-type': 'error', // Requires explicit return types on functions and class methods
     '@typescript-eslint/no-unnecessary-type-assertion': ['error'],
-    '@typescript-eslint/no-unused-vars': ['error', { args: 'none' }],
+    '@typescript-eslint/no-unused-vars': ['error', {
+      "args": "all",
+      "argsIgnorePattern": "^_",
+      "caughtErrors": "all",
+      "caughtErrorsIgnorePattern": "^_"
+    }],
 
     // disabled
     'require-atomic-updates': ['off'],
 
     // Downgraded to warnings
-    '@typescript-eslint/ban-types': ['warn'],
+    '@typescript-eslint/no-empty-object-type': ['warn'],
+    '@typescript-eslint/no-unsafe-function-type': ['warn'],
+    '@typescript-eslint/no-wrapper-object-types': ['warn'],
     '@typescript-eslint/restrict-template-expressions': ['warn'],
     'no-useless-escape': ['warn'],
     'no-prototype-builtins': ['warn'],

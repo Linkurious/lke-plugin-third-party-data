@@ -4,7 +4,6 @@ import {
   IntegrationModel,
   IntegrationModelPublic
 } from '../../../shared/integration/IntegrationModel.ts';
-import {VendorSearchResponse} from '../../../shared/api/response.ts';
 
 import {ApiMock} from './devServer';
 
@@ -106,7 +105,7 @@ export const API_MOCKS: ApiMock[] = [
             }
           }
         ]
-      } as VendorSearchResponse
+      }
     }
   },
   {
