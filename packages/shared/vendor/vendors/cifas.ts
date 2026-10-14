@@ -27,8 +27,14 @@ export class Cifas extends Vendor<CifasSearchQuery, CifasSearchResponse, CifasDe
           required: true
         },
         {
+          type: 'string',
+          key: 'currentUserReference',
+          name: 'Current User Reference',
+          required: true
+        },
+        {
           type: 'file',
-          key: 'pfxCertificate',
+          key: 'pfxCertificateSecret',
           name: 'PFX Certificate',
           required: true
         },
@@ -37,6 +43,15 @@ export class Cifas extends Vendor<CifasSearchQuery, CifasSearchResponse, CifasDe
           key: 'pfxCertificatePassphrase',
           name: 'PFX Certificate passphrase',
           required: true
+        },
+        {
+          type: 'boolean',
+          key: 'testApi',
+          name: 'Use test API',
+          required: false,
+          options: {
+            hidden: true
+          }
         }
       ],
       searchQueryFields: {

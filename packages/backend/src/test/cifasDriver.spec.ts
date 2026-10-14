@@ -4,12 +4,12 @@ import * as assert from 'node:assert';
 import {VendorIntegration} from '../../../shared/integration/vendorIntegration';
 import {
   buildCifasSearchBody,
-  buildCifasSubjectId,
   CifasCaseBody,
+  CifasDriver,
   CifasReference,
-  extractCifasSubjectNeighbors,
-  toCaseProperties
+  extractCifasSubjectNeighbors
 } from '../services/vendor/driver/cifasDriver';
+import {CifasSubjectHelper} from '../services/vendor/driver/cifasSubject';
 
 const INTEGRATION = {
   getAdminSettings: (key: string) =>
@@ -50,20 +50,34 @@ const CASE: CifasCaseBody = {
 void describe('CifasDriver', () => {
   void describe('buildCifasSubjectId', () => {
     void it('should build a deterministic subject id with normalized values', () => {
-      const hash1 = buildCifasSubjectId(' Case-123 ', ' John ', ' DOE ', '2024-03-01T09:30:00Z');
-      const hash2 = buildCifasSubjectId('case-123', 'john', 'doe', '2024-03-01');
+      const hash1 = CifasSubjectHelper.getId({
+        caseId: 123,
+        firstName: ' John ',
+        surname: ' DOE ',
+        birthDate: '2024-03-01T09:30:00Z'
+      });
+      const hash2 = CifasSubjectHelper.getId({
+        caseId: 123,
+        firstName: 'john',
+        surname: 'doe',
+        birthDate: '2024-03-01'
+      });
       assert.strictEqual(hash1, hash2);
     });
 
-    void it('should accept numeric case ids', () => {
-      assert.strictEqual(
-        buildCifasSubjectId(123, 'john', 'doe', '2024-03-01'),
-        buildCifasSubjectId('123', 'john', 'doe', '2024-03-01')
+    void it('should build different ids for different case ids', () => {
+      assert.notStrictEqual(
+        CifasSubjectHelper.getId({caseId: 123, firstName: 'john', surname: 'doe'}),
+        CifasSubjectHelper.getId({caseId: 124, firstName: 'john', surname: 'doe'})
       );
     });
 
     void it('should hash with empty strings for missing values', () => {
-      const hash = buildCifasSubjectId(undefined, null, 'doe', 'invalid-date');
+      const hash = CifasSubjectHelper.getId({
+        caseId: 123,
+        surname: 'doe',
+        birthDate: 'invalid-date'
+      });
       assert.match(hash, /^[a-f0-9]{64}$/);
     });
   });
@@ -96,7 +110,7 @@ void describe('CifasDriver', () => {
 
   void describe('toCaseProperties', () => {
     void it('should flatten the case without subjects', () => {
-      const properties = toCaseProperties(CASE) as unknown as Record<string, unknown>;
+      const properties = CifasDriver.toCaseProperties(CASE) as unknown as Record<string, unknown>;
       assert.strictEqual(properties.caseId, 8693212);
       assert.strictEqual(properties.caseType_referenceCode, 'FA');
       assert.strictEqual(properties.caseType_description, 'False Application');
@@ -116,7 +130,12 @@ void describe('CifasDriver', () => {
       assert.strictEqual(subject.keyProperty, 'subjectId');
       assert.strictEqual(
         subject.properties.subjectId,
-        buildCifasSubjectId(8693212, 'Laura', 'Smith', '1985-04-01')
+        CifasSubjectHelper.getId({
+          caseId: 8693212,
+          firstName: 'Laura',
+          surname: 'Smith',
+          birthDate: '1985-04-01'
+        })
       );
       assert.strictEqual(subject.properties.role_referenceCode, 'BP');
       assert.strictEqual(subject.properties.surname, 'Smith');

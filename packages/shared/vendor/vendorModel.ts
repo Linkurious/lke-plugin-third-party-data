@@ -48,14 +48,14 @@ export interface VendorField {
 
 export type VendorAdminField =
   | BaseAdminField<'string', {enum?: string[]}>
-  | BaseAdminField<'boolean', undefined>
-  | BaseAdminField<'file', undefined>;
-interface BaseAdminField<TYPE, OPTIONS> {
+  | BaseAdminField<'boolean'>
+  | BaseAdminField<'file'>;
+interface BaseAdminField<TYPE, OPTIONS = unknown> {
   type: TYPE;
   key: string;
   name: string;
   required?: boolean;
-  options?: OPTIONS;
+  options?: {hidden?: boolean} & OPTIONS;
 }
 
 export type AbstractFields = {[key: string]: VendorFieldType | undefined};

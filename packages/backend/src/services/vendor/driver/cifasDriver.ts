@@ -1,4 +1,3 @@
-import {createHash} from 'node:crypto';
 import {Buffer} from 'node:buffer';
 import * as process from 'node:process';
 
@@ -25,10 +24,11 @@ import {DetailsOptions} from '../../../models/detailsOptions';
 import {AbstractFields} from '../../../../../shared/vendor/vendorModel';
 import {VendorContext} from '../../../../../shared/vendor/vendorContext';
 
+import {CifasSubjectHelper} from './cifasSubject';
+
 // LKE-14966 - training environment
-const CIFAS_BASE_URL = 'https://trainingapi.cifas.org.uk';
-// const CIFAS_BASE_URL = 'https://api.cifas.org.uk/';
-const CIFAS_CURRENT_USER = 'Linkurious_API';
+const CIFAS_TEST_BASE_URL = 'https://trainingapi.cifas.org.uk';
+const CIFAS_BASE_URL = 'https://api.cifas.org.uk/';
 
 export class CifasDriver extends BaseDetailsSearchDriver<
   CifasSearchQuery,
@@ -51,7 +51,7 @@ export class CifasDriver extends BaseDetailsSearchDriver<
     _context: VendorContext
   ): Promise<VendorResult<CifasSearchResponse, CifasEdgeProperties>[]> {
     void _context;
-    const url = new URL('/v1/NFD/Search', CIFAS_BASE_URL);
+    const url = new URL('/v1/NFD/Search', this.getBaseUrl(integration));
     const result = await this.call<CifasSearchResponseBody>(
       integration,
       url,
@@ -80,7 +80,7 @@ export class CifasDriver extends BaseDetailsSearchDriver<
     context: VendorContext
   ): Promise<VendorResult<CifasDetailsResponse, CifasEdgeProperties>> {
     const caseId = encodeURIComponent(detailsOptions.searchResultId);
-    const url = new URL(`/v1/NFD/Cases/${caseId}`, CIFAS_BASE_URL);
+    const url = new URL(`/v1/NFD/Cases/${caseId}`, this.getBaseUrl(integration));
     const cifasCase = await this.call<CifasCaseBody>(integration, url, 'get');
 
     // create edge with properties
@@ -94,7 +94,7 @@ export class CifasDriver extends BaseDetailsSearchDriver<
 
     return {
       id: `${cifasCase.caseId}`,
-      properties: toCaseProperties(cifasCase),
+      properties: CifasDriver.toCaseProperties(cifasCase),
       keyProperty: 'caseId',
       edgeKeyProperty: 'caseId',
       edgeProperties: edgeProperties,
@@ -109,7 +109,10 @@ export class CifasDriver extends BaseDetailsSearchDriver<
     body?: unknown
   ): Promise<T> {
     // the PFX certificate is stored as a base64 string in the plugin configuration
-    const pfx = Buffer.from(integration.getAdminSettings('pfxCertificate') as string, 'base64');
+    const pfx = Buffer.from(
+      integration.getAdminSettings('pfxCertificateSecret') as string,
+      'base64'
+    );
     const passphrase = integration.getAdminSettings('pfxCertificatePassphrase') as string;
 
     const request = this.request(url, verb)
@@ -121,14 +124,15 @@ export class CifasDriver extends BaseDetailsSearchDriver<
       )
       .set('X-OwningMemberNumber', integration.getAdminSettings('owningMemberNumber') as string)
       .set('X-ManagingMemberNumber', integration.getAdminSettings('managingMemberNumber') as string)
-      .set('X-CurrentUser', CIFAS_CURRENT_USER);
-    if (body !== undefined) {
-      void request.send(body as object);
-    }
+      .set('X-CurrentUser', integration.getAdminSettings('currentUserReference') as string);
 
     let response: Response;
     try {
-      response = await request;
+      if (body !== undefined) {
+        response = await request.send(body as object);
+      } else {
+        response = await request;
+      }
     } catch (e) {
       if (process.env.DEBUG) {
         console.log('HTTP error: ' + JSON.stringify(e));
@@ -145,6 +149,23 @@ export class CifasDriver extends BaseDetailsSearchDriver<
       throw new Error(`CIFAS request failed (${response.status}): ${describeBody(response)}`);
     }
     return response.body as T;
+  }
+
+  private getBaseUrl(integration: VendorIntegration): string {
+    const testApi = integration.getAdminSettings('testApi') as boolean;
+    if (testApi) {
+      return CIFAS_TEST_BASE_URL;
+    }
+    return CIFAS_BASE_URL;
+  }
+
+  /** the case properties, without the subjects (they are returned as neighbors) */
+  public static toCaseProperties(cifasCase: CifasCaseBody): CifasDetailsResponse {
+    const {subjects, filingReasons, ...rest} = cifasCase;
+    void subjects;
+    const properties = flattenJson(rest);
+    properties.filingReasons = formatReferences(filingReasons);
+    return properties as unknown as CifasDetailsResponse;
   }
 }
 
@@ -240,51 +261,6 @@ export function buildCifasSearchBody(
   };
 }
 
-export function buildCifasSubjectId(
-  caseId: unknown,
-  firstName: unknown,
-  surname: unknown,
-  birthDate: unknown
-): string {
-  const payload =
-    normalizeString(caseId) +
-    normalizeString(firstName) +
-    normalizeString(surname) +
-    normalizeDateLike(birthDate);
-  return createHash('sha256').update(payload).digest('hex');
-}
-
-function normalizeString(value: unknown): string {
-  if (typeof value === 'number') {
-    return `${value}`;
-  }
-  if (typeof value !== 'string') {
-    return '';
-  }
-  return value.trim().toLowerCase();
-}
-
-function normalizeDateLike(value: unknown): string {
-  const sDate = normalizeString(value);
-  if (!sDate) {
-    return '';
-  }
-  const date = new Date(sDate);
-  if (Number.isNaN(date.getTime())) {
-    return '';
-  }
-  return date.toISOString().slice(0, 10);
-}
-
-/** the case properties, without the subjects (they are returned as neighbors) */
-export function toCaseProperties(cifasCase: CifasCaseBody): CifasDetailsResponse {
-  const {subjects, filingReasons, ...rest} = cifasCase;
-  void subjects;
-  const properties = flattenJson(rest);
-  properties.filingReasons = formatReferences(filingReasons);
-  return properties as unknown as CifasDetailsResponse;
-}
-
 function formatReferences(references: CifasReference[] | undefined): string {
   return (references ?? []).map((r) => `${r.referenceCode} - ${r.description}`).join('\n');
 }
@@ -292,12 +268,12 @@ function formatReferences(references: CifasReference[] | undefined): string {
 export function extractCifasSubjectNeighbors(cifasCase: CifasCaseBody): NeighborResult[] {
   return (cifasCase.subjects ?? []).map((subject) => {
     const properties = flattenJson(subject, true) as Record<string, string | number | boolean>;
-    properties.subjectId = buildCifasSubjectId(
-      cifasCase.caseId,
-      subject.firstName,
-      subject.surname,
-      subject.birthDate
-    );
+    properties.subjectId = CifasSubjectHelper.getId({
+      caseId: cifasCase.caseId,
+      firstName: subject.firstName,
+      surname: subject.surname,
+      birthDate: subject.birthDate
+    });
     return {
       edgeType: 'HAS_SUBJECT',
       nodeCategory: 'CIFAS_Subject',
