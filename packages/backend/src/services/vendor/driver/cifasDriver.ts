@@ -64,7 +64,7 @@ export class CifasDriver extends BaseDetailsSearchDriver<
     // keep the order returned by CIFAS: it reflects their prioritisation
     return (result.caseSearchResult.matches ?? []).slice(0, maxResults).map((match) => ({
       id: `${match.case.caseId}`,
-      properties: flattenJson(match.case) as CifasSearchResponse,
+      properties: flattenJson(match.case, true) as CifasSearchResponse,
       keyProperty: 'caseId',
       edgeKeyProperty: 'caseId'
     }));
@@ -285,29 +285,27 @@ export function toCaseProperties(cifasCase: CifasCaseBody): CifasDetailsResponse
   return properties as unknown as CifasDetailsResponse;
 }
 
-function formatReferences(references: CifasRef[] | undefined): string {
+function formatReferences(references: CifasReference[] | undefined): string {
   return (references ?? []).map((r) => `${r.referenceCode} - ${r.description}`).join('\n');
 }
 
 export function extractCifasSubjectNeighbors(cifasCase: CifasCaseBody): NeighborResult[] {
-  return (cifasCase.subjects ?? [])
-    .filter((subject) => typeof subject === 'object' && subject !== null)
-    .map((subject) => {
-      const properties = flattenJson(subject) as Record<string, string | number | boolean>;
-      properties.subjectId = buildCifasSubjectId(
-        cifasCase.caseId,
-        subject.firstName,
-        subject.surname,
-        subject.birthDate
-      );
-      return {
-        edgeType: 'HAS_SUBJECT',
-        nodeCategory: 'CIFAS_Subject',
-        keyProperty: 'subjectId',
-        edgeKeyProperty: 'subjectId',
-        properties: properties
-      };
-    });
+  return (cifasCase.subjects ?? []).map((subject) => {
+    const properties = flattenJson(subject, true) as Record<string, string | number | boolean>;
+    properties.subjectId = buildCifasSubjectId(
+      cifasCase.caseId,
+      subject.firstName,
+      subject.surname,
+      subject.birthDate
+    );
+    return {
+      edgeType: 'HAS_SUBJECT',
+      nodeCategory: 'CIFAS_Subject',
+      keyProperty: 'subjectId',
+      edgeKeyProperty: 'subjectId',
+      properties: properties
+    };
+  });
 }
 
 function describeBody(response: {body?: unknown; text?: string}): string {
@@ -317,7 +315,7 @@ function describeBody(response: {body?: unknown; text?: string}): string {
   return JSON.stringify(response.body);
 }
 
-type CifasRef = {referenceCode: string; description: string};
+export type CifasReference = {referenceCode: string; description: string};
 
 export interface CifasSearchRequestBody {
   memberReferenceNumber: string;
@@ -330,10 +328,10 @@ interface CifasSearchResponseBody {
   memberSearchReference?: string;
   caseSearchResult: {
     casesMatched: number;
-    unexecutedDmr: CifasRef[];
+    unexecutedDmr: CifasReference[];
     matches?: Array<{
       case: Record<string, unknown> & {caseId: number};
-      dmrOutcome: CifasRef[];
+      dmrOutcome: CifasReference[];
       priority: boolean;
     }>;
   };
@@ -343,6 +341,73 @@ interface CifasSearchResponseBody {
 /** "Case" in the NFD Search API v1 */
 export interface CifasCaseBody extends Record<string, unknown> {
   caseId: number;
-  filingReasons?: CifasRef[];
-  subjects?: Array<Record<string, unknown>>;
+  filingReasons?: CifasReference[];
+  subjects?: CifasSubject[];
+}
+
+interface CifasSubject {
+  role: CifasReference;
+  roleQualifier: CifasReference;
+
+  firstName?: string;
+  middleNames?: string;
+  surname?: string;
+  birthDate?: string;
+  nationalInsuranceNumber?: string;
+
+  employmentType?: CifasReference;
+
+  homeTelephoneNumber?: string;
+  mobileTelephoneNumber?: string;
+  workTelephoneNumber?: string;
+  employerTelephoneNumber?: string;
+  emailAddress?: string;
+  vehicleRegistrationNumber?: string;
+  vehicleIdentificationNumber?: string;
+  companyName?: string;
+  companyNumber?: string;
+  vatNumber?: string;
+  websiteAddress?: string;
+
+  addresses?: CifasSubjectAddress[];
+  financeDetails?: CifasFinanceDetail[];
+  documents?: CifasDocumentOutput[];
+
+  withholdSubjectAccess?: boolean;
+}
+
+interface CifasSubjectAddress {
+  addressType: CifasReference;
+  flatOrUnit?: string;
+  houseName?: string;
+  houseNumber?: string;
+  streetName?: string;
+  district?: string;
+  town?: string;
+  county?: string;
+  postcode?: string;
+  timeAtAddress?: CifasTimeAt;
+}
+
+interface CifasFinanceDetail {
+  type: 'bankOrBuildingSocietyAccount' | 'paymentCard';
+  relevance: CifasReference;
+  timeWithInstitution?: CifasTimeAt;
+}
+
+interface CifasDocumentOutput {
+  copyAvailable: CifasReference;
+  documentType: CifasReference;
+  documentQualifier: CifasReference;
+  nationality?: CifasReference;
+  reference: string;
+}
+
+interface CifasTimeAt {
+  format: {
+    referenceCode: string;
+    description: string;
+  };
+  year: number;
+  month?: number;
 }

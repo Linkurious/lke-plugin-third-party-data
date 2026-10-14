@@ -226,5 +226,4 @@ export type CifasDetailsResponse = CifasSearchResponse & {
   facility_description: string;
   ipAddress?: string;
   deviceId?: string;
-  // subject: complex object => output as a node, is an array so multiple output neighbor nodes
 };

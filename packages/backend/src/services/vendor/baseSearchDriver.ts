@@ -102,15 +102,19 @@ export abstract class BaseDetailsSearchDriver<
   ): Promise<VendorResult<DNR, DER>>;
 }
 
-export function flattenJson(json: unknown): Record<string, VendorFieldType> {
+export function flattenJson(json: unknown, explodeArray = false): Record<string, VendorFieldType> {
   const result: Record<string, VendorFieldType> = {};
   if (typeof json !== 'object' || json === null) {
     return result;
   }
   for (const [key, value] of Object.entries(json)) {
-    if (value !== null && typeof value === 'object') {
-      flattenJsonField(result, key, value as Record<string, unknown>);
-    } else if (value !== null && value !== undefined) {
+    if (value === null || value === undefined) {
+      continue;
+    }
+
+    if (typeof value === 'object') {
+      flattenJsonField(result, key, value as Record<string, unknown>, explodeArray);
+    } else {
       result[key] = value as VendorFieldType;
     }
   }
@@ -120,7 +124,8 @@ export function flattenJson(json: unknown): Record<string, VendorFieldType> {
 function flattenJsonField(
   result: Record<string, VendorFieldType>,
   key: string,
-  value: Record<string, unknown>
+  value: Record<string, unknown>,
+  explodeArray = false
 ): void {
   if (Array.isArray(value)) {
     // empty array
@@ -128,17 +133,31 @@ function flattenJsonField(
       return;
     }
 
-    // array of strings
-    if (typeof value[0] === 'string') {
-      result[key] = value.join(', ');
-      return;
-    }
+    if (explodeArray) {
+      value.forEach((entry, index) => {
+        if (entry === null || entry === undefined) {
+          return;
+        }
 
-    // array of objects
-    if (typeof value[0] === 'object' && value[0] !== null) {
-      result[key] = value
-        .map((entry) => JSON.stringify(entry, null, 1).slice(3, -1).replaceAll('\n "', '\n"'))
-        .join('\n\n');
+        if (typeof entry === 'object') {
+          flattenJsonField(result, `${key}_${index}`, entry as Record<string, unknown>);
+        } else {
+          result[`${key}_${index}`] = entry as VendorFieldType;
+        }
+      });
+    } else {
+      // array of strings
+      if (typeof value[0] === 'string') {
+        result[key] = value.join(', ');
+        return;
+      }
+
+      // array of objects
+      if (typeof value[0] === 'object' && value[0] !== null) {
+        result[key] = value
+          .map((entry) => JSON.stringify(entry, null, 1).slice(3, -1).replaceAll('\n "', '\n"'))
+          .join('\n\n');
+      }
     }
   } else {
     const prefix = key + '_';

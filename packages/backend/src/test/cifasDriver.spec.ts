@@ -6,6 +6,7 @@ import {
   buildCifasSearchBody,
   buildCifasSubjectId,
   CifasCaseBody,
+  CifasReference,
   extractCifasSubjectNeighbors,
   toCaseProperties
 } from '../services/vendor/driver/cifasDriver';
@@ -15,7 +16,7 @@ const INTEGRATION = {
     key === 'managingMemberNumber' ? 'LinkuriousSearch' : undefined
 } as unknown as VendorIntegration;
 
-const REF = (referenceCode: string, description: string): Record<string, string> => ({
+const REF = (referenceCode: string, description: string): CifasReference => ({
   referenceCode: referenceCode,
   description: description
 });
