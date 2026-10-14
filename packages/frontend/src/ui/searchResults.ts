@@ -144,7 +144,7 @@ export class SearchResults extends BaseUI {
               {class: 'col-8 text-break' + (index % 2 === 0 ? ' text-bg-light' : '')},
               typeof entry.value === 'string'
                 ? entry.value.split('\n\n').map((line) => $elem('div', {}, line))
-                : `${entry.value}`
+                : String(entry.value)
             )
           ])
         )
