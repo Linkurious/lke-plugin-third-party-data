@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "bootstrap": "5.3.8",
-    "@linkurious/rest-client": "4.3.13",
+    "@linkurious/rest-client": "4.3.14",
     "superagent": "10.2.3"
   },
   "devDependencies": {
