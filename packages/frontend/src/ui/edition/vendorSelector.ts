@@ -73,36 +73,37 @@ export class VendorSelector extends AbstractSelector<VendorEditorModel> {
     id: string,
     model: VendorEditorModel
   ): void {
-    if (field.type === 'string') {
-      if (field.options?.enum) {
-        const NONE = 'no-value';
-        const values = field.options.enum.map((v) => ({key: v, value: v}));
-        if (!field.required) {
-          values.unshift({key: NONE, value: STRINGS.ui.global.noValue});
-        }
-        addSelect(
-          parent,
-          {label: undefined, selectedKey: model.adminSettings[field.key] as string | undefined},
-          id,
-          values,
-          (value) => {
-            if (value === NONE) {
-              model.adminSettings[field.key] = undefined;
-            } else {
-              model.adminSettings[field.key] = value;
-            }
-          }
-        );
-      } else {
-        const input = document.createElement('input');
-        input.id = id;
-        input.classList.add('form-control');
-        input.value = (model.adminSettings[field.key] as string) ?? '';
-        input.addEventListener('input', () => {
-          model.adminSettings[field.key] = input.value === '' ? undefined : input.value;
-        });
-        parent.appendChild(input);
+    if (field.type === 'string' && field.options?.enum) {
+      const NONE = 'no-value';
+      const values = field.options.enum.map((v) => ({key: v, value: v}));
+      if (!field.required) {
+        values.unshift({key: NONE, value: STRINGS.ui.global.noValue});
       }
+      addSelect(
+        parent,
+        {label: undefined, selectedKey: model.adminSettings[field.key] as string | undefined},
+        id,
+        values,
+        (value) => {
+          if (value === NONE) {
+            model.adminSettings[field.key] = undefined;
+          } else {
+            model.adminSettings[field.key] = value;
+          }
+        }
+      );
+    } else if (field.type === 'string' || field.type === 'password') {
+      const input = document.createElement('input');
+      input.id = id;
+      if (field.type === 'password') {
+        input.type = 'password';
+      }
+      input.classList.add('form-control');
+      input.value = (model.adminSettings[field.key] as string) ?? '';
+      input.addEventListener('input', () => {
+        model.adminSettings[field.key] = input.value === '' ? undefined : input.value;
+      });
+      parent.appendChild(input);
     } else if (field.type === 'boolean') {
       const input = document.createElement('input');
       input.setAttribute('type', 'checkbox');

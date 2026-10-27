@@ -39,7 +39,7 @@ export class Cifas extends Vendor<CifasSearchQuery, CifasSearchResponse, CifasDe
           required: true
         },
         {
-          type: 'string',
+          type: 'password',
           key: 'pfxCertificatePassphrase',
           name: 'PFX Certificate passphrase',
           required: true
