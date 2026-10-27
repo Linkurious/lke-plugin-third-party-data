@@ -46,10 +46,10 @@
   ],
   "bundledDependencies": true,
   "dependencies": {
-    "@linkurious/rest-client": "4.3.13",
-    "body-parser": "2.3.0",
-    "qs": "6.16.0",
-    "superagent": "10.3.0",
+    "@linkurious/rest-client": "4.3.14",
+    "body-parser": "2.4.0",
+    "qs": "6.16.1",
+    "superagent": "10.4.1",
     "https-proxy-agent": "7.0.6"
   },
   "devDependencies": {
@@ -59,7 +59,7 @@
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-prettier": "5.5.6",
-    "express": "4.22.1",
+    "express": "4.22.3",
     "typescript": "5.9.3"
   },
   "workspaces": [
