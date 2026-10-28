@@ -48,8 +48,10 @@ export interface VendorField {
 
 export type VendorAdminField =
   | BaseAdminField<'string', {enum?: string[]}>
+  | BaseAdminField<'password'>
   | BaseAdminField<'boolean'>
   | BaseAdminField<'file'>;
+
 interface BaseAdminField<TYPE, OPTIONS = unknown> {
   type: TYPE;
   key: string;
