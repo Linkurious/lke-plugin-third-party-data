@@ -1,8 +1,7 @@
-import express = require('express');
+import * as express from 'express';
 
 import {MyPluginConfig, MyPluginConfigPublic} from '../../../shared/myPluginConfig';
 import {clone} from '../../../shared/utils';
-import {IntegrationModelPublic} from '../../../shared/integration/IntegrationModel';
 import {VendorIntegration} from '../../../shared/integration/vendorIntegration';
 import {STRINGS} from '../../../shared/strings';
 import {API} from '../server/api';
@@ -35,7 +34,7 @@ export class Configuration {
       integrations: (configClone.integrations ?? []).map((integration) => ({
         ...integration,
         adminSettings: undefined
-      })) as IntegrationModelPublic[]
+      }))
     };
   }
 
@@ -112,11 +111,16 @@ export class Configuration {
           }
         } else {
           // value is defined
-          if (field.type === 'string' && typeof value !== 'string') {
+          if ((field.type === 'string' || field.type === 'password') && typeof value !== 'string') {
             throw new Error(`${vendor.key}: adminSettings.${key} must be a string`);
           }
           if (field.type === 'boolean' && typeof value !== 'boolean') {
             throw new Error(`${vendor.key}: adminSettings.${key} must be a boolean`);
+          }
+          if (field.type === 'file') {
+            if (typeof value !== 'string' || !Configuration.isValidBase64Payload(value)) {
+              throw new Error(`${vendor.key}: adminSettings.${key} must be a base64 string`);
+            }
           }
         }
       }
@@ -136,5 +140,15 @@ export class Configuration {
       throw new Error(STRINGS.errors.getIntegrationById(integrationId));
     }
     return new VendorIntegration(integration);
+  }
+
+  private static isValidBase64Payload(value: string): boolean {
+    if (value.length === 0) {
+      return false;
+    }
+    if (value.length % 4 !== 0) {
+      return false;
+    }
+    return /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value);
   }
 }

@@ -51,7 +51,7 @@ export = function (pluginInterface: PluginRouteOptions<MyPluginConfig>): void {
     '/details',
     respond(async (req) => {
       const detailsOptions = DetailsOptions.from(req.query);
-      return services.getDetails(detailsOptions);
+      return services.getDetails(pluginInterface.getRestClient(req), detailsOptions);
     })
   );
 };

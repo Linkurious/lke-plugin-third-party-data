@@ -18,6 +18,8 @@ export const STRINGS = {
     checkInputNodeMapping: {
       noMappingsDefined: 'At least one search query mapping must be defined',
       missingInputProperty: `Search query mapping: source node property must be defined`,
+      missingNeighborNodeCategory: `Search query mapping: neighbor node category must be defined`,
+      missingNeighborInputProperty: `Search query mapping: neighbor node property must be defined`,
       requiredFieldMissing: (vf: VendorField): string =>
         `Search query mapping: required field "${vf.key}" is missing`,
       unknownField: (m: Partial<FieldMapping>): string =>
@@ -146,6 +148,9 @@ export const STRINGS = {
       inputTypeLabel: 'Input type',
       searchQueryFieldLabel: 'Search query field (* = required)',
       inputPropertyLabel: 'Input property',
+      neighborProperty: 'Neighbor property',
+      neighborNodeCategoryLabel: 'Neighbor node category',
+      neighborPropertyLabel: 'Neighbor property',
 
       propertyInputType: (inputNodeType: string): string => `"${inputNodeType}" property`
     },
@@ -168,6 +173,16 @@ export const STRINGS = {
       title: 'Select third-party vendor API - [1/7]',
       description:
         'Select a third-party data vendor API for this new integration, and configure it.'
+    },
+    inputNeighborNodesEditor: {
+      description: 'Load data from neighbor nodes',
+      edgeTypeLabel: 'Edge type',
+      anyEdgeLabel: 'Any edge',
+      nodeTypeLabel: 'Node category',
+      actionColumnHead: 'Action',
+      addButton: 'Add',
+      duplicateNeighborNodeError:
+        'At least one neighbor node is used twice. Please select a different node category.'
     },
     integrationEditor: {
       selectInputNodeTypeTitle: 'Select the input node-category - [3/7]',
@@ -200,7 +215,14 @@ export const STRINGS = {
       detailsModalTitle: 'Search result details',
       detailsButton: `View details`,
       noResults: 'No results found.',
-      importButton: `Import result`
+      resultNumber: (index: number): string => `Result #${index}`,
+      matchedResultSelected: (count: number): string =>
+        `${count} matched result selected for import`,
+      matchedResultsSelected: (count: number): string =>
+        `${count} matched results selected for import`,
+      importButton: `Import result`,
+      importSelectionButton: `Import`,
+      cancelButton: `Cancel`
     },
     editIntegration: {
       savingNewIntegration: 'Saving new integration...',
@@ -214,7 +236,10 @@ export const STRINGS = {
       successfullyCreated: `Successfully imported search result in the graph.`,
       confirmModalCloseButton: 'Close window',
       gettingDetails: 'Getting details for the selected result',
-      title: 'Success'
+      noResultsToImport: 'No results selected for import.',
+      title: 'Success',
+      failBulkNodes: (category: string): string => `Failed to bulk create nodes (${category})`,
+      failBulkEdges: (type: string): string => `Failed to bulk create edges (${type})`
     },
     integrationCreated: {
       title: 'Integration created successfully',

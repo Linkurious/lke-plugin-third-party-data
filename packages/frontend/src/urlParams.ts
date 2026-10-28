@@ -51,7 +51,7 @@ interface BaseSuccessState<A> extends BaseState<false> {
   action: A;
 }
 export type SuccessState = EmptySuccessState | SearchSuccessState;
-export interface EmptySuccessState extends BaseSuccessState<'none'> {}
+export type EmptySuccessState = BaseSuccessState<'none'>;
 export interface SearchSuccessState extends BaseSuccessState<'search'> {
   action: 'search';
   sourceKey: string;

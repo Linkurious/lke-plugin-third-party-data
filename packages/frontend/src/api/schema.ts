@@ -34,6 +34,43 @@ export class Schema {
     }
   }
 
+  async getNodeTypesSchemas(
+    sourceKey: string,
+    nodeCategories: string[],
+    access: ItemAccess = 'read',
+    tolerateMissing = false
+  ): Promise<GraphItemSchema[]> {
+    const itemTypes = await this.getItemTypes(sourceKey, EntityType.NODE, access);
+
+    return nodeCategories.map((nodeCategory) => {
+      const schema = itemTypes.find((t) => t.itemType === nodeCategory);
+
+      if (!schema) {
+        if (tolerateMissing) {
+          return {
+            itemType: nodeCategory,
+            access: ItemTypeAccessRightType.WRITE,
+            properties: []
+          };
+        } else {
+          throw new Error(`Node category "${nodeCategory}" was not found in the graph schema`);
+        }
+      }
+
+      return {
+        itemType: schema.itemType,
+        access: schema.access,
+        properties: schema.properties
+          .filter((p) => p.visibility !== DataVisibility.NONE)
+          .map((p) => ({
+            propertyKey: p.propertyKey,
+            required: p.required,
+            type: p.propertyType.name
+          }))
+      };
+    });
+  }
+
   async getEdgeTypeSchema(
     sourceKey: string,
     edgeType: string,

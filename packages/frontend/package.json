@@ -1,10 +1,11 @@
 {
   "name": "frontend",
-  "version": "1.0.0",
+  "version": "1.0.11",
   "type": "module",
   "scripts": {
     "start": "vite serve",
     "build": "vite build",
+    "tsc:no-emit": "tsc --noEmit",
     "clean": "rm -rf ../../dist/frontend ./node_modules/.vite ./reports",
     "lint": "tsc && eslint ./vite.config.ts ./src ../shared --ext .ts",
     "lint:fix": "eslint ./vite.config.ts ./src ../shared --ext .ts --fix",
@@ -12,11 +13,11 @@
   },
   "dependencies": {
     "bootstrap": "5.3.8",
-    "@linkurious/rest-client": "4.3.4",
-    "superagent": "10.2.3"
+    "@linkurious/rest-client": "4.3.14",
+    "superagent": "10.4.1"
   },
   "devDependencies": {
-    "@types/bootstrap": "5.2.10",
-    "vite": "8.0.8"
+    "@types/bootstrap": "5.2.11",
+    "vite": "8.3.5"
   }
 }

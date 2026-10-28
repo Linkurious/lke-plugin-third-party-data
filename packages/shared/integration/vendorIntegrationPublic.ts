@@ -1,13 +1,30 @@
-import {ICreateNodeParams, ICreateEdgeParams, LkNode} from '@linkurious/rest-client';
+import {
+  DuplicateConfig,
+  DuplicateStrategy,
+  LkNode,
+  PluginAction,
+  NodeParams,
+  EdgeParams
+} from '@linkurious/rest-client';
 
-import {PluginAction} from '../../backend/src/server/api';
-import {NeighborResult, VendorResult} from '../api/response';
-import {VendorFieldType} from '../vendor/vendorModel';
+import {NeighborResult} from '../api/response';
+import {AbstractFields, VendorFieldType} from '../vendor/vendorModel';
 import {Vendor} from '../vendor/vendor';
 import {Vendors} from '../vendor/vendors';
 import {STRINGS} from '../strings';
 
-import {FieldMapping, IntegrationModelPublic, PropertyFieldMapping} from './IntegrationModel';
+import {
+  FieldMapping,
+  IntegrationModelPublic,
+  NeighborNodeFilter,
+  NeighborPropertyFieldMapping
+} from './IntegrationModel';
+
+// Nodes matching a NeighborNode definition
+export interface NeighborGroup {
+  neighborNodeFilter: NeighborNodeFilter;
+  nodes: LkNode[];
+}
 
 export class VendorIntegrationPublic<VI extends IntegrationModelPublic = IntegrationModelPublic> {
   protected readonly model: VI;
@@ -22,37 +39,33 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
     return this.model.id;
   }
 
-  getOutputNode(vendorResult: VendorResult): ICreateNodeParams {
-    const node = {
-      sourceKey: this.model.sourceKey,
-      categories: [this.model.outputNodeCategory],
-      properties: {} as Record<string, unknown>
-    };
+  mapMainNodeProperties(rawProperties: AbstractFields): Required<NodeParams>['properties'] {
+    const nodeProperties: Required<NodeParams>['properties'] = {};
     for (const mapping of this.model.outputNodeFieldMapping) {
-      const inputValue = this.getVendorInputValue(mapping, vendorResult);
+      const inputValue = this.getVendorInputValue(mapping, rawProperties);
       if (inputValue === undefined) {
         continue;
       }
       // if the input value is a string...
       if (typeof inputValue === 'string') {
         // ...and the output property is already a string...
-        if (typeof node.properties[mapping.outputPropertyKey] === 'string') {
+        if (typeof nodeProperties[mapping.outputPropertyKey] === 'string') {
           // ...append the input value to the output value
-          node.properties[mapping.outputPropertyKey] += ` ${inputValue}`;
+          nodeProperties[mapping.outputPropertyKey] += ` ${inputValue}`;
         } else {
           // else, if the output property is not a string, set it to the input value
-          node.properties[mapping.outputPropertyKey] = inputValue;
+          nodeProperties[mapping.outputPropertyKey] = inputValue;
         }
       } else {
-        node.properties[mapping.outputPropertyKey] = inputValue;
+        nodeProperties[mapping.outputPropertyKey] = inputValue;
       }
     }
-    return node;
+    return nodeProperties;
   }
 
   private getVendorInputValue(
     mapping: FieldMapping,
-    searchResult: VendorResult
+    rawProperties: AbstractFields
   ): VendorFieldType | undefined {
     if (mapping.type === 'constant') {
       let value = mapping.value;
@@ -62,58 +75,67 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
       return value;
     }
     if (mapping.type === 'property') {
-      return searchResult.properties[mapping.inputPropertyKey];
+      return rawProperties[mapping.inputPropertyKey];
     }
     return undefined;
   }
 
-  getOutputEdge(
-    _searchResult: VendorResult,
-    outputNodeId: string,
-    inputNodeId: string
-  ): ICreateEdgeParams {
-    return {
-      sourceKey: this.model.sourceKey,
-      type: this.model.outputEdgeType,
-      properties: {} as Record<string, unknown>,
-      // edge direction: from output node to input node
-      source: outputNodeId,
-      target: inputNodeId
-    };
+  getInputNeighborNodeFilters(): NeighborNodeFilter[] {
+    return this.model.inputNeighborNodeFilters ?? [];
   }
 
-  getSearchQuery(inputNode: LkNode): Record<string, VendorFieldType> {
+  hasNeighborPropertyMapping(): boolean {
+    return this.model.searchQueryFieldMapping.some((m) => m.type === 'neighborProperty');
+  }
+
+  getSearchQuery(
+    inputNode: LkNode,
+    neighborGroups: NeighborGroup[] = []
+  ): Record<string, VendorFieldType> {
     const query: Record<string, VendorFieldType> = {};
     for (const mapping of this.model.searchQueryFieldMapping) {
-      const inputValue = this.getNodeInputValue(mapping, inputNode);
-      if (inputValue === undefined) {
+      const rawValue = this.getNodeInputValue(mapping, inputNode, neighborGroups);
+      if (rawValue === undefined) {
         continue;
       }
-      const expectedType = this.vendor.searchQueryFields.find(
+      const vendorField = this.vendor.searchQueryFields.find(
         (f) => f.key === mapping.outputPropertyKey
-      )?.type;
+      );
+      const expectedType = vendorField?.type;
       if (expectedType === undefined) {
         console.warn(
           `Search query builder: unknown vendor field ${mapping.outputPropertyKey} (integration: ${this.model.id})`
         );
         continue;
       }
-      if (expectedType === 'string') {
-        if (query[mapping.outputPropertyKey] === undefined) {
-          // first value
-          query[mapping.outputPropertyKey] = `${inputValue}`;
-        } else {
-          // append to existing value
-          query[mapping.outputPropertyKey] += ` ${inputValue}`;
-        }
-      } else if (expectedType === 'number' && typeof inputValue === 'number') {
-        query[mapping.outputPropertyKey] = inputValue;
-      } else if (expectedType === 'boolean' && typeof inputValue === 'boolean') {
-        query[mapping.outputPropertyKey] = inputValue;
+      if (vendorField?.array) {
+        query[mapping.outputPropertyKey] = [
+          ...((query[mapping.outputPropertyKey] ?? []) as VendorFieldType[]),
+          ...(Array.isArray(rawValue) ? rawValue : [rawValue])
+        ];
       } else {
-        console.warn(
-          `Search query builder: invalid input value type for ${mapping.outputPropertyKey} (node: #${inputNode.id}, integration: ${this.model.id})`
-        );
+        // scalar field: join the values
+        const inputValue = Array.isArray(rawValue) ? rawValue.flat().join(', ') : rawValue;
+        if (inputValue === undefined) {
+          continue;
+        }
+        if (expectedType === 'string') {
+          if (query[mapping.outputPropertyKey] === undefined) {
+            // first value
+            query[mapping.outputPropertyKey] = `${inputValue}`;
+          } else {
+            // append to existing value
+            query[mapping.outputPropertyKey] += ` ${inputValue}`;
+          }
+        } else if (expectedType === 'number' && typeof inputValue === 'number') {
+          query[mapping.outputPropertyKey] = inputValue;
+        } else if (expectedType === 'boolean' && typeof inputValue === 'boolean') {
+          query[mapping.outputPropertyKey] = inputValue;
+        } else {
+          console.warn(
+            `Search query builder: invalid input value type for ${mapping.outputPropertyKey} (node: #${inputNode.id}, integration: ${this.model.id})`
+          );
+        }
       }
     }
 
@@ -123,14 +145,37 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
     return query;
   }
 
-  private getNodeInputValue(mapping: FieldMapping, inputNode: LkNode): VendorFieldType | undefined {
+  private getNodeInputValue(
+    mapping: FieldMapping,
+    inputNode: LkNode,
+    neighborGroups: NeighborGroup[]
+  ): VendorFieldType | undefined {
     if (mapping.type === 'constant') {
       return mapping.value;
     }
     if (mapping.type === 'property') {
       return this.getNodePropertyValue(inputNode, mapping.inputPropertyKey);
     }
+    if (mapping.type === 'neighborProperty') {
+      const neighbors = this.getMappingNeighbor(mapping, neighborGroups);
+      // keep one entry per neighbor ('' when the value is missing) so that values mapped from
+      // different properties of the same neighbor stay aligned by index
+      const neighborValues = neighbors?.map(
+        (neighbor) => this.getNodePropertyValue(neighbor, mapping.inputPropertyKey) ?? ''
+      );
+      return neighborValues?.some((v) => v !== '') ? neighborValues : undefined;
+    }
     return undefined;
+  }
+
+  private getMappingNeighbor(
+    mapping: NeighborPropertyFieldMapping,
+    neighborGroups: NeighborGroup[]
+  ): LkNode[] | undefined {
+    // take the first neighbor node that matches the mapping
+    return neighborGroups.find(
+      (g) => g.neighborNodeFilter.nodeCategory === mapping.inputNodeCategory && g.nodes.length > 0
+    )?.nodes;
   }
 
   private getNodePropertyValue(node: LkNode, propertyKey: string): VendorFieldType | undefined {
@@ -175,9 +220,13 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
   private checkSearchQuery(searchQuery: Record<string, VendorFieldType>): void {
     for (const field of this.vendor.searchQueryFields) {
       if (field.required && searchQuery[field.key] === undefined) {
-        const missingProperties = this.model.searchQueryFieldMapping
-          .filter((m) => m.type === 'property')
-          .map((mapping) => (mapping as PropertyFieldMapping).inputPropertyKey);
+        const missingProperties = this.model.searchQueryFieldMapping.flatMap((mapping) =>
+          mapping.type === 'property'
+            ? [mapping.inputPropertyKey]
+            : mapping.type === 'neighborProperty'
+              ? [`${mapping.inputNodeCategory}.${mapping.inputPropertyKey}`]
+              : []
+        );
         throw new Error(
           STRINGS.errors.checkSearchQuery.requiredFieldMissing(
             this.vendor,
@@ -189,25 +238,33 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
     }
   }
 
-  public getNeighborNode(neighbor: NeighborResult): ICreateNodeParams {
+  public getNeighborEdgeProperties(neighbor: NeighborResult): Required<EdgeParams>['properties'] {
+    const properties: Record<string, unknown> = {};
+
+    if (neighbor.edgeKeyProperty && neighbor.properties[neighbor.edgeKeyProperty] !== undefined) {
+      properties[neighbor.edgeKeyProperty] = neighbor.properties[neighbor.edgeKeyProperty];
+    }
+
+    return properties;
+  }
+
+  public getDuplicateConfig(keyProperty?: string): DuplicateConfig {
+    if (keyProperty) {
+      return {
+        duplicateStrategy: DuplicateStrategy.MERGE,
+        duplicateDetection: {property: keyProperty}
+      };
+    }
     return {
-      sourceKey: this.model.sourceKey,
-      categories: [neighbor.nodeCategory],
-      properties: neighbor.properties
+      duplicateStrategy: DuplicateStrategy.IMPORT_EVERYTHING
     };
   }
 
-  public getNeighborEdge(
-    neighbor: NeighborResult,
-    mainNodeId: string,
-    neighborNodeId: string
-  ): ICreateEdgeParams {
-    return {
-      sourceKey: this.model.sourceKey,
-      type: neighbor.edgeType,
-      source: mainNodeId,
-      target: neighborNodeId,
-      properties: {}
-    };
+  getOutputTypes(): Pick<VI, 'outputEdgeType' | 'outputNodeCategory'> {
+    return this.model;
+  }
+
+  getSourceKey(): string {
+    return this.model.sourceKey;
   }
 }

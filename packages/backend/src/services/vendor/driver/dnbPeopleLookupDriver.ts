@@ -6,6 +6,7 @@ import {
   DnbPersonLookupSearchResponse,
   DnbPersonLookupVendor
 } from '../../../../../shared/vendor/vendors/dnbPersonLookup';
+import {VendorContext} from '../../../../../shared/vendor/vendorContext';
 
 export class DnbPeopleLookupDriver extends BaseSearchDriver<
   DnbPersonLookupSearchQuery,
@@ -21,7 +22,8 @@ export class DnbPeopleLookupDriver extends BaseSearchDriver<
   async search(
     searchQuery: DnbPersonLookupSearchQuery,
     integration: VendorIntegration,
-    maxResults: number
+    maxResults: number,
+    _context: VendorContext
   ): Promise<VendorResult<DnbPersonLookupSearchResponse>[]> {
     const url = new URL('https://direct.dnb.com/V6.4/organizations');
     url.searchParams.set('CandidateMaximumQuantity', `${maxResults}`);

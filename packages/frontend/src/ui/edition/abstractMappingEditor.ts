@@ -9,6 +9,7 @@ import {AbstractFormPopin} from './abstractFormPopin';
 export abstract class AbstractMappingEditor extends AbstractFormPopin<FieldMapping[]> {
   protected newModel: Partial<FieldMapping>;
   private nodeTypeSchema?: GraphItemSchema;
+  protected readonly neighborNodeSchemasByCategory = new Map<string, GraphItemSchema>();
   protected readonly services: ServiceFacade;
 
   protected constructor(services: ServiceFacade, title: string, description: string) {
@@ -81,7 +82,11 @@ export abstract class AbstractMappingEditor extends AbstractFormPopin<FieldMappi
     col4.appendChild(
       this.ui.button.create('Add', {outline: true, small: true}, async () => {
         try {
-          this.assertNewModelIsValid(this.newModel, nodeTypeSchema);
+          const neighborNodeSchema =
+            this.newModel.type === 'neighborProperty' && this.newModel.inputNodeCategory
+              ? await this.getNeighborNodeSchema(this.newModel.inputNodeCategory)
+              : undefined;
+          this.assertNewModelIsValid(this.newModel, nodeTypeSchema, neighborNodeSchema);
           console.log('NEW Mapping: ' + JSON.stringify(this.newModel));
           this.getModel()!.push(this.newModel);
           this.newModel = {};
@@ -152,6 +157,13 @@ export abstract class AbstractMappingEditor extends AbstractFormPopin<FieldMappi
     );
   }
 
+  protected renderNeighborProperty(nodeCategory: string, propertyKey: string): string {
+    const neighborNodeSchema = this.neighborNodeSchemasByCategory.get(nodeCategory);
+    return neighborNodeSchema
+      ? this.renderNodeProperty(propertyKey, neighborNodeSchema)
+      : `${nodeCategory}.${propertyKey}`;
+  }
+
   /**
    * Render the 3 columns used to display an existing mapping.
    */
@@ -174,15 +186,25 @@ export abstract class AbstractMappingEditor extends AbstractFormPopin<FieldMappi
 
   protected abstract assertNewModelIsValid(
     model: Partial<FieldMapping>,
-    nodeTypeSchema: GraphItemSchema
+    nodeTypeSchema: GraphItemSchema,
+    neighborNodeSchema?: GraphItemSchema
   ): asserts model is FieldMapping;
 
-  protected abstract $getNodeTypeSchemaInternal(): Promise<GraphItemSchema>;
+  protected abstract $getNodeTypeSchemaInternal(nodeType?: string): Promise<GraphItemSchema>;
 
   protected async getNodeTypeSchema(): Promise<GraphItemSchema> {
     if (!this.nodeTypeSchema) {
       this.nodeTypeSchema = await this.$getNodeTypeSchemaInternal();
     }
     return this.nodeTypeSchema;
+  }
+
+  protected async getNeighborNodeSchema(nodeCategory: string): Promise<GraphItemSchema> {
+    let schema = this.neighborNodeSchemasByCategory.get(nodeCategory);
+    if (!schema) {
+      schema = await this.$getNodeTypeSchemaInternal(nodeCategory);
+      this.neighborNodeSchemasByCategory.set(nodeCategory, schema);
+    }
+    return schema;
   }
 }

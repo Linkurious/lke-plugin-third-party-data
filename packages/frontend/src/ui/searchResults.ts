@@ -23,13 +23,46 @@ export class SearchResults extends BaseUI {
       return $elem('p', {class: 'text-center my-3'}, STRINGS.ui.searchResults.noResults);
     }
 
+    const results = new Set<VendorResult>();
+    const selectionText = $elem('div', {class: 'mb-3'});
+    const importButton = this.ui.button.create(
+      STRINGS.ui.searchResults.importSelectionButton,
+      {classes: ['mb-2', 'col-5']},
+      async () => {
+        await services.importSearchResults(integration, Array.from(results), response.inputNodeId);
+      }
+    );
+
+    function updateSelection(): void {
+      selectionText.innerText =
+        results.size === 1
+          ? STRINGS.ui.searchResults.matchedResultSelected(results.size)
+          : STRINGS.ui.searchResults.matchedResultsSelected(results.size);
+      importButton.disabled = results.size === 0;
+    }
+    updateSelection();
+
     return $elem('div', {}, [
       description,
       // results
       ...response.results.map((result, index) => {
         return $elem('div', {class: 'row mb-3'}, [
+          $elem('div', {class: 'col-1'}, [
+            this.ui.checkbox.create(
+              STRINGS.ui.searchResults.resultNumber(index),
+              {hideLabel: true},
+              (checked) => {
+                if (checked) {
+                  results.add(result);
+                } else if (results.has(result)) {
+                  results.delete(result);
+                }
+                updateSelection();
+              }
+            )
+          ]),
           $elem('div', {class: 'col-1'}, [$elem('em', {}, `#${index}`)]),
-          $elem('div', {class: 'col-8'}, [
+          $elem('div', {class: 'col-7'}, [
             this.getSearchResultProperties(integration, result, true),
             // result separator
             $elem('hr', {})
@@ -56,12 +89,23 @@ export class SearchResults extends BaseUI {
               STRINGS.ui.searchResults.importButton,
               {classes: ['float-end', 'mb-2']},
               async () => {
-                await services.importSearchResult(integration, result, response.inputNodeId);
+                await services.importSearchResults(integration, [result], response.inputNodeId);
               }
             )
           ])
         ]);
-      })
+      }),
+      selectionText,
+      $elem('div', {class: 'row mb-3'}, [
+        importButton,
+        this.ui.button.create(
+          STRINGS.ui.searchResults.cancelButton,
+          {type: 'secondary', classes: ['mb-2', 'col-5']},
+          async () => {
+            services.closePlugin();
+          }
+        )
+      ])
     ]);
   }
 
@@ -100,7 +144,7 @@ export class SearchResults extends BaseUI {
               {class: 'col-8 text-break' + (index % 2 === 0 ? ' text-bg-light' : '')},
               typeof entry.value === 'string'
                 ? entry.value.split('\n\n').map((line) => $elem('div', {}, line))
-                : `${entry.value}`
+                : String(entry.value)
             )
           ])
         )

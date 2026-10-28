@@ -4,6 +4,7 @@ import superagent, {SuperAgentRequest} from 'superagent';
 import {HttpsProxyAgent} from 'https-proxy-agent';
 
 import {AbstractFields, VendorFieldType} from '../../../../shared/vendor/vendorModel';
+import {VendorContext} from '../../../../shared/vendor/vendorContext';
 import {VendorResult} from '../../../../shared/api/response';
 import {VendorIntegration} from '../../../../shared/integration/vendorIntegration';
 import {Vendor} from '../../../../shared/vendor/vendor';
@@ -48,13 +49,17 @@ export class ProxyClient extends WithLogger {
   }
 }
 
-export abstract class BaseSearchDriver<SQ extends AbstractFields, SR extends AbstractFields>
+export abstract class BaseSearchDriver<
+  SQ extends AbstractFields,
+  SNR extends AbstractFields,
+  DER extends AbstractFields = AbstractFields
+>
   extends ProxyClient
-  implements SearchDriver<SQ, SR>
+  implements SearchDriver<SQ, SNR, DER>
 {
   public readonly vendorKey: string;
 
-  protected constructor(vendor: Vendor<SQ, SR>) {
+  protected constructor(vendor: Vendor<SQ, SNR>) {
     super();
     this.vendorKey = vendor.key;
   }
@@ -62,21 +67,23 @@ export abstract class BaseSearchDriver<SQ extends AbstractFields, SR extends Abs
   abstract search(
     searchQuery: SQ,
     integration: VendorIntegration,
-    maxResults: number
-  ): Promise<VendorResult<SR>[]>;
+    maxResults: number,
+    context: VendorContext
+  ): Promise<VendorResult<SNR, DER>[]>;
 }
 
 export abstract class BaseDetailsSearchDriver<
   SQ extends AbstractFields,
-  SR extends AbstractFields,
-  DR extends AbstractFields
+  SNR extends AbstractFields,
+  DNR extends AbstractFields,
+  DER extends AbstractFields = AbstractFields
 >
   extends ProxyClient
-  implements DetailsSearchDriver<SQ, SR, DR>
+  implements DetailsSearchDriver<SQ, SNR, DNR, DER>
 {
   public readonly vendorKey: string;
 
-  protected constructor(vendor: Vendor<SQ, SR>) {
+  protected constructor(vendor: Vendor<SQ, SNR>) {
     super();
     this.vendorKey = vendor.key;
   }
@@ -84,24 +91,35 @@ export abstract class BaseDetailsSearchDriver<
   abstract search(
     searchQuery: SQ,
     integration: VendorIntegration,
-    maxResults: number
-  ): Promise<VendorResult<SR>[]>;
+    maxResults: number,
+    context: VendorContext
+  ): Promise<VendorResult<SNR, DER>[]>;
 
   abstract getDetails(
     integration: VendorIntegration,
-    detailsOptions: DetailsOptions
-  ): Promise<VendorResult<DR>>;
+    detailsOptions: DetailsOptions,
+    context: VendorContext
+  ): Promise<VendorResult<DNR, DER>>;
 }
 
-export function flattenJson(json: unknown): Record<string, VendorFieldType> {
+/**
+ * Flattens a JSON object into a single-level object.
+ * Option to spread array values into separate keys with index suffixes.
+ * Example: {adresses: [{city: 'New York'}, {city: 'Los Angeles'}]} becomes addresses_0_city: 'New York', addresses_1_city: 'Los Angeles' if spreadArray is true.
+ */
+export function flattenJson(json: unknown, spreadArray = false): Record<string, VendorFieldType> {
   const result: Record<string, VendorFieldType> = {};
   if (typeof json !== 'object' || json === null) {
     return result;
   }
   for (const [key, value] of Object.entries(json)) {
-    if (value !== null && typeof value === 'object') {
-      flattenJsonField(result, key, value as Record<string, unknown>);
-    } else if (value !== null && value !== undefined) {
+    if (value === null || value === undefined) {
+      continue;
+    }
+
+    if (typeof value === 'object') {
+      flattenJsonField(result, key, value as Record<string, unknown>, spreadArray);
+    } else {
       result[key] = value as VendorFieldType;
     }
   }
@@ -111,7 +129,8 @@ export function flattenJson(json: unknown): Record<string, VendorFieldType> {
 function flattenJsonField(
   result: Record<string, VendorFieldType>,
   key: string,
-  value: Record<string, unknown>
+  value: Record<string, unknown>,
+  spreadArray = false
 ): void {
   if (Array.isArray(value)) {
     // empty array
@@ -119,17 +138,31 @@ function flattenJsonField(
       return;
     }
 
-    // array of strings
-    if (typeof value[0] === 'string') {
-      result[key] = value.join(', ');
-      return;
-    }
+    if (spreadArray) {
+      value.forEach((entry, index) => {
+        if (entry === null || entry === undefined) {
+          return;
+        }
 
-    // array of objects
-    if (typeof value[0] === 'object' && value[0] !== null) {
-      result[key] = value
-        .map((entry) => JSON.stringify(entry, null, 1).slice(3, -1).replaceAll('\n "', '\n"'))
-        .join('\n\n');
+        if (typeof entry === 'object') {
+          flattenJsonField(result, `${key}_${index}`, entry as Record<string, unknown>);
+        } else {
+          result[`${key}_${index}`] = entry as VendorFieldType;
+        }
+      });
+    } else {
+      // array of strings
+      if (typeof value[0] === 'string') {
+        result[key] = value.join(', ');
+        return;
+      }
+
+      // array of objects
+      if (typeof value[0] === 'object' && value[0] !== null) {
+        result[key] = value
+          .map((entry) => JSON.stringify(entry, null, 1).slice(3, -1).replaceAll('\n "', '\n"'))
+          .join('\n\n');
+      }
     }
   } else {
     const prefix = key + '_';

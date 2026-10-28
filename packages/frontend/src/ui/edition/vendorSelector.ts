@@ -6,6 +6,7 @@ import {Vendors} from '../../../../shared/vendor/vendors.ts';
 import {STRINGS} from '../../../../shared/strings';
 
 import {AbstractSelector} from './abstractSelector';
+import {FileAdminFieldController} from './fileAdminFieldController';
 
 export type VendorEditorModel = {
   vendor: Vendor;
@@ -13,6 +14,8 @@ export type VendorEditorModel = {
 };
 
 export class VendorSelector extends AbstractSelector<VendorEditorModel> {
+  private readonly fileAdminFieldController = new FileAdminFieldController();
+
   constructor(ui: UiFacade) {
     super(ui, STRINGS.ui.vendorSelector.title, STRINGS.ui.vendorSelector.description);
   }
@@ -49,15 +52,17 @@ export class VendorSelector extends AbstractSelector<VendorEditorModel> {
       {class: 'mb-3 form-control'},
       model === undefined
         ? undefined
-        : model.vendor.adminFields.map((f, i) => {
-            const id = 'admin-field-' + i;
-            const left = $elem('div', {class: 'col-5'}, [
-              $elem('label', {for: id, class: 'form-label'}, `${f.name}${f.required ? ' *' : ''}`)
-            ]);
-            const right = $elem('div', {class: 'col-7'});
-            this.addField(right, f, id, model);
-            return $elem('div', {class: 'row my-1'}, [left, right]);
-          })
+        : model.vendor.adminFields
+            .filter((f) => !f.options?.hidden)
+            .map((f, i) => {
+              const id = 'admin-field-' + i;
+              const left = $elem('div', {class: 'col-5'}, [
+                $elem('label', {for: id, class: 'form-label'}, `${f.name}${f.required ? ' *' : ''}`)
+              ]);
+              const right = $elem('div', {class: 'col-7'});
+              this.addField(right, f, id, model);
+              return $elem('div', {class: 'row my-1'}, [left, right]);
+            })
     );
     return $elem('div', {}, [description, settings]);
   }
@@ -68,36 +73,37 @@ export class VendorSelector extends AbstractSelector<VendorEditorModel> {
     id: string,
     model: VendorEditorModel
   ): void {
-    if (field.type === 'string') {
-      if (field.options?.enum) {
-        const NONE = 'no-value';
-        const values = field.options.enum.map((v) => ({key: v, value: v}));
-        if (!field.required) {
-          values.unshift({key: NONE, value: STRINGS.ui.global.noValue});
-        }
-        addSelect(
-          parent,
-          {label: undefined, selectedKey: model.adminSettings[field.key] as string | undefined},
-          id,
-          values,
-          (value) => {
-            if (value === NONE) {
-              model.adminSettings[field.key] = undefined;
-            } else {
-              model.adminSettings[field.key] = value;
-            }
-          }
-        );
-      } else {
-        const input = document.createElement('input');
-        input.id = id;
-        input.classList.add('form-control');
-        input.value = (model.adminSettings[field.key] as string) ?? '';
-        input.addEventListener('input', () => {
-          model.adminSettings[field.key] = input.value === '' ? undefined : input.value;
-        });
-        parent.appendChild(input);
+    if (field.type === 'string' && field.options?.enum) {
+      const NONE = 'no-value';
+      const values = field.options.enum.map((v) => ({key: v, value: v}));
+      if (!field.required) {
+        values.unshift({key: NONE, value: STRINGS.ui.global.noValue});
       }
+      addSelect(
+        parent,
+        {label: undefined, selectedKey: model.adminSettings[field.key] as string | undefined},
+        id,
+        values,
+        (value) => {
+          if (value === NONE) {
+            model.adminSettings[field.key] = undefined;
+          } else {
+            model.adminSettings[field.key] = value;
+          }
+        }
+      );
+    } else if (field.type === 'string' || field.type === 'password') {
+      const input = document.createElement('input');
+      input.id = id;
+      if (field.type === 'password') {
+        input.type = 'password';
+      }
+      input.classList.add('form-control');
+      input.value = (model.adminSettings[field.key] as string) ?? '';
+      input.addEventListener('input', () => {
+        model.adminSettings[field.key] = input.value === '' ? undefined : input.value;
+      });
+      parent.appendChild(input);
     } else if (field.type === 'boolean') {
       const input = document.createElement('input');
       input.setAttribute('type', 'checkbox');
@@ -107,15 +113,36 @@ export class VendorSelector extends AbstractSelector<VendorEditorModel> {
         model.adminSettings[field.key] = input.checked;
       });
       parent.appendChild(input);
+    } else if (field.type === 'file') {
+      const input = document.createElement('input');
+      input.setAttribute('type', 'file');
+      input.id = id;
+      this.fileAdminFieldController.bindFileInput({
+        fieldKey: field.key,
+        fieldName: field.name,
+        input: input,
+        setValue: (value) => {
+          model.adminSettings[field.key] = value;
+        },
+        invalidValueMessage: (fieldName) => STRINGS.errors.vendorSelector.invalidValue(fieldName)
+      });
+      parent.appendChild(input);
     }
   }
 
   protected override async getValidationError(): Promise<string | undefined> {
+    // Let file reads finish before validating, so that we can check for file read errors.
+    await this.fileAdminFieldController.waitForPendingReads();
+
     const model = this.getModel();
     if (!model) {
       return STRINGS.errors.vendorSelector.noVendorSelected;
     }
     for (const field of model.vendor.adminFields) {
+      const fileReadError = this.fileAdminFieldController.getReadError(field.key);
+      if (fileReadError) {
+        return fileReadError;
+      }
       const value = model.adminSettings[field.key];
       if (field.required && (value === undefined || value === null)) {
         return STRINGS.errors.vendorSelector.missingRequiredField(field.name);

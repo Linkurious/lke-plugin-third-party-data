@@ -4,7 +4,6 @@ import {
   IntegrationModel,
   IntegrationModelPublic
 } from '../../../shared/integration/IntegrationModel.ts';
-import {VendorSearchResponse} from '../../../shared/api/response.ts';
 
 import {ApiMock} from './devServer';
 
@@ -23,7 +22,8 @@ const mockUser: User = {
   accessRights: {},
   createdAt: '2021-01-01T00:00:00.000Z',
   updatedAt: '2021-01-01T00:00:00.000Z',
-  preferences: {pinOnDrag: false, locale: 'en', incrementalLayout: false}
+  preferences: {pinOnDrag: false, locale: 'en', incrementalLayout: false, nodeSnapping: false},
+  locked: false
 };
 
 const publicIntegrationModel: IntegrationModelPublic = {
@@ -31,6 +31,7 @@ const publicIntegrationModel: IntegrationModelPublic = {
   vendorKey: 'annuaire-entreprises-data-gouv-fr',
   sourceKey: validSourceKey,
   inputNodeCategory: 'Person',
+  inputNeighborNodeFilters: [],
   searchQueryFieldMapping: [
     {outputPropertyKey: 'q', type: 'property', inputPropertyKey: 'full_name'}
   ],
@@ -104,7 +105,7 @@ export const API_MOCKS: ApiMock[] = [
             }
           }
         ]
-      } as VendorSearchResponse
+      }
     }
   },
   {
