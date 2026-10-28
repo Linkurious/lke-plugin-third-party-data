@@ -65,5 +65,8 @@
   "workspaces": [
     "packages/backend",
     "packages/frontend"
-  ]
+  ],
+  "allowScripts": {
+    "fsevents": true
+  }
 }
