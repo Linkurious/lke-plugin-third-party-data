@@ -111,7 +111,7 @@ export class Configuration {
           }
         } else {
           // value is defined
-          if (field.type === 'string' && typeof value !== 'string') {
+          if ((field.type === 'string' || field.type === 'password') && typeof value !== 'string') {
             throw new Error(`${vendor.key}: adminSettings.${key} must be a string`);
           }
           if (field.type === 'boolean' && typeof value !== 'boolean') {
