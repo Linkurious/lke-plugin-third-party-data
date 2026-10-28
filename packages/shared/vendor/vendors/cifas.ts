@@ -6,7 +6,7 @@ export class Cifas extends Vendor<CifasSearchQuery, CifasSearchResponse, CifasDe
       key: 'cifas',
       name: 'CIFAS',
       strategy: 'searchAndDetails',
-      description: `Search the CIFAS National Fraud Database (NFD), see <a target="_blank" href="portal.cifas.org.uk/en-GB/Support/SearchDocumentation">details</a>`,
+      description: `Search the <a target="_blank" rel="noopener noreferrer" href="https://www.cifas.org.uk/fraud-prevention-community/combined-threat-protect/national-fraud-database">CIFAS National Fraud Database (NFD)</a>`,
       adminFields: [
         {
           type: 'string',
