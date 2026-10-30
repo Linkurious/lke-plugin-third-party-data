@@ -114,8 +114,8 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
           ...(Array.isArray(rawValue) ? rawValue : [rawValue])
         ];
       } else {
-        // scalar field: join the values
-        const inputValue = Array.isArray(rawValue) ? rawValue.flat().join(', ') : rawValue;
+        // scalar field: if the input data is an array, take the first value.
+        const inputValue = Array.isArray(rawValue) ? rawValue[0] : rawValue;
         if (inputValue === undefined) {
           continue;
         }
