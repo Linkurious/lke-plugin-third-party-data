@@ -14,7 +14,7 @@ export class Logger {
   }
 
   error(message: string, error?: Error): void {
-    console.error(this.date + ' - ' + message + (error ? ': ' + error.stack : ''));
+    console.error(this.date + ' - ' + message, error);
   }
 }
 

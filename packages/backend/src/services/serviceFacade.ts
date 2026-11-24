@@ -134,7 +134,7 @@ export class ServiceFacade {
   }
 
   private logError(integration: VendorIntegration, action: string, error: Error): void {
-    console.error(`${integration.vendor.key}.${action} failed`, error);
+    this.logger.error(`${integration.vendor.key}.${action} failed`, error);
   }
 
   private async buildVendorContext(restClient: RestClient): Promise<VendorContext> {
