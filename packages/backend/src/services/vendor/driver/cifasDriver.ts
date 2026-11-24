@@ -1,5 +1,4 @@
 import {Buffer} from 'node:buffer';
-import * as process from 'node:process';
 
 import {Response} from 'superagent';
 
@@ -124,23 +123,16 @@ export class CifasDriver extends BaseDetailsSearchDriver<
       .set('X-CurrentUser', integration.getAdminSettings('currentUserReference') as string);
 
     let response: Response;
-    try {
-      if (body !== undefined) {
-        response = await request.send(body as object);
-      } else {
-        response = await request;
-      }
-    } catch (e) {
-      if (process.env.DEBUG) {
-        console.log('HTTP error: ' + JSON.stringify(e));
-      }
-      throw e;
+    if (body !== undefined) {
+      response = await request.send(body as object);
+    } else {
+      response = await request;
     }
     if (response.status === 401) {
       throw new Error(`CIFAS authentication failed: ${describeBody(response)}`);
     }
     if (response.status === 404) {
-      throw new Error(`CIFAS: not found (${url.pathname})`);
+      throw new Error(`CIFAS not found (${url.pathname})`);
     }
     if (!response.ok) {
       throw new Error(`CIFAS request failed (${response.status}): ${describeBody(response)}`);
@@ -300,11 +292,16 @@ export function extractCifasSubjectNeighbors(cifasCase: CifasCaseBody): Neighbor
   });
 }
 
-function describeBody(response: {body?: unknown; text?: string}): string {
-  if (response.text) {
-    return response.text;
+function describeBody(response: Response): string {
+  try {
+    if (response.text) {
+      return response.text;
+    }
+    return JSON.stringify(response.body);
+  } catch (e) {
+    console.error('Failed to serialize response body', e);
+    return `[cannot serialize body, headers: ${JSON.stringify(response.headers)}]`;
   }
-  return JSON.stringify(response.body);
 }
 
 export type CifasReference = {referenceCode: string; description: string};

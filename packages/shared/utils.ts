@@ -14,12 +14,12 @@ export function clone<T>(obj: T): T {
   return JSON.parse(JSON.stringify(obj)) as T;
 }
 
-export function asError(e: unknown): {message: string} {
+export function asError(e: unknown): Error {
   if (e instanceof Error) {
     return e;
   }
   if (e && typeof e === 'object' && 'message' in e && typeof e.message === 'string') {
-    return e as {message: string};
+    return e as Error;
   }
-  return {message: String(e)};
+  return {message: String(e)} as Error;
 }

@@ -15,6 +15,7 @@ import {SearchOptions} from '../models/searchOptions';
 import {asError} from '../../../shared/utils';
 import {DetailsOptions} from '../models/detailsOptions';
 import {ConfigOptions} from '../models/configOptions';
+import {VendorIntegration} from '../../../shared/integration/vendorIntegration';
 
 import {Configuration} from './configuration';
 import {Logger} from './logger';
@@ -89,9 +90,11 @@ export class ServiceFacade {
       const context = await this.buildVendorContext(restClient);
       results = await searcher.getSearchResults(restClient, searchOptions, context);
     } catch (e) {
+      const error = asError(e);
+      this.logError(searcher.integration, 'search', error);
       apiError = {
         code: 'search-error',
-        message: asError(e).message
+        message: error.message
       };
     }
     return {
@@ -114,9 +117,11 @@ export class ServiceFacade {
       const context = await this.buildVendorContext(restClient);
       result = await searcher.getDetails(detailsOptions, context);
     } catch (e) {
+      const error = asError(e);
+      this.logError(searcher.integration, 'getDetails', error);
       apiError = {
         code: 'get-details-error',
-        message: asError(e).message
+        message: error.message
       };
     }
     return {
@@ -126,6 +131,10 @@ export class ServiceFacade {
       vendorKey: searcher.integration.vendor.key,
       result: result
     };
+  }
+
+  private logError(integration: VendorIntegration, action: string, error: Error): void {
+    console.error(`${integration.vendor.key}.${action} failed`, error);
   }
 
   private async buildVendorContext(restClient: RestClient): Promise<VendorContext> {

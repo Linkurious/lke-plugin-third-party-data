@@ -22,7 +22,9 @@ export class ProxyClient extends WithLogger {
   }
 
   /**
-   * Uses a proxy if needed
+   * Uses a proxy if needed.
+   * Never rejects on non-2xx HTTP status codes: callers are expected to check `response.status`.
+   * (Network-level errors still reject.)
    */
   protected request(url: URL, verb: 'get' | 'post' = 'get'): SuperAgentRequest {
     let proxyUrl: string | undefined;
@@ -38,7 +40,8 @@ export class ProxyClient extends WithLogger {
     }
 
     const sUrl = url.toString();
-    const request = this.client[verb](sUrl);
+    // resolve the promise whatever the HTTP status code (do not throw on 4xx/5xx)
+    const request = this.client[verb](sUrl).ok(() => true);
     if (proxyUrl) {
       this.logger.info(`HTTP Client: Sending "${verb}" request (via proxy) to ${sUrl}`);
       return request.agent(new HttpsProxyAgent(proxyUrl));
