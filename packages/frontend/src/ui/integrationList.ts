@@ -50,6 +50,11 @@ export class IntegrationList extends BaseUI {
         $elem('td', {}, int.outputNodeCategory),
         $elem('td', {}, [
           $elem('div', {class: 'd-flex justify-content-end'}, [
+            this.ui.button.create(
+              STRINGS.ui.integrationList.testConnectionButton,
+              {type: 'secondary', outline: true, small: true},
+              () => this.testConnection(int.id, Vendors.getVendorByKey(int.vendorKey).name)
+            ),
             this.ui.button.create(STRINGS.ui.integrationList.editButton, {small: true}, () =>
               this.services.editIntegration(int.id)
             ),
@@ -78,5 +83,38 @@ export class IntegrationList extends BaseUI {
 
     const content = $elem('div', {}, [table]);
     await this.ui.popIn.showElement(STRINGS.ui.integrationList.title, content, buttons, true);
+  }
+
+  private async testConnection(integrationId: string, vendorName: string): Promise<void> {
+    const response = await this.services.testConnection(integrationId);
+    const strings = STRINGS.ui.testConnection;
+
+    let title: string;
+    let content: HTMLElement;
+    if (response.error) {
+      title = strings.errorTitle;
+      content = $elem('div', {class: 'my-2'}, [
+        $elem('p', {}, strings.errorMessage(vendorName)),
+        $elem('p', {class: 'mb-1 fw-bold'}, strings.errorDetails),
+        $elem(
+          'div',
+          {class: 'text-danger'},
+          response.error.message
+            .split('\n')
+            .map((line: string) => $elem('p', {class: 'mb-1'}, line))
+        )
+      ]);
+    } else {
+      title = strings.successTitle;
+      content = $elem('p', {class: 'my-2 text-success'}, strings.successMessage(vendorName));
+    }
+
+    const buttons = [
+      this.ui.button.create(STRINGS.ui.global.closeButton, {type: 'secondary'}, () =>
+        this.ui.popIn.close()
+      ),
+      this.ui.button.create(strings.backButton, {}, () => this.show())
+    ];
+    void this.ui.popIn.showElement(title, content, buttons, true);
   }
 }

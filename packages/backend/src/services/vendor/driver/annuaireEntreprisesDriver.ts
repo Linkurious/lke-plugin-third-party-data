@@ -16,6 +16,10 @@ export class AnnuaireEntreprisesDriver extends BaseSearchDriver<
     super(new AnnuaireEntreprisesVendor());
   }
 
+  async testConnection(integration: VendorIntegration): Promise<void> {
+    await this.search({q: 'test'}, integration, 1, {requestedAt: new Date()});
+  }
+
   /**
    * https://recherche-entreprises.api.gouv.fr/docs/#tag/Recherche-textuelle/paths/~1search/get
    */

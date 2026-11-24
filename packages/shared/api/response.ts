@@ -32,31 +32,31 @@ export interface NeighborResult {
 }
 
 export interface VendorResult<
-  NR extends AbstractFields = AbstractFields,
-  ER extends AbstractFields = AbstractFields
+  NodeResult extends AbstractFields = AbstractFields,
+  EdgeResult extends AbstractFields = AbstractFields
 > {
   id: string;
-  properties: NR;
+  properties: NodeResult;
   keyProperty?: string;
   edgeKeyProperty?: string;
-  edgeProperties?: ER;
+  edgeProperties?: EdgeResult;
   neighbors?: NeighborResult[];
 }
 
 export interface VendorSearchResponse<
-  R extends AbstractFields = AbstractFields
+  SearchResponse extends AbstractFields = AbstractFields
 > extends ApiResponse {
   integrationId: string;
   inputNodeId: string;
   vendorKey: string;
-  results: VendorResult<R>[];
+  results: VendorResult<SearchResponse>[];
 }
 
 export interface VendorDetailsResponse<
-  R extends AbstractFields = AbstractFields
+  DetailsResponse extends AbstractFields = AbstractFields
 > extends ApiResponse {
   integrationId: string;
   searchResultId: string;
   vendorKey: string;
-  result?: VendorResult<R>;
+  result?: VendorResult<DetailsResponse>;
 }

@@ -1,6 +1,6 @@
 import {LkEdge, LkError, LkNode, Response, User} from '@linkurious/rest-client';
 
-import {VendorResult} from '../../shared/api/response';
+import {ApiResponse, VendorResult} from '../../shared/api/response';
 import {IntegrationModelPublic} from '../../shared/integration/IntegrationModel';
 import {VendorIntegrationPublic} from '../../shared/integration/vendorIntegrationPublic';
 import {asError, clone, randomString} from '../../shared/utils';
@@ -278,6 +278,22 @@ export class ServiceFacade {
       await this.config.deleteIntegration(integrationId);
       p.update(STRINGS.ui.global.done);
     });
+  }
+
+  async testConnection(integrationId: string): Promise<ApiResponse> {
+    return this.ui.longTask.run(
+      async (p) => {
+        p.update(STRINGS.ui.testConnection.testing);
+        try {
+          return await this.api.testConnection(integrationId);
+        } catch (e) {
+          // network error or similar
+          const error = asError(e);
+          return {error: {code: error.name || 'unexpected', message: error.message}};
+        }
+      },
+      {defaultErrorHandler: false}
+    );
   }
 }
 

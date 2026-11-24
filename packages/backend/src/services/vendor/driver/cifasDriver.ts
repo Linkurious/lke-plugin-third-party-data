@@ -39,6 +39,10 @@ export class CifasDriver extends BaseDetailsSearchDriver<
     super(new Cifas());
   }
 
+  async testConnection(integration: VendorIntegration): Promise<void> {
+    await this.call<unknown>(integration, '/v1/NFD/Products', 'get');
+  }
+
   /**
    * POST /v1/NFD/Search
    * https://portal.cifas.org.uk/en-GB/Support/SearchDocumentation

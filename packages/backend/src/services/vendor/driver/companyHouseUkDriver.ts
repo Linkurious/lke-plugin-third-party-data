@@ -22,6 +22,10 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     super(new CompanyHouseUk());
   }
 
+  async testConnection(integration: VendorIntegration): Promise<void> {
+    await this.search({q: 'test'}, integration, 1, {requestedAt: new Date()});
+  }
+
   /**
    * GET /search/companies
    * https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference/search/search-companies

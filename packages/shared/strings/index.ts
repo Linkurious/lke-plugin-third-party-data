@@ -68,8 +68,10 @@ export const STRINGS = {
           field.key
         } is missing (input node properties: ${JSON.stringify(missingProperties)})`
     },
+    sharedOptions: {
+      missingIntegrationId: 'Missing query-string parameter: integrationId'
+    },
     searchOptions: {
-      missingIntegrationId: 'Missing query-string parameter: integrationId',
       missingNodeId:
         'Missing query-string parameter: nodeId (hint: you possibly forgot to use a {{node}} entry in your action URL)',
       missingSourceKey:
@@ -79,8 +81,7 @@ export const STRINGS = {
         `Invalid query-string parameter: maxResults (must be between ${min} and ${max})`
     },
     detailsOptions: {
-      missingSearchResultId: 'Missing query-string parameter: searchResultId',
-      missingIntegrationId: 'Missing query-string parameter: integrationId'
+      missingSearchResultId: 'Missing query-string parameter: searchResultId'
     },
     search: {
       vendorNotFound: (i: VendorIntegration): string =>
@@ -202,10 +203,20 @@ export const STRINGS = {
       editButton: 'Edit',
       deleteButton: 'Delete',
       addButton: 'Add integration',
+      testConnectionButton: 'Test connection',
       vendorHeader: 'Vendor API',
       dataSourceHeader: 'Data-Source',
       inputNodeHeader: 'Input node',
       outputNodeHeader: 'Output node'
+    },
+    testConnection: {
+      testing: 'Testing connection...',
+      successTitle: 'Connection successful',
+      successMessage: (vendorName: string): string => `Successfully connected to ${vendorName}.`,
+      errorTitle: 'Connection failed',
+      errorMessage: (vendorName: string): string => `Could not connect to ${vendorName}.`,
+      errorDetails: 'Details:',
+      backButton: 'Back to integrations list'
     },
     popin: {
       info: 'Information',

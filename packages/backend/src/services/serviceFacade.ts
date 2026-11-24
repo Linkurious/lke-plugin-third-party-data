@@ -16,6 +16,7 @@ import {asError} from '../../../shared/utils';
 import {DetailsOptions} from '../models/detailsOptions';
 import {ConfigOptions} from '../models/configOptions';
 import {VendorIntegration} from '../../../shared/integration/vendorIntegration';
+import {TestConnectionOptions} from '../models/testConnectionOptions';
 
 import {Configuration} from './configuration';
 import {Logger} from './logger';
@@ -79,6 +80,25 @@ export class ServiceFacade {
     return this.config.getPublicConfig();
   }
 
+  async testConnection(req: express.Request, options: TestConnectionOptions): Promise<ApiResponse> {
+    await this.ensureAdmin(req);
+    const searcher = new Searcher(this.logger, this.config, options.integrationId);
+    let apiError: ApiError | undefined = undefined;
+    try {
+      await searcher.testConnection();
+    } catch (e) {
+      const error = asError(e);
+      this.logError(searcher.integration, 'testConnection', error);
+      apiError = {
+        code: 'connection-error',
+        message: error.message
+      };
+    }
+    return {
+      error: apiError
+    };
+  }
+
   async search(
     restClient: RestClient,
     searchOptions: SearchOptions
@@ -134,7 +154,7 @@ export class ServiceFacade {
   }
 
   private logError(integration: VendorIntegration, action: string, error: Error): void {
-    console.error(`${integration.vendor.key}.${action} failed`, error);
+    this.logger.error(`${integration.vendor.key}.${action} failed`, error);
   }
 
   private async buildVendorContext(restClient: RestClient): Promise<VendorContext> {

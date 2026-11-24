@@ -16,6 +16,10 @@ export class DnbPeopleLookupDriver extends BaseSearchDriver<
     super(new DnbPersonLookupVendor());
   }
 
+  testConnection(_integration: VendorIntegration): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
   /**
    * https://docs.dnb.com/direct/2.0/en-US/entitylist/latest/findcontact/EM-rest-API#ContactEmailLookup
    */

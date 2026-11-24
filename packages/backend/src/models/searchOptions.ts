@@ -22,7 +22,7 @@ export class SearchOptions {
 
   static from(query: ParsedQs): SearchOptions {
     if (typeof query.integrationId !== 'string') {
-      throw new Error(STRINGS.errors.searchOptions.missingIntegrationId);
+      throw new Error(STRINGS.errors.sharedOptions.missingIntegrationId);
     }
     if (typeof query.nodeId !== 'string') {
       throw new Error(STRINGS.errors.searchOptions.missingNodeId);

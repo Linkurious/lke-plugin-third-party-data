@@ -13,7 +13,7 @@ export class DetailsOptions {
 
   static from(query: ParsedQs): DetailsOptions {
     if (typeof query.integrationId !== 'string') {
-      throw new Error(STRINGS.errors.detailsOptions.missingIntegrationId);
+      throw new Error(STRINGS.errors.sharedOptions.missingIntegrationId);
     }
     if (typeof query.searchResultId !== 'string') {
       throw new Error(STRINGS.errors.detailsOptions.missingSearchResultId);

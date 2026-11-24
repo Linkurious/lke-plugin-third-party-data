@@ -10,6 +10,7 @@ import {ServiceFacade} from './services/serviceFacade';
 import {SearchOptions} from './models/searchOptions';
 import {DetailsOptions} from './models/detailsOptions';
 import {ConfigOptions} from './models/configOptions';
+import {TestConnectionOptions} from './models/testConnectionOptions';
 
 export = function (pluginInterface: PluginRouteOptions<MyPluginConfig>): void {
   const services = new ServiceFacade(pluginInterface);
@@ -19,7 +20,7 @@ export = function (pluginInterface: PluginRouteOptions<MyPluginConfig>): void {
   pluginInterface.router.get(
     '/admin-config',
     respond(async (req) => {
-      return services.getConfigAdmin(req);
+      return await services.getConfigAdmin(req);
     })
   );
 
@@ -28,22 +29,30 @@ export = function (pluginInterface: PluginRouteOptions<MyPluginConfig>): void {
     '/admin-config',
     respond(async (req: Request) => {
       const config = ConfigOptions.from(req.body);
-      return services.setConfigAdmin(req, config);
+      return await services.setConfigAdmin(req, config);
     }, 201)
   );
 
   pluginInterface.router.get(
     '/config',
     respond(async () => {
-      return services.getConfigUser();
+      return await services.getConfigUser();
     })
+  );
+
+  pluginInterface.router.get(
+    '/test-connection',
+    respond(async (req: Request) => {
+      const testConnectionOptions = TestConnectionOptions.from(req.query);
+      return await services.testConnection(req, testConnectionOptions);
+    }, 200)
   );
 
   pluginInterface.router.get(
     '/search',
     respond(async (req) => {
       const searchOptions = SearchOptions.from(req.query);
-      return services.search(pluginInterface.getRestClient(req), searchOptions);
+      return await services.search(pluginInterface.getRestClient(req), searchOptions);
     })
   );
 
@@ -51,7 +60,7 @@ export = function (pluginInterface: PluginRouteOptions<MyPluginConfig>): void {
     '/details',
     respond(async (req) => {
       const detailsOptions = DetailsOptions.from(req.query);
-      return services.getDetails(pluginInterface.getRestClient(req), detailsOptions);
+      return await services.getDetails(pluginInterface.getRestClient(req), detailsOptions);
     })
   );
 };

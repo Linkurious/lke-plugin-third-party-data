@@ -77,6 +77,22 @@ export const API_MOCKS: ApiMock[] = [
     }
   },
   {
+    // queryString: integrationId (succeeds for the default integration, fails otherwise)
+    match: '/plugins/3d/api/test-connection',
+    response: (url) =>
+      url.query.integrationId === defaultIntegrationId
+        ? {body: {}}
+        : {
+            status: 500,
+            body: {
+              error: {
+                code: 'connection-error',
+                message: `Mock: connection failed for integration ${String(url.query.integrationId)}`
+              }
+            }
+          }
+  },
+  {
     match: `/plugins/3d/api/search`, // queryString: integrationId, nodeId, sourceKey
     response: {
       body: {

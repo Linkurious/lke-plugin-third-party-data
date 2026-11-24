@@ -111,6 +111,35 @@ export class API {
     return r as unknown as MyPluginConfigPublic;
   }
 
+  /**
+   * Test the connection to the vendor API of an integration.
+   * Never throws for API-level failures: the returned response contains an `error` if the test failed.
+   */
+  async testConnection(integrationId: string): Promise<ApiResponse> {
+    const qs = new URLSearchParams({integrationId: integrationId});
+    const url = `./api/test-connection?${qs.toString()}`;
+    const r = await fetch(url, {method: 'GET'});
+    let body: ApiResponse | undefined = undefined;
+    try {
+      body = (await r.json()) as ApiResponse;
+    } catch (_e) {
+      body = undefined;
+    }
+
+    if (body && body.error) {
+      return {error: body.error};
+    }
+    if (r.ok) {
+      return {};
+    }
+    return {
+      error: {
+        code: `connection-error`,
+        message: `HTTP Status ${r.status}`
+      }
+    };
+  }
+
   private async getPluginResponseError(r: Response): Promise<string> {
     try {
       const body = (await r.json()) as ApiResponse;

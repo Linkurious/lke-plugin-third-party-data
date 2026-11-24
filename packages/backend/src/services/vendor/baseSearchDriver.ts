@@ -53,62 +53,69 @@ export class ProxyClient extends WithLogger {
 }
 
 export abstract class BaseSearchDriver<
-  SQ extends AbstractFields,
-  SNR extends AbstractFields,
-  DER extends AbstractFields = AbstractFields
+  SearchQuery extends AbstractFields,
+  SearchNodeResult extends AbstractFields,
+  EdgeResult extends AbstractFields = AbstractFields
 >
   extends ProxyClient
-  implements SearchDriver<SQ, SNR, DER>
+  implements SearchDriver<SearchQuery, SearchNodeResult, EdgeResult>
 {
   public readonly vendorKey: string;
 
-  protected constructor(vendor: Vendor<SQ, SNR>) {
+  protected constructor(vendor: Vendor<SearchQuery, SearchNodeResult>) {
     super();
     this.vendorKey = vendor.key;
   }
 
+  abstract testConnection(integration: VendorIntegration): Promise<void>;
+
   abstract search(
-    searchQuery: SQ,
+    searchQuery: SearchQuery,
     integration: VendorIntegration,
     maxResults: number,
     context: VendorContext
-  ): Promise<VendorResult<SNR, DER>[]>;
+  ): Promise<VendorResult<SearchNodeResult, EdgeResult>[]>;
 }
 
 export abstract class BaseDetailsSearchDriver<
-  SQ extends AbstractFields,
-  SNR extends AbstractFields,
-  DNR extends AbstractFields,
-  DER extends AbstractFields = AbstractFields
+  SearchQuery extends AbstractFields,
+  SearchNodeResult extends AbstractFields,
+  DetailsNodeResult extends AbstractFields,
+  EdgeResult extends AbstractFields = AbstractFields
 >
   extends ProxyClient
-  implements DetailsSearchDriver<SQ, SNR, DNR, DER>
+  implements DetailsSearchDriver<SearchQuery, SearchNodeResult, DetailsNodeResult, EdgeResult>
 {
   public readonly vendorKey: string;
 
-  protected constructor(vendor: Vendor<SQ, SNR>) {
+  protected constructor(vendor: Vendor<SearchQuery, SearchNodeResult>) {
     super();
     this.vendorKey = vendor.key;
   }
 
+  abstract testConnection(integration: VendorIntegration): Promise<void>;
+
   abstract search(
-    searchQuery: SQ,
+    searchQuery: SearchQuery,
     integration: VendorIntegration,
     maxResults: number,
     context: VendorContext
-  ): Promise<VendorResult<SNR, DER>[]>;
+  ): Promise<VendorResult<SearchNodeResult, EdgeResult>[]>;
 
   abstract getDetails(
     integration: VendorIntegration,
     detailsOptions: DetailsOptions,
     context: VendorContext
-  ): Promise<VendorResult<DNR, DER>>;
+  ): Promise<VendorResult<DetailsNodeResult, EdgeResult>>;
 }
 
 /**
  * Flattens a JSON object into a single-level object.
  * Option to spread array values into separate keys with index suffixes.
- * Example: {adresses: [{city: 'New York'}, {city: 'Los Angeles'}]} becomes addresses_0_city: 'New York', addresses_1_city: 'Los Angeles' if spreadArray is true.
+ * Example:
+ *   {addresses: [{city: 'New York'}, {city: 'Los Angeles'}]}
+ *   becomes addresses_0_city: 'New York', addresses_1_city: 'Los Angeles'
+ *   if spreadArray is true.
  */
 export function flattenJson(json: unknown, spreadArray = false): Record<string, VendorFieldType> {
   const result: Record<string, VendorFieldType> = {};

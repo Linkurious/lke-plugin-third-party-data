@@ -31,6 +31,11 @@ export class Searcher extends WithLogger {
     this.integration = config.getIntegrationById(integrationId);
   }
 
+  async testConnection(): Promise<void> {
+    const driver = this.getSearchDriver();
+    await driver.testConnection(this.integration);
+  }
+
   async getSearchResults(
     api: RestClient,
     searchOptions: SearchOptions,

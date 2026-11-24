@@ -5,28 +5,29 @@ import {VendorIntegration} from '../../../../shared/integration/vendorIntegratio
 import {DetailsOptions} from '../../models/detailsOptions';
 
 export interface SearchDriver<
-  SQ extends AbstractFields = AbstractFields,
-  SNR extends AbstractFields = AbstractFields,
-  DER extends AbstractFields = AbstractFields
+  SearchQuery extends AbstractFields = AbstractFields,
+  SearchNodeResult extends AbstractFields = AbstractFields,
+  EdgeResult extends AbstractFields = AbstractFields
 > {
   readonly vendorKey: string;
+  testConnection(integration: VendorIntegration): Promise<void>;
   search(
-    searchQuery: SQ,
+    searchQuery: SearchQuery,
     integration: VendorIntegration,
     maxResults: number,
     context: VendorContext
-  ): Promise<VendorResult<SNR, DER>[]>;
+  ): Promise<VendorResult<SearchNodeResult, EdgeResult>[]>;
 }
 
 export interface DetailsSearchDriver<
-  SQ extends AbstractFields = AbstractFields,
-  SNR extends AbstractFields = AbstractFields,
-  DNR extends AbstractFields = AbstractFields,
-  DER extends AbstractFields = AbstractFields
-> extends SearchDriver<SQ, SNR, DER> {
+  SearchQuery extends AbstractFields = AbstractFields,
+  SearchNodeResult extends AbstractFields = AbstractFields,
+  DetailsNodeResult extends AbstractFields = AbstractFields,
+  EdgeResult extends AbstractFields = AbstractFields
+> extends SearchDriver<SearchQuery, SearchNodeResult, EdgeResult> {
   getDetails(
     integration: VendorIntegration,
     detailsOptions: DetailsOptions,
     context: VendorContext
-  ): Promise<VendorResult<DNR, DER>>;
+  ): Promise<VendorResult<DetailsNodeResult, EdgeResult>>;
 }
