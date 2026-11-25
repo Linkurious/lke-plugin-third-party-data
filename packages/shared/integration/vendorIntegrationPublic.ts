@@ -118,7 +118,9 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
         // the expected output is a scalar value
 
         // if the input data is an array, take the first value.
-        const inputValue = Array.isArray(rawValue) ? rawValue[0] : rawValue;
+        const inputValue = Array.isArray(rawValue)
+          ? rawValue.find((value) => value !== '')
+          : rawValue;
         if (inputValue === undefined) {
           continue;
         }
