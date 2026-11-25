@@ -13,7 +13,7 @@ export class Logger {
     console.warn(this.date + ' - ' + message);
   }
 
-  error(message: string, error?: Error): void {
+  error(message: string, error: Error): void {
     console.error(this.date + ' - ' + message, error);
   }
 }

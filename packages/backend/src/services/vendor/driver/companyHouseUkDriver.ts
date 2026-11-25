@@ -155,7 +155,7 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
     }
     if (response.status !== 200) {
       throw new Error(
-        `HTTP status ${response.status} for ${url.toString()}: ${JSON.stringify(response.body)}`
+        `HTTP status ${response.status} for ${url.toString()}: ${this.serializeBody(response)}`
       );
     }
     return response.body as T;

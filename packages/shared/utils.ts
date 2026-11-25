@@ -19,7 +19,11 @@ export function asError(e: unknown): Error {
     return e;
   }
   if (e && typeof e === 'object' && 'message' in e && typeof e.message === 'string') {
-    return e as Error;
+    if ('name' in e && typeof e.name === 'string') {
+      return e as Error;
+    } else {
+      return new Error(e.message);
+    }
   }
-  return {message: String(e)} as Error;
+  return {name: 'error', message: String(e)};
 }

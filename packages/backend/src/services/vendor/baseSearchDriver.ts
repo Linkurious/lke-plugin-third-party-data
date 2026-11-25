@@ -1,6 +1,6 @@
 import process from 'node:process';
 
-import superagent, {SuperAgentRequest} from 'superagent';
+import superagent, {Response, SuperAgentRequest} from 'superagent';
 import {HttpsProxyAgent} from 'https-proxy-agent';
 
 import {AbstractFields, VendorFieldType} from '../../../../shared/vendor/vendorModel';
@@ -103,6 +103,26 @@ export abstract class BaseDetailsSearchDriver<
     detailsOptions: DetailsOptions,
     context: VendorContext
   ): Promise<VendorResult<DNR, DER>>;
+
+  /**
+   * Useful when the API returns a failure code (e.g., HTTP 500)
+   * and we want to bubble up the response body for debugging.
+   */
+  protected serializeBody(response: Response): string {
+    return serializeBody(response);
+  }
+}
+
+function serializeBody(response: Response): string {
+  try {
+    if (response.text) {
+      return response.text;
+    }
+    return JSON.stringify(response.body);
+  } catch (e) {
+    console.error('Failed to serialize response body', e);
+    return `[cannot serialize body]`;
+  }
 }
 
 /**

@@ -129,13 +129,13 @@ export class CifasDriver extends BaseDetailsSearchDriver<
       response = await request;
     }
     if (response.status === 401) {
-      throw new Error(`CIFAS authentication failed: ${describeBody(response)}`);
+      throw new Error(`CIFAS authentication failed: ${this.serializeBody(response)}`);
     }
     if (response.status === 404) {
       throw new Error(`CIFAS not found (${url.pathname})`);
     }
     if (!response.ok) {
-      throw new Error(`CIFAS request failed (${response.status}): ${describeBody(response)}`);
+      throw new Error(`CIFAS request failed (${response.status}): ${this.serializeBody(response)}`);
     }
     return response.body as T;
   }
@@ -290,18 +290,6 @@ export function extractCifasSubjectNeighbors(cifasCase: CifasCaseBody): Neighbor
       properties: properties
     };
   });
-}
-
-function describeBody(response: Response): string {
-  try {
-    if (response.text) {
-      return response.text;
-    }
-    return JSON.stringify(response.body);
-  } catch (e) {
-    console.error('Failed to serialize response body', e);
-    return `[cannot serialize body, headers: ${JSON.stringify(response.headers)}]`;
-  }
 }
 
 export type CifasReference = {referenceCode: string; description: string};
