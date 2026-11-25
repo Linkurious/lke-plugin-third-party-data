@@ -109,23 +109,27 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
         continue;
       }
       if (vendorField?.array) {
+        // the expected output is an array
         query[mapping.outputPropertyKey] = [
           ...((query[mapping.outputPropertyKey] ?? []) as VendorFieldType[]),
           ...(Array.isArray(rawValue) ? rawValue : [rawValue])
         ];
       } else {
-        // scalar field: if the input data is an array, take the first value.
+        // the expected output is a scalar value
+
+        // if the input data is an array, take the first value.
         const inputValue = Array.isArray(rawValue) ? rawValue[0] : rawValue;
         if (inputValue === undefined) {
           continue;
         }
+
         if (expectedType === 'string') {
           if (query[mapping.outputPropertyKey] === undefined) {
             // first value
-            query[mapping.outputPropertyKey] = `${inputValue}`;
+            query[mapping.outputPropertyKey] = inputValue.toString();
           } else {
             // append to existing value
-            query[mapping.outputPropertyKey] += ` ${inputValue}`;
+            query[mapping.outputPropertyKey] += ' ' + inputValue.toString();
           }
         } else if (expectedType === 'number' && typeof inputValue === 'number') {
           query[mapping.outputPropertyKey] = inputValue;
