@@ -191,8 +191,7 @@ export function buildCifasSearchBody(
 
           addresses[i][key] = text;
         }
-      }
-      if (isBankAccountKey(key)) {
+      } else if (isBankAccountKey(key)) {
         for (let i = 0; i < value.length; i++) {
           const text = `${value[i]}`.trim();
           if (text === '') {
@@ -208,8 +207,7 @@ export function buildCifasSearchBody(
 
           bankAccounts[i][key] = text;
         }
-      }
-      if (isPaymentCardKey(key)) {
+      } else if (isPaymentCardKey(key)) {
         for (let i = 0; i < value.length; i++) {
           const text = `${value[i]}`.trim();
           if (text === '') {
@@ -224,8 +222,7 @@ export function buildCifasSearchBody(
 
           paymentCards[i][key] = text;
         }
-      }
-      if (isDocumentKey(key)) {
+      } else if (isDocumentKey(key)) {
         for (let i = 0; i < value.length; i++) {
           const text = `${value[i]}`.trim();
           if (text === '') {

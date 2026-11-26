@@ -5,7 +5,7 @@ nodeJob {
   projectName = "linkurious/lke-plugin-third-party-data"
   podTemplateNames = ['jnlp-agent-node']
 
-  runUnitTests = false
+  runUnitTests = true
   runE2eTests = false
   runDependencyVersionCheck = false
 
