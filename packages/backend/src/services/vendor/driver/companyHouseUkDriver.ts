@@ -1,7 +1,3 @@
-import * as process from 'node:process';
-
-import {Response} from 'superagent';
-
 import {NeighborResult, VendorResult} from '../../../../../shared/api/response';
 import {BaseDetailsSearchDriver, flattenJson} from '../baseSearchDriver';
 import {VendorIntegration} from '../../../../../shared/integration/vendorIntegration';
@@ -151,22 +147,16 @@ export class CompanyHouseUkDriver extends BaseDetailsSearchDriver<
   }
 
   private async get<T>(integration: VendorIntegration, url: URL): Promise<T> {
-    let response: Response;
-    try {
-      response = await this.request(url)
-        .auth(integration.getAdminSettings('apiKey') as string, '', {type: 'basic'})
-        .set('accept', 'application/json');
-    } catch (e) {
-      if (process.env.DEBUG) {
-        console.log('HTTP error: ' + JSON.stringify(e));
-      }
-      throw e;
-    }
+    const response = await this.request(url)
+      .auth(integration.getAdminSettings('apiKey') as string, '', {type: 'basic'})
+      .set('accept', 'application/json');
     if (response.status === 401) {
       throw new Error(`Invalid API key`);
     }
     if (response.status !== 200) {
-      throw new Error(`Failed to get ${url.toString()}: ${JSON.stringify(response.body)}`);
+      throw new Error(
+        `HTTP status ${response.status} for ${url.toString()}: ${this.serializeBody(response)}`
+      );
     }
     return response.body as T;
   }
