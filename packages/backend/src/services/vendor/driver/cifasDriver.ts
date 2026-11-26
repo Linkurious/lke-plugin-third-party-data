@@ -1,5 +1,4 @@
 import {Buffer} from 'node:buffer';
-import * as process from 'node:process';
 
 import {Response} from 'superagent';
 
@@ -124,26 +123,19 @@ export class CifasDriver extends BaseDetailsSearchDriver<
       .set('X-CurrentUser', integration.getAdminSettings('currentUserReference') as string);
 
     let response: Response;
-    try {
-      if (body !== undefined) {
-        response = await request.send(body as object);
-      } else {
-        response = await request;
-      }
-    } catch (e) {
-      if (process.env.DEBUG) {
-        console.log('HTTP error: ' + JSON.stringify(e));
-      }
-      throw e;
+    if (body !== undefined) {
+      response = await request.send(body as object);
+    } else {
+      response = await request;
     }
     if (response.status === 401) {
-      throw new Error(`CIFAS authentication failed: ${describeBody(response)}`);
+      throw new Error(`CIFAS authentication failed: ${this.serializeBody(response)}`);
     }
     if (response.status === 404) {
-      throw new Error(`CIFAS: not found (${url.pathname})`);
+      throw new Error(`CIFAS not found (${url.pathname})`);
     }
     if (!response.ok) {
-      throw new Error(`CIFAS request failed (${response.status}): ${describeBody(response)}`);
+      throw new Error(`CIFAS request failed (${response.status}): ${this.serializeBody(response)}`);
     }
     return response.body as T;
   }
@@ -298,13 +290,6 @@ export function extractCifasSubjectNeighbors(cifasCase: CifasCaseBody): Neighbor
       properties: properties
     };
   });
-}
-
-function describeBody(response: {body?: unknown; text?: string}): string {
-  if (response.text) {
-    return response.text;
-  }
-  return JSON.stringify(response.body);
 }
 
 export type CifasReference = {referenceCode: string; description: string};

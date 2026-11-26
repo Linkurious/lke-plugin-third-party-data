@@ -34,7 +34,7 @@ export class AnnuaireEntreprisesDriver extends BaseSearchDriver<
 
     const r = await this.request(url).set('accept', 'application/json');
     if (r.status !== 200) {
-      throw new Error(`Failed to get search results: ${(r.body as ResponseBody).erreur}`);
+      throw new Error(`HTTP status ${r.status}: ${(r.body as ResponseBody).erreur}`);
     }
     return (r.body as ResponseBody).results.map((res) => {
       const properties = flattenJson(res) as AnnuaireEntreprisesSearchResponse;
