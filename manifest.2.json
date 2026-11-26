@@ -20,6 +20,14 @@
     "ja": {
       "title": "第三者データ",
       "description": "外部データベンダーのAPIを使用して、グラフ内の企業や人物の情報を拡充します。"
+    },
+    "ar": {
+      "title": "بيانات الجهات الخارجية",
+      "description": "إثراء بيانات الشركات والأشخاص في الرسم البياني باستخدام بيانات من واجهات برمجة تطبيقات موردي البيانات الخارجيين."
+    },
+    "de": {
+      "title": "Drittanbieterdaten",
+      "description": "Unternehmen und Personen in Ihrem Graphen mit Daten aus APIs externer Datenanbieter anreichern."
     }
   }
 }
