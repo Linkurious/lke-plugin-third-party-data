@@ -263,10 +263,14 @@ export function buildCifasSearchBody(
   if (Object.keys(search).length === 0) {
     throw new Error('CIFAS: at least one search criterion is required');
   }
-  return {
+  const body = {
     memberReferenceNumber: integration.getAdminSettings('managingMemberNumber') as string,
     search: search
   };
+  if (integration.getAdminSettings('testApi')) {
+    console.log(`CIFAS search body (test API): ${JSON.stringify(body, null, 2)}`);
+  }
+  return body;
 }
 
 function formatReferences(references: CifasReference[] | undefined): string {

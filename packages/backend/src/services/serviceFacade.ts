@@ -39,7 +39,7 @@ export class ServiceFacade {
       actions: [
         {
           name: 'Configure integrations',
-          urlTemplate: '/',
+          urlTemplate: '/#linkurious-modal',
           access: 'admin'
         },
         ...(this.config

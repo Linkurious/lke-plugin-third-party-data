@@ -4,7 +4,8 @@ import {
   LkNode,
   PluginAction,
   NodeParams,
-  EdgeParams
+  EdgeParams,
+  LkEdge
 } from '@linkurious/rest-client';
 
 import {NeighborResult} from '../api/response';
@@ -23,7 +24,7 @@ import {
 // Nodes matching a NeighborNode definition
 export interface NeighborGroup {
   neighborNodeFilter: NeighborNodeFilter;
-  nodes: LkNode[];
+  neighbors: Array<{node: LkNode; edge: LkEdge}>;
 }
 
 export class VendorIntegrationPublic<VI extends IntegrationModelPublic = IntegrationModelPublic> {
@@ -179,9 +180,32 @@ export class VendorIntegrationPublic<VI extends IntegrationModelPublic = Integra
     neighborGroups: NeighborGroup[]
   ): LkNode[] | undefined {
     // take the first neighbor node that matches the mapping
-    return neighborGroups.find(
-      (g) => g.neighborNodeFilter.nodeCategory === mapping.inputNodeCategory && g.nodes.length > 0
-    )?.nodes;
+    const group = neighborGroups.find((g) => {
+      return (
+        g.neighborNodeFilter.nodeCategory === mapping.inputNodeCategory && g.neighbors.length > 0
+      );
+    });
+    // if we don't have a least one neighbor group that matches the node-category criteria, return undefined
+    if (!group) {
+      return undefined;
+    }
+    // if the mapping has no "where" filter, return all nodes in the group
+    if (!mapping.where) {
+      return group.neighbors.map((n) => n.node);
+    }
+    // if the mapping has a "where" filter, keep only the nodes that match the filter
+    const filteredNodes = group.neighbors
+      .filter((n) => {
+        if (mapping.where?.kind === 'node') {
+          return n.node.data.properties[mapping.where.propertyKey] === mapping.where.propertyValue;
+        } else if (mapping.where?.kind === 'edge') {
+          return n.edge.data.properties[mapping.where.propertyKey] === mapping.where.propertyValue;
+        }
+        return false;
+      })
+      .map((n) => n.node);
+    // if no nodes match the filter, return undefined
+    return filteredNodes.length > 0 ? filteredNodes : undefined;
   }
 
   private getNodePropertyValue(node: LkNode, propertyKey: string): VendorFieldType | undefined {

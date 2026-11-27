@@ -6,7 +6,7 @@ import {
   NeighborNodeFilter,
   NeighborPropertyFieldMapping
 } from '../../../../shared/integration/IntegrationModel';
-import {addSelect} from '../uiUtils';
+import {$elem, addSelect} from '../uiUtils';
 import {IntegrationModelChecker} from '../../integration/integrationModelChecker';
 import {VendorField} from '../../../../shared/vendor/vendorModel';
 import {asError} from '../../../../shared/utils';
@@ -109,6 +109,7 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
         if (this.newModel.type === 'neighborProperty') {
           delete this.newModel.inputPropertyKey;
           delete this.newModel.inputNodeCategory;
+          delete this.newModel.where;
         }
         this.newModel.type = fieldMappingType;
         getCol3().replaceChildren();
@@ -171,6 +172,91 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
     );
 
     parent.appendChild(propertyContainer);
+    this.addNeighborPropertyFilter(parent);
+  }
+
+  /**
+   * Adds a "property filter" toggle that displays a sub-form:
+   * "Include only when [node|edge].[property key] is [property value]".
+   * The filter is stored in `NeighborPropertyFieldMapping.where`.
+   */
+  private addNeighborPropertyFilter(parent: HTMLElement): void {
+    const strings = STRINGS.ui.inputMappingEditor;
+    let enabled = false;
+
+    const itemTypeSelect = document.createElement('select');
+    itemTypeSelect.id = 'search-mapping-filter-item-type-select';
+    itemTypeSelect.classList.add('form-select', 'form-select-sm', 'w-auto');
+    itemTypeSelect.options.add(new Option(strings.propertyFilterNode, 'node', true, true));
+    itemTypeSelect.options.add(new Option(strings.propertyFilterEdge, 'edge'));
+
+    const keyInput = this.createFilterInput(
+      'search-mapping-filter-key-input',
+      strings.propertyFilterKeyPlaceholder
+    );
+    const valueInput = this.createFilterInput(
+      'search-mapping-filter-value-input',
+      strings.propertyFilterValuePlaceholder
+    );
+
+    const updateModel = (): void => {
+      if (this.newModel.type !== 'neighborProperty') {
+        return;
+      }
+      if (!enabled) {
+        delete this.newModel.where;
+        return;
+      }
+      this.newModel.where = {
+        kind: itemTypeSelect.value === 'edge' ? 'edge' : 'node',
+        propertyKey: keyInput.value.trim(),
+        propertyValue: valueInput.value
+      };
+    };
+
+    itemTypeSelect.addEventListener('change', updateModel);
+    keyInput.addEventListener('input', updateModel);
+    valueInput.addEventListener('input', updateModel);
+
+    const subForm = $elem('div', {class: 'd-flex flex-wrap align-items-center gap-1 mt-1'}, [
+      $elem('span', {class: 'small'}, strings.propertyFilterPrefix),
+      itemTypeSelect,
+      $elem('span', {class: 'small'}, '.'),
+      keyInput,
+      $elem('span', {class: 'small'}, strings.propertyFilterIs),
+      valueInput
+    ]);
+    const subFormContainer = $elem('div', {}, [subForm]);
+    subFormContainer.style.display = 'none';
+
+    const toggle = this.ui.checkbox.create(strings.propertyFilterToggle, {}, (checked) => {
+      enabled = checked;
+      subFormContainer.style.display = checked ? '' : 'none';
+      updateModel();
+    });
+    toggle.classList.add('mt-2', 'form-switch');
+    toggle.querySelector('input')?.setAttribute('role', 'switch');
+
+    parent.appendChild(toggle);
+    parent.appendChild(subFormContainer);
+  }
+
+  private createFilterInput(id: string, placeholder: string): HTMLInputElement {
+    const input = document.createElement('input');
+    input.id = id;
+    input.type = 'text';
+    input.placeholder = placeholder;
+    input.setAttribute('spellcheck', 'false');
+    input.setAttribute('autocomplete', 'off');
+    input.classList.add('form-control', 'form-control-sm', 'w-auto', 'flex-grow-1');
+    return input;
+  }
+
+  private renderPropertyFilter(where: NeighborPropertyFieldMapping['where']): string {
+    if (!where) {
+      return '';
+    }
+    return ` (only when ${where.kind}.${where.propertyKey} is ${JSON.stringify(where.propertyValue)})`;
   }
 
   private async addNeighborNodePropertySelect(
@@ -238,7 +324,8 @@ export class InputNodeMappingEditor extends AbstractMappingEditor {
         : mapping.type === 'property'
           ? this.renderNodeProperty(mapping.inputPropertyKey, nodeTypeSchema)
           : mapping.type === 'neighborProperty'
-            ? this.renderNeighborProperty(mapping.inputNodeCategory, mapping.inputPropertyKey)
+            ? this.renderNeighborProperty(mapping.inputNodeCategory, mapping.inputPropertyKey) +
+              this.renderPropertyFilter(mapping.where)
             : '(n/a)';
     return [col1Text, col2Text, col3Text];
   }

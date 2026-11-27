@@ -78,10 +78,13 @@ void describe('VendorIntegrationPublic.getSearchQuery with neighbors', () => {
 
   void it('should use the first neighbor of the first non-empty matching group', () => {
     const groups: NeighborGroup[] = [
-      {neighborNodeFilter: locatedAt, nodes: []},
+      {neighborNodeFilter: locatedAt, neighbors: []},
       {
         neighborNodeFilter: anyEdge,
-        nodes: [node('2', 'Address', {city: 'London'}), node('3', 'Address', {city: 'Paris'})]
+        neighbors: [
+          {node: node('2', 'Address', {city: 'London'}), edge: edge('e1', '1', '2', 'located_at')},
+          {node: node('3', 'Address', {city: 'Paris'}), edge: edge('e2', '1', '3', 'located_at')}
+        ]
       }
     ];
     assert.deepStrictEqual(integration.getSearchQuery(companyNode, groups), {
@@ -114,9 +117,12 @@ void describe('VendorIntegrationPublic.getSearchQuery with neighbors', () => {
     const groups: NeighborGroup[] = [
       {
         neighborNodeFilter: cifas.getInputNeighborNodeFilters()[0],
-        nodes: [
-          node('2', 'Address', {city: 'London'}),
-          node('3', 'Address', {city: 'Paris', zip: '75000'})
+        neighbors: [
+          {node: node('2', 'Address', {city: 'London'}), edge: edge('e1', '1', '2', 'located_at')},
+          {
+            node: node('3', 'Address', {city: 'Paris', zip: '75000'}),
+            edge: edge('e2', '1', '3', 'located_at')
+          }
         ]
       }
     ];
@@ -128,8 +134,18 @@ void describe('VendorIntegrationPublic.getSearchQuery with neighbors', () => {
 
   void it('should prefer groups in neighbor nodes definition order', () => {
     const groups: NeighborGroup[] = [
-      {neighborNodeFilter: locatedAt, nodes: [node('2', 'Address', {city: 'London'})]},
-      {neighborNodeFilter: anyEdge, nodes: [node('3', 'Address', {city: 'Paris'})]}
+      {
+        neighborNodeFilter: locatedAt,
+        neighbors: [
+          {node: node('2', 'Address', {city: 'London'}), edge: edge('e1', '1', '2', 'located_at')}
+        ]
+      },
+      {
+        neighborNodeFilter: anyEdge,
+        neighbors: [
+          {node: node('3', 'Address', {city: 'Paris'}), edge: edge('e2', '1', '3', 'located_at')}
+        ]
+      }
     ];
     assert.deepStrictEqual(integration.getSearchQuery(companyNode, groups).restrictions, 'London');
   });
@@ -139,16 +155,19 @@ void describe('VendorIntegrationPublic.getSearchQuery with neighbors', () => {
   });
 
   void it('should skip the mapping when the neighbor property is invalid', () => {
-    const groups = [
+    const groups: NeighborGroup[] = [
       {
         neighborNodeFilter: locatedAt,
-        nodes: [
-          node('2', 'Address', {
-            city: {status: 'invalid', value: 1, original: 1}
-          } as unknown as LkNode['data']['properties'])
+        neighbors: [
+          {
+            node: node('2', 'Address', {
+              city: {status: 'invalid', value: 1, original: 1}
+            } as unknown as LkNode['data']['properties']),
+            edge: edge('e1', '1', '2', 'located_at')
+          }
         ]
       }
-    ] as unknown as NeighborGroup[];
+    ];
     assert.deepStrictEqual(integration.getSearchQuery(companyNode, groups), {q: 'Facebook'});
   });
 
@@ -238,7 +257,7 @@ void describe('Searcher.getInputNeighbors', () => {
     );
     const groups = await s['getInputNeighbors'](api, searchOptions);
     assert.deepStrictEqual(
-      groups.map((g) => g.nodes.map((n) => n.id)),
+      groups.map((g) => g.neighbors.map((n) => n.node.id)),
       [['10'], ['10', '11']]
     );
     assert.deepStrictEqual(calls, [
@@ -261,7 +280,7 @@ void describe('Searcher.getInputNeighbors', () => {
     );
     const groups = await s['getInputNeighbors'](api, searchOptions);
     assert.deepStrictEqual(
-      groups.map((g) => g.nodes.map((n) => n.id)),
+      groups.map((g) => g.neighbors.map((n) => n.node.id)),
       [['10']]
     );
     assert.deepStrictEqual((calls[0] as {edgeTypes: string[]}).edgeTypes, ['located_at']);

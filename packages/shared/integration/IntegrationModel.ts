@@ -57,6 +57,11 @@ export type NeighborNodeFilter = {
 export interface NeighborPropertyFieldMapping extends BaseQueryFieldMapping<'neighborProperty'> {
   inputNodeCategory: string;
   inputPropertyKey: string;
+  where?: {
+    kind: 'node' | 'edge';
+    propertyKey: string;
+    propertyValue: string;
+  };
 }
 
 export type FieldMapping =

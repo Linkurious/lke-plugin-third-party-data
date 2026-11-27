@@ -122,6 +122,9 @@ export class IntegrationModelChecker {
       if (!neighborNodeTypeSchema) {
         throw new Error(STRINGS.errors.checkInputNodeMapping.missingNeighborNodeCategory);
       }
+      if (mapping.where && mapping.where.propertyKey.trim() === '') {
+        throw new Error(STRINGS.errors.checkInputNodeMapping.missingPropertyFilterKey);
+      }
       this.checkGraphPropertyToVendorFieldMapping(
         mapping.inputPropertyKey,
         neighborNodeTypeSchema,

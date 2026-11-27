@@ -20,6 +20,7 @@ export const STRINGS = {
       missingInputProperty: `Search query mapping: source node property must be defined`,
       missingNeighborNodeCategory: `Search query mapping: neighbor node category must be defined`,
       missingNeighborInputProperty: `Search query mapping: neighbor node property must be defined`,
+      missingPropertyFilterKey: `Search query mapping: property filter key must be defined`,
       requiredFieldMissing: (vf: VendorField): string =>
         `Search query mapping: required field "${vf.key}" is missing`,
       unknownField: (m: Partial<FieldMapping>): string =>
@@ -151,6 +152,13 @@ export const STRINGS = {
       neighborProperty: 'Neighbor property',
       neighborNodeCategoryLabel: 'Neighbor node category',
       neighborPropertyLabel: 'Neighbor property',
+      propertyFilterToggle: 'Property filter',
+      propertyFilterPrefix: 'Include only when',
+      propertyFilterNode: 'node',
+      propertyFilterEdge: 'edge',
+      propertyFilterKeyPlaceholder: 'Property key',
+      propertyFilterIs: 'is',
+      propertyFilterValuePlaceholder: 'Property value',
 
       propertyInputType: (inputNodeType: string): string => `"${inputNodeType}" property`
     },

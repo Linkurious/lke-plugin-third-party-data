@@ -90,7 +90,7 @@ export class Searcher extends WithLogger {
     const nodesById = new Map<string, LkNode>(neighborNodesR.body.nodes.map((n) => [n.id, n]));
     const groups: NeighborGroup[] = neighborNodeFilters.map((neighborNodeFilter) => ({
       neighborNodeFilter: neighborNodeFilter,
-      nodes: []
+      neighbors: []
     }));
     for (const edge of neighborNodesR.body.edges) {
       let neighborId: string;
@@ -111,12 +111,18 @@ export class Searcher extends WithLogger {
       // filtering out nodes that were overfetched
       for (const group of groups) {
         if (
+          // the neighbor node matches the node category of the neighbor node filter
           neighbor.data.categories.includes(group.neighborNodeFilter.nodeCategory) &&
+          // if the neighbor node filter has an edge type, it must match the edge type of the neighbor node
           (group.neighborNodeFilter.edgeType === undefined ||
             group.neighborNodeFilter.edgeType === edge.data.type) &&
-          !group.nodes.includes(neighbor)
+          // the neighbor node is not already in the group (we only want unique nodes)
+          group.neighbors.find((n) => n.node.id === neighborId) === undefined
         ) {
-          group.nodes.push(neighbor);
+          group.neighbors.push({
+            node: neighbor,
+            edge: edge
+          });
         }
       }
     }
