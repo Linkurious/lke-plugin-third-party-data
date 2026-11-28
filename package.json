@@ -46,7 +46,7 @@
   ],
   "bundledDependencies": true,
   "dependencies": {
-    "@linkurious/rest-client": "4.3.14",
+    "@linkurious/rest-client": "4.3.16",
     "body-parser": "2.4.0",
     "qs": "6.16.1",
     "superagent": "10.4.1",
